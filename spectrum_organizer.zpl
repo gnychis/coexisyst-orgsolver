@@ -1,5 +1,8 @@
 # Spectrum Organization solver
 #
+# High Level notes:
+#   - Parameters are used to define constants within ZIMPL
+#
 # Input:
 #   <int: network_id> <int: network_type> <float: desired_airtime> <int: avg_tx_length_in_us>
 #
@@ -9,4 +12,4 @@
 #   3: ZigBee
 #   4: Analog Phone
 #
-# 
+# Implement types as a tuple, index value at, like: <"bandwidth", 3>
