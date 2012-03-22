@@ -13,3 +13,7 @@
 #   4: Analog Phone
 #
 # Implement types as a tuple, index value at, like: <"bandwidth", 3>
+
+param Protocols := { "802.11g", "802.11n", "ZigBee", "Bluetooth", "AnalogPhone" };
+
+
