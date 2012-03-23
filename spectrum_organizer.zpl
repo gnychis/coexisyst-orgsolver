@@ -29,4 +29,6 @@ set F[Protocols] := <"802.11g"> {2412,2437,2462},
 # In microseconds, the avg. TX length for each of the protocols (i.e., 'T' in formalization)
 param T[Protocols] := <"802.11g"> 2000, <"802.11n"> 2000, <"ZigBee"> 2000, <"AnalogPhone"> 2000;
 
-
+# A function to determine whether two frequencies overlap with each other
+defbool O(f1,b1,f2,b2) := 
+    if f1 < f2;
