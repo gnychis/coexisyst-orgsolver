@@ -26,4 +26,7 @@ set F[Protocols] := <"802.11g"> {2412,2437,2462},
                     <"ZigBee"> {2405,2410,2415,2420,2425,2430,2435,2440,2445,2450,2455,2460,2465,2470,2475,2480},
                     <"AnalogPhone"> {2412,2437,2462,2476};
 
+# In microseconds, the avg. TX length for each of the protocols (i.e., 'T' in formalization)
+param T[Protocols] := <"802.11g"> 2000, <"802.11n"> 2000, <"ZigBee"> 2000, <"AnalogPhone"> 2000;
+
 
