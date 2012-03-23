@@ -35,10 +35,11 @@ defnumb HF(f,b) := f+(b/2.0);
 
 # A basic function to test if a number is in the range of two numbers (a low and high)
 defbool INRANGE(num,low,high) := num >= low and num <= high;
+defnumb INRANGEI(num,low,high) := if num >= low and num <= high then 1 else 0 end;
 
 # A function to determine whether two frequencies overlap with each other
 defnumb O(f1,b1,f2,b2) := 
-    if INRANGE( LF(f1,b1), LF(f2,b2), HF(f2,b2) )  or  INRANGE( LF(f2,b2), LF(f1,b1), HF(f1,b1) ) then 
+    if INRANGEI( LF(f1,b1), LF(f2,b2), HF(f2,b2) )==1  or  INRANGEI( LF(f2,b2), LF(f1,b1), HF(f1,b1) )==1 then 
       1
     else 
       0 
@@ -48,15 +49,10 @@ do print "Bandwidths:";
 do print B["802.11g"];
 do print B["ZigBee"];
 do print "";
-do print "LF1:";
-do print LF(2412e3,B["802.11g"]);
-do print "HF1:";
-do print HF(2412e3,B["802.11g"]);
-do print "LF2:";
-do print LF(2480e3,B["ZigBee"]);
-do print "HF2:";
-do print HF(2480e3,B["ZigBee"]);
-do print INRANGE(1,2,3);
+do print "802.11:  LF: ",  LF(2412e3,B["802.11g"]), " - HF: ", HF(2412e3,B["802.11g"]);
+do print "ZigBee:  LF: ",  LF(2480e3,B["ZigBee"]), " - HF: ", HF(2480e3,B["ZigBee"]);
+do print "In range: ", INRANGEI(LF(2412e3,B["802.11g"]),LF(2480e3,B["ZigBee"]),HF(2480e3,B["ZigBee"]));
+do print "In range: ", INRANGEI(LF(2480e3,B["ZigBee"]),LF(2412e3,B["802.11g"]),HF(2412e3,B["802.11g"]));
 
 do print O(2412,B["802.11g"], 2415,B["ZigBee"]);
 do print O(2412,B["802.11g"], 2480,B["ZigBee"]);
