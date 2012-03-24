@@ -16,6 +16,8 @@
 
 include "functions.zpl";
 
+set W := { read "sample_networks.dat" as "<1n,2s,3n>" };
+
 set Protocols := { "802.11g", "802.11n", "ZigBee", "AnalogPhone" };
 #param ProtocolIds[Protocols] := <"802.11g"> 1, <"802.11n"> 2, <"ZigBee"> 3, <"AnalogPhone"> 4;
 
@@ -31,5 +33,4 @@ set F[Protocols] := <"802.11g"> {2412e3,2437e3,2462e3},
 # In microseconds, the avg. TX length for each of the protocols (i.e., 'T' in formalization)
 param T[Protocols] := <"802.11g"> 2000, <"802.11n"> 2000, <"ZigBee"> 2000, <"AnalogPhone"> 2000;
 
-do print O(2412e3,B["802.11g"], 2415e3,B["ZigBee"]);
-do print O(2412e3,B["802.11g"], 2480e3,B["ZigBee"]);
+do print W;
