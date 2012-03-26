@@ -37,3 +37,7 @@ set F[Protocols] := <"802.11g"> {2412e3,2437e3,2462e3},
 # In microseconds, the avg. TX length for each of the protocols (i.e., 'T' in formalization)
 param T[Protocols] := <"802.11g"> 2000, <"802.11n"> 2000, <"ZigBee"> 2000, <"AnalogPhone"> 2000;
 
+var f[W] integer;   # The center frequency for each network, specified as integer because default is 'real'
+
+subto valid_freq:
+  forall <i> in W : f[i] 
