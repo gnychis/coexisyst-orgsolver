@@ -19,11 +19,12 @@ include "functions.zpl";
 set   W       := { read "sample_networks.dat" as "<1n>" };      # unique set of network IDs
 param type[W] := read "sample_networks.dat" as "<1n> 2s";       # the network types for each network
 param D[W]    := read "sample_networks.dat" as "<1n> 3n";       # the desired airtime for each network
-param U[W]    := read "sample_uncoordinated.dat" as "<1n>";
+#param U[W]    := read "sample_uncoordinated.dat" as "<1n>";
 #set   C       := { read "sample_coordinated.dat" as "<n+>" };
 #set   U       := { read "sample_uncoordinated.dat" as "<1n>" };
 #set e := { <3>, <3>, <1,2,3,4> };
-#set e[I] := <1>{1,2,3}, <2>{1,3,4}, <3>{4,5,6} ;
+set I := {1..3};
+set e[I] := <1>{1,3}, <2>{1,3,4}, <3>{4,5,6} ;
 
 set Protocols := { "802.11g", "802.11n", "ZigBee", "AnalogPhone" };
 #param ProtocolIds[Protocols] := <"802.11g"> 1, <"802.11n"> 2, <"ZigBee"> 3, <"AnalogPhone"> 4;
