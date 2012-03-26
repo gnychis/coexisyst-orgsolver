@@ -13,4 +13,5 @@ defnumb O(f1,b1,f2,b2) :=
       0 
     end;
 
-
+defnumb sigma(Au, Tu, Ti) :=
+  1 - exp( (-Au / (Tu + Ti)));
