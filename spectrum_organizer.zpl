@@ -39,5 +39,5 @@ param T[Protocols] := <"802.11g"> 2000, <"802.11n"> 2000, <"ZigBee"> 2000, <"Ana
 
 var f[W] integer;   # The center frequency for each network, specified as integer because default is 'real'
 
-subto valid_freq:
-  forall <i> in W : f[i] 
+#subto valid_freq:
+#  forall <i> in W : f[i] 
