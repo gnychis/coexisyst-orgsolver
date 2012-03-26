@@ -16,9 +16,9 @@
 
 include "functions.zpl";
 
-set   W       := { read "sample_networks.dat" as "<1n>" };      # unique set of network IDs
-param type[W] := read "sample_networks.dat" as "<1n> 2s";       # the network types for each network
-param D[W]    := read "sample_networks.dat" as "<1n> 3n";       # the desired airtime for each network
+set   W       := { read "networks.dat" as "<1n>" };      # unique set of network IDs
+param type[W] := read "networks.dat" as "<1n> 2s";       # the network types for each network
+param D[W]    := read "networks.dat" as "<1n> 3n";       # the desired airtime for each network
 
 include "unified_coordination.zpl";
 
