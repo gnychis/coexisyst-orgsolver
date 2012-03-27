@@ -37,7 +37,40 @@ set F[Protocols] := <"802.11g"> {2412e3,2437e3,2462e3},
 # In microseconds, the avg. TX length for each of the protocols (i.e., 'T' in formalization)
 param T[Protocols] := <"802.11g"> 2000, <"802.11n"> 2000, <"ZigBee"> 2000, <"AnalogPhone"> 2000;
 
-var f[W] integer;   # The center frequency for each network, specified as integer because default is 'real'
+############################################################################################################################################
+# VARIABLES
+##############
+#
+var f[W] integer;         # The center frequency for each network, specified as integer because default is 'real'
+var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
+var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
+var Airtime[W]
+    real >= 0 <= 1;       # Airtime is a real number for each network between 0 and 1.
+
+############################################################################################################################################
+# CONSTRAINTS
+################
 
 #subto valid_freq:
 #  forall <i> in W : f[i] 
+
+subto airtime_is_positive:    # Ensure that the airtime of all networks is positive, it cannot be a negative value.  Worst case is nothing.
+  forall <i> in W : Airtime[i] >= 0;
+
+subto airtime_lte_desired:    # The actual airtime for each network cannot exceed the desired airtime of the network.
+  forall <i> in W : Airtime[i] <= D[i];
+
+subto sustained_between_01:   # Sustained interference is a loss rate, which must be between 0 and 1.
+  forall <i> in W : s[i] >= 0 and s[i] <= 1;
+
+############################################################################################################################################
+# INPUT CHECK
+################
+# The following checks below are checks for valid input.  For these we do not need constraints since they do
+#   not change with execution.  We just need to make sure they are valid inputs.
+
+# This is a check to make sure that the specified desired airtimes are legit.
+do forall <i> in W do check D[i] >= 0 and D[i] <= 1;
+
+# Make sure that the protocols for each network are ones that are valid and supported.
+do forall <i> in W do check card( { type[i] } inter Protocols ) == 1;
