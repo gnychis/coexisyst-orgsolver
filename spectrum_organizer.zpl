@@ -59,8 +59,14 @@ var Airtime[W]
 # OBJECTIVE FUNCTION
 ################
 #
-# minimize cost: min forall  
-# 
+# minimize cost: min ( forall <i> in W do  
+#                        min( D[i], 1 - sum <c> in C : D[c] * o(f,i,c) )      # Residual
+#                        *                                                    # *
+#                        (1 - (                                               # (1 - 
+#                               1 - prod <u> in U : 1 - s(i,u) * o(f,i,u) )   #      LossRate_i
+#                                  )                                          #                 )
+#                        / D[i]  # over D[i]
+#                    ) # end of topmost min
 
 ############################################################################################################################################
 # CONSTRAINTS
