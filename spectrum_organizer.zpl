@@ -14,14 +14,22 @@
 #
 # Implement types as a tuple, index value at, like: <"bandwidth", 3>
 
-include "functions.zpl";
+include "functions.zpl";   # A set of helper functions to create constants
 
+############################################################################################################################################
+# INPUTS
+##############
+#
 set   W       := { read "networks.dat" as "<1n>" };      # unique set of network IDs
 param type[W] := read "networks.dat" as "<1n> 2s";       # the network types for each network
 param D[W]    := read "networks.dat" as "<1n> 3n";       # the desired airtime for each network
 
 include "unified_coordination.zpl";   # imports a variable Q := <1,1> 0, <1,2> 0, <1,3> 1 ...
 
+############################################################################################################################################
+# CONSTANTS
+##############
+#
 set Protocols := { "802.11g", "802.11n", "ZigBee", "AnalogPhone" };
 #param ProtocolIds[Protocols] := <"802.11g"> 1, <"802.11n"> 2, <"ZigBee"> 3, <"AnalogPhone"> 4;
 
