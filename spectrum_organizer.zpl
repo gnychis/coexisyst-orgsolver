@@ -27,6 +27,35 @@ param D[W]    := read "networks.dat" as "<1n> 3n";       # the desired airtime f
 include "unified_coordination.zpl";   # imports a variable Q := <1,1> 0, <1,2> 0, <1,3> 1 ...
 
 ############################################################################################################################################
+# FUNCTIONS
+##############
+#
+# Defining low and high frequencies of a center frequency with a given bandwidth
+defnumb LF(f,b) := f-(b/2.0);   # Given a center frequency 'c' and bandwidth 'b', gives the lower frequency bound
+defnumb HF(f,b) := f+(b/2.0);   # Given a center frequency 'c' and bandwidth 'b', gives the upper frequency bound
+
+# A basic function to test if a number is in the range of two numbers (a low and high)
+defbool INRANGE(num,low,high) := num >= low and num <= high;
+
+# A function to determine whether two operational bands overlap with each other, given a pair of center
+#   frequencies and bandwidths.
+defnumb O(f1,b1,f2,b2) := 
+    if INRANGE( LF(f1,b1), LF(f2,b2), HF(f2,b2) )   # The lower frequency of band1 is in band2
+            or  
+        INRANGE( LF(f2,b2), LF(f1,b1), HF(f1,b1) )  # The lower frequency of band2 is in band1
+    then 
+      1   # They overlap with each other
+    else 
+      0   # They do not overlap with each other
+    end;
+
+# This calculates the expected loss rate of two networks given the Airtime of U (Au), and the
+#   two average transmission lengths of both networks Tu and Ti, assuming that they are independent
+#   processes, modeled as Poisson.
+defnumb sigma(Au, Tu, Ti) :=
+  1 - exp( (-Au / (Tu + Ti)));
+
+############################################################################################################################################
 # CONSTANTS
 ##############
 #
@@ -60,11 +89,11 @@ var Airtime[W]
 ################
 #
 # minimize cost: min ( forall <i> in W do  
-#                        min( D[i], 1 - sum <c> in C : D[c] * o(f,i,c) )      # Residual
-#                        *                                                    # *
-#                        (1 - (                                               # (1 - 
-#                               1 - prod <u> in U : 1 - s(i,u) * o(f,i,u) )   #      LossRate_i
-#                                  )                                          #                 )
+#                        min( D[i], 1 - sum <c> in C : D[c] * o(f,i,c) )      # Residual          # \
+#                        *                                                    # *                 #  \
+#                        (1 - (                                               # (1 -              #   Airtime_i
+#                               1 - prod <u> in U : 1 - s(i,u) * o(f,i,u) )   #      LossRate_i   #  /
+#                                  )                                          #                 ) # /
 #                        / D[i]  # over D[i]
 #                    ) # end of topmost min
 
