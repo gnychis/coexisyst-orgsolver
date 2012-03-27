@@ -52,15 +52,13 @@ defnumb O(f1,b1,f2,b2) :=
 # This calculates the expected loss rate of two networks given the Airtime of U (Au), and the
 #   two average transmission lengths of both networks Tu and Ti, assuming that they are independent
 #   processes, modeled as Poisson.
-defnumb sigma(Au, Tu, Ti) :=
-  1 - exp( (-Au / (Tu + Ti)));
+defnumb sigma(Au, Tu, Ti) := 1 - exp( (-Au / (Tu + Ti)));
 
 ############################################################################################################################################
 # CONSTANTS
 ##############
 #
 set Protocols := { "802.11g", "802.11n", "ZigBee", "AnalogPhone" };
-#param ProtocolIds[Protocols] := <"802.11g"> 1, <"802.11n"> 2, <"ZigBee"> 3, <"AnalogPhone"> 4;
 
 # In KHz, the bandwidth of networks that use the following protocols
 param B[Protocols] := <"802.11g"> 20000, <"802.11n"> 20000, <"ZigBee"> 5000, <"AnalogPhone"> 1000;
