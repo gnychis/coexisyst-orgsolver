@@ -33,11 +33,15 @@ set Protocols := { "802.11g", "802.11n", "ZigBee", "AnalogPhone" };
 # In KHz, the bandwidth of networks that use the following protocols
 param B[Protocols] := <"802.11g"> 20000, <"802.11n"> 20000, <"ZigBee"> 5000, <"AnalogPhone"> 1000;
 
-# The possible set of center frequencies (KHz) for each network by protocol (i.e., 'F' in formalization)
-set F[Protocols] := <"802.11g"> {2412e3,2437e3,2462e3},
+# The possible set of center frequencies (KHz) broken down ('F'requency 'B'reakdown) for each network by protocol
+set FB[Protocols] := <"802.11g"> {2412e3,2437e3,2462e3},
                     <"802.11n"> {2412e3,2437e3,2462e3},
                     <"ZigBee"> {2405e3,2410e3,2415e3,2420e3,2425e3,2430e3,2435e3,2440e3,2445e3,2450e3,2455e3,2460e3,2465e3,2470e3,2475e3,2480e3},
                     <"AnalogPhone"> {2412e3,2437e3,2462e3,2476e3};
+
+# The total set of frequencies.  This is not in the formalization, but a requirement to fit the language and solvers.  This is a union
+#   of all possible frequencies which are then used to construct a table for each network about which frequency is usable given the protocol.
+set F := union <p> in Protocols : FB[p];
 
 # In microseconds, the avg. TX length for each of the protocols (i.e., 'T' in formalization)
 param T[Protocols] := <"802.11g"> 2000, <"802.11n"> 2000, <"ZigBee"> 2000, <"AnalogPhone"> 2000;
@@ -84,7 +88,7 @@ defnumb sigma(Au, Tu, Ti) := 1 - exp( (-Au / (Tu + Ti)));
 # VARIABLES
 ##############
 #
-var f[W] integer;         # The center frequency for each network, specified as integer because default is 'real'
+var f[W*F] binary;        # A binary representation of which network picks which frequency
 var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
 var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
 var Airtime[W]
@@ -109,9 +113,7 @@ var Airtime[W]
 ################
 #
 
-subto valid_freq:             # The frequency selected by each network must be valid for its TYPE
-  forall <i> in W: sum <j> in F[TYPE[i]]: j = 1;
-#  forall <i> in W: IS_AVAIL_FREQ(i, f[i])=1; 
+#subto valid_freq:             # The frequency selected by each network must be valid for its TYPE
 
 subto airtime_is_positive:    # Ensure that the airtime of all networks is positive, it cannot be a negative value.  Worst case is nothing.
   forall <i> in W : Airtime[i] >= 0;
@@ -138,5 +140,3 @@ do forall <i> in W do check card( { TYPE[i] } inter Protocols ) == 1;
 #param a := sum <i> in W  do forall <j> in F[TYPE[i]] : if(i==1) then 1 else 0 end;
 #param a := sum <j> in F[TYPE[1]] : j;
 #do print a;
-
-do forall <i> in W do print IS_AVAIL_FREQ(i, 2412e3);
