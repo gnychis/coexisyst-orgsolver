@@ -4,7 +4,7 @@
 #   - Parameters are used to define constants within ZIMPL
 #
 # Input:
-#   <int: network_id> <int: network_type> <float: desired_airtime> <int: avg_tx_length_in_us>
+#   <int: network_id> <int: network_TYPE> <float: desired_airtime> <int: avg_tx_length_in_us>
 #
 # Network Types: 
 #   1: Wifi (802.11g: standard preamble)
@@ -12,14 +12,14 @@
 #   3: ZigBee
 #   4: Analog Phone
 #
-# Implement types as a tuple, index value at, like: <"bandwidth", 3>
+# Implement TYPEs as a tuple, index value at, like: <"bandwidth", 3>
 
 ############################################################################################################################################
 # INPUTS
 ##############
 #
 set   W       := { read "networks.dat" as "<1n>" };      # unique set of network IDs
-param type[W] := read "networks.dat" as "<1n> 2s";       # the network types for each network
+param TYPE[W] := read "networks.dat" as "<1n> 2s";       # the network TYPEs for each network
 param D[W]    := read "networks.dat" as "<1n> 3n";       # the desired airtime for each network
 
 include "unified_coordination.zpl";   # imports a variable Q := <1,1> 0, <1,2> 0, <1,3> 1 ...
@@ -99,8 +99,8 @@ var Airtime[W]
 ################
 #
 
-#subto valid_freq:             # The frequency selected by each network must be valid for its type
-#  forall <i> in W : card( { f[i] } inter F[type[i]] ) == 1;
+#subto valid_freq:             # The frequency selected by each network must be valid for its TYPE
+#  forall <i> in W : card( { f[i] } inter F[TYPE[i]] ) == 1;
 
 subto airtime_is_positive:    # Ensure that the airtime of all networks is positive, it cannot be a negative value.  Worst case is nothing.
   forall <i> in W : Airtime[i] >= 0;
@@ -121,6 +121,6 @@ subto sustained_between_01:   # Sustained interference is a loss rate, which mus
 do forall <i> in W do check D[i] >= 0 and D[i] <= 1;
 
 # Make sure that the protocols for each network are ones that are valid and supported.
-do forall <i> in W do check card( { type[i] } inter Protocols ) == 1;
+do forall <i> in W do check card( { TYPE[i] } inter Protocols ) == 1;
 
-do forall <i> in W do print card( { 2412e3 } inter F[type[i]] );
+do forall <i> in W do print card( { 2412e3 } inter F[TYPE[i]] );
