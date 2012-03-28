@@ -25,6 +25,25 @@ param D[W]    := read "networks.dat" as "<1n> 3n";       # the desired airtime f
 include "unified_coordination.zpl";   # imports a variable Q := <1,1> 0, <1,2> 0, <1,3> 1 ...
 
 ############################################################################################################################################
+# CONSTANTS
+##############
+#
+set Protocols := { "802.11g", "802.11n", "ZigBee", "AnalogPhone" };
+
+# In KHz, the bandwidth of networks that use the following protocols
+param B[Protocols] := <"802.11g"> 20000, <"802.11n"> 20000, <"ZigBee"> 5000, <"AnalogPhone"> 1000;
+
+# The possible set of center frequencies (KHz) for each network by protocol (i.e., 'F' in formalization)
+set F[Protocols] := <"802.11g"> {2412e3,2437e3,2462e3},
+                    <"802.11n"> {2412e3,2437e3,2462e3},
+                    <"ZigBee"> {2405e3,2410e3,2415e3,2420e3,2425e3,2430e3,2435e3,2440e3,2445e3,2450e3,2455e3,2460e3,2465e3,2470e3,2475e3,2480e3},
+                    <"AnalogPhone"> {2412e3,2437e3,2462e3,2476e3};
+
+# In microseconds, the avg. TX length for each of the protocols (i.e., 'T' in formalization)
+param T[Protocols] := <"802.11g"> 2000, <"802.11n"> 2000, <"ZigBee"> 2000, <"AnalogPhone"> 2000;
+
+
+############################################################################################################################################
 # FUNCTIONS
 ##############
 #
@@ -47,28 +66,19 @@ defnumb O(f1,b1,f2,b2) :=
       0   # They do not overlap with each other
     end;
 
+defnumb IS_AVAIL_FREQ(i, freq) := 
+    if( card( { freq } inter F[TYPE[i]] ) == 1)
+      then
+        1
+      else
+        0
+      end;
+
 # This calculates the expected loss rate of two networks given the Airtime of U (Au), and the
 #   two average transmission lengths of both networks Tu and Ti, assuming that they are independent
 #   processes, modeled as Poisson.
 defnumb sigma(Au, Tu, Ti) := 1 - exp( (-Au / (Tu + Ti)));
 
-############################################################################################################################################
-# CONSTANTS
-##############
-#
-set Protocols := { "802.11g", "802.11n", "ZigBee", "AnalogPhone" };
-
-# In KHz, the bandwidth of networks that use the following protocols
-param B[Protocols] := <"802.11g"> 20000, <"802.11n"> 20000, <"ZigBee"> 5000, <"AnalogPhone"> 1000;
-
-# The possible set of center frequencies (KHz) for each network by protocol (i.e., 'F' in formalization)
-set F[Protocols] := <"802.11g"> {2412e3,2437e3,2462e3},
-                    <"802.11n"> {2412e3,2437e3,2462e3},
-                    <"ZigBee"> {2405e3,2410e3,2415e3,2420e3,2425e3,2430e3,2435e3,2440e3,2445e3,2450e3,2455e3,2460e3,2465e3,2470e3,2475e3,2480e3},
-                    <"AnalogPhone"> {2412e3,2437e3,2462e3,2476e3};
-
-# In microseconds, the avg. TX length for each of the protocols (i.e., 'T' in formalization)
-param T[Protocols] := <"802.11g"> 2000, <"802.11n"> 2000, <"ZigBee"> 2000, <"AnalogPhone"> 2000;
 
 ############################################################################################################################################
 # VARIABLES
@@ -100,7 +110,8 @@ var Airtime[W]
 #
 
 subto valid_freq:             # The frequency selected by each network must be valid for its TYPE
-  forall <i> in W do sum <j> in F[TYPE[i]] : if(f[i]==j) then 1 else 0 end;
+  forall <i> in W: sum <j> in F[TYPE[i]]: j = 1;
+#  forall <i> in W: IS_AVAIL_FREQ(i, f[i])=1; 
 
 subto airtime_is_positive:    # Ensure that the airtime of all networks is positive, it cannot be a negative value.  Worst case is nothing.
   forall <i> in W : Airtime[i] >= 0;
@@ -124,5 +135,8 @@ do forall <i> in W do check D[i] >= 0 and D[i] <= 1;
 do forall <i> in W do check card( { TYPE[i] } inter Protocols ) == 1;
 
 #do forall <i> in W do print card( { 2412e3 } inter F[TYPE[i]] );
-param a := sum <i> in W  do forall <j> in F[TYPE[i]] : if(i==1) then 1 else 0 end;
-do print a;
+#param a := sum <i> in W  do forall <j> in F[TYPE[i]] : if(i==1) then 1 else 0 end;
+#param a := sum <j> in F[TYPE[1]] : j;
+#do print a;
+
+do forall <i> in W do print IS_AVAIL_FREQ(i, 2412e3);
