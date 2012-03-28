@@ -99,8 +99,8 @@ var Airtime[W]
 ################
 #
 
-#subto valid_freq:             # The frequency selected by each network must be valid for its TYPE
-#  forall <i> in W : card( { f[i] } inter F[TYPE[i]] ) == 1;
+subto valid_freq:             # The frequency selected by each network must be valid for its TYPE
+  forall <i> in W do sum <j> in F[TYPE[i]] : if(f[i]==j) then 1 else 0 end;
 
 subto airtime_is_positive:    # Ensure that the airtime of all networks is positive, it cannot be a negative value.  Worst case is nothing.
   forall <i> in W : Airtime[i] >= 0;
@@ -123,4 +123,6 @@ do forall <i> in W do check D[i] >= 0 and D[i] <= 1;
 # Make sure that the protocols for each network are ones that are valid and supported.
 do forall <i> in W do check card( { TYPE[i] } inter Protocols ) == 1;
 
-do forall <i> in W do print card( { 2412e3 } inter F[TYPE[i]] );
+#do forall <i> in W do print card( { 2412e3 } inter F[TYPE[i]] );
+param a := sum <i> in W  do forall <j> in F[TYPE[i]] : if(i==1) then 1 else 0 end;
+do print a;
