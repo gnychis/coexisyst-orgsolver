@@ -101,7 +101,10 @@ var residual[W] real >= 0 <= 1;
 maximize min_prop_airtime: 
     sum <i> in W :
      residual[i] * (1 - 
-        (1 - prod <u> in U[i] : (1 - sigma(D[u],T[u],T[i])))  # LossRate
+        (   1 - prod <u> in U[i] : (  1 - sigma(D[u],T[u],T[i]) * 
+                                            ( sum<i,fi> in TF : sum <u,fu> in TF : O(fi,B[i],fu,B[u]) ) 
+                                   )    
+        )  # LossRate
      )  # Enf of residual * ()
       / 
          D[i];
