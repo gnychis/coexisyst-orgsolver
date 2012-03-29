@@ -36,7 +36,8 @@ include "network_frequencies.zpl";
 
 # The total set of frequencies.  This is not in the formalization, but a requirement to fit the language and solvers.  This is a union
 #   of all possible frequencies which are then used to construct a table for each network about which frequency is usable given the protocol.
-set F := union <i> in W : FB[i];
+set F  := union <i> in W : FB[i];
+set TF := W*F;   # Creating a set of all possible networks and frequencies
 
 ############################################################################################################################################
 # FUNCTIONS
@@ -62,7 +63,7 @@ defnumb O(f1,b1,f2,b2) :=
     end;
 
 defnumb IS_AVAIL_FREQ(i, freq) := 
-    if( card( { freq } inter F[TYPE[i]] ) == 1)
+    if( card( { freq } inter FB[i] ) == 1)
       then
         1
       else
@@ -79,17 +80,11 @@ defnumb sigma(Au, Tu, Ti) := 1 - exp( (-Au / (Tu + Ti)));
 # VARIABLES
 ##############
 #
-var f[W*F] binary;        # A binary representation of which network picks which frequency
+var af[TF] binary;       # A binary representation of which network picks which frequency
 var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
 var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
 var Airtime[W]
     real >= 0 <= 1;       # Airtime is a real number for each network between 0 and 1.
-
-############################################################################################################################################
-# Initialization
-##############
-#
-
 
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
@@ -110,7 +105,8 @@ var Airtime[W]
 ################
 #
 
-#subto valid_freq:             # The frequency selected by each network must be valid for its TYPE
+subto valid_freq:             # The frequency selected by each network must be one in its list, if not it cannot be used and must have a val of 0.
+  forall <i,f> in TF with IS_AVAIL_FREQ(i,f)==0 : af[i,f] == 0;
 
 subto airtime_is_positive:    # Ensure that the airtime of all networks is positive, it cannot be a negative value.  Worst case is nothing.
   forall <i> in W : Airtime[i] >= 0;

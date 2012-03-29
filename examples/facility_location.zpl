@@ -40,6 +40,8 @@ minimize cost: sum <p> in PLANTS : building[p] * z[p]
 # Each store is supplied by exactly one plant
 #
 subto assign: forall <s> in STORES : sum <p> in PLANTS : x[p,s] == 1;
+
+subto limit2: x["A",1]==0;
    
 # To be able to supply a store, a plant must be build
 #
