@@ -18,9 +18,11 @@
 # INPUTS
 ##############
 #
-set   W       := { read "networks.dat" as "<1n>" };      # unique set of network IDs
-param TYPE[W] := read "networks.dat" as "<1n> 2s";       # the network TYPEs for each network
-param D[W]    := read "networks.dat" as "<1n> 3n";       # the desired airtime for each network
+set   W       := { read "networks.dat" as "<1n>" comment "#"};       # unique set of network IDs
+param TYPE[W] := read "networks.dat" as "<1n> 2s" comment "#";       # the network TYPEs for each network
+param D[W]    := read "networks.dat" as "<1n> 3n" comment "#";       # the desired airtime for each network
+param B[W]    := read "networks.dat" as "<1n> 4n" comment "#";       # the bandwidth in KHz for each network
+param T[W]    := read "networks.dat" as "<1n> 5n" comment "#";       # average TX time in us for each network
 
 include "unified_coordination.zpl";   # imports a variable Q := <1,1> 0, <1,2> 0, <1,3> 1 ...
 
@@ -30,22 +32,11 @@ include "unified_coordination.zpl";   # imports a variable Q := <1,1> 0, <1,2> 0
 #
 set Protocols := { "802.11g", "802.11n", "ZigBee", "AnalogPhone" };
 
-# In KHz, the bandwidth of networks that use the following protocols
-param B[Protocols] := <"802.11g"> 20000, <"802.11n"> 20000, <"ZigBee"> 5000, <"AnalogPhone"> 1000;
-
-# The possible set of center frequencies (KHz) broken down ('F'requency 'B'reakdown) for each network by protocol
-set FB[Protocols] := <"802.11g"> {2412e3,2437e3,2462e3},
-                    <"802.11n"> {2412e3,2437e3,2462e3},
-                    <"ZigBee"> {2405e3,2410e3,2415e3,2420e3,2425e3,2430e3,2435e3,2440e3,2445e3,2450e3,2455e3,2460e3,2465e3,2470e3,2475e3,2480e3},
-                    <"AnalogPhone"> {2412e3,2437e3,2462e3,2476e3};
+include "network_frequencies.zpl";
 
 # The total set of frequencies.  This is not in the formalization, but a requirement to fit the language and solvers.  This is a union
 #   of all possible frequencies which are then used to construct a table for each network about which frequency is usable given the protocol.
-set F := union <p> in Protocols : FB[p];
-
-# In microseconds, the avg. TX length for each of the protocols (i.e., 'T' in formalization)
-param T[Protocols] := <"802.11g"> 2000, <"802.11n"> 2000, <"ZigBee"> 2000, <"AnalogPhone"> 2000;
-
+set F := union <i> in W : FB[i];
 
 ############################################################################################################################################
 # FUNCTIONS
@@ -95,6 +86,12 @@ var Airtime[W]
     real >= 0 <= 1;       # Airtime is a real number for each network between 0 and 1.
 
 ############################################################################################################################################
+# Initialization
+##############
+#
+
+
+############################################################################################################################################
 # OBJECTIVE FUNCTION
 ################
 #
@@ -135,6 +132,9 @@ do forall <i> in W do check D[i] >= 0 and D[i] <= 1;
 
 # Make sure that the protocols for each network are ones that are valid and supported.
 do forall <i> in W do check card( { TYPE[i] } inter Protocols ) == 1;
+
+# Ensure that bandwidth is positive
+do forall <i> in W do check B[i] > 0;
 
 #do forall <i> in W do print card( { 2412e3 } inter F[TYPE[i]] );
 #param a := sum <i> in W  do forall <j> in F[TYPE[i]] : if(i==1) then 1 else 0 end;
