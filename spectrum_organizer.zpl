@@ -18,6 +18,7 @@
 # INPUTS
 ##############
 #
+
 set   W       := { read "networks.dat" as "<1n>" comment "#"};       # unique set of network IDs
 param TYPE[W] := read "networks.dat" as "<1n> 2s" comment "#";       # the network TYPEs for each network
 param D[W]    := read "networks.dat" as "<1n> 3n" comment "#";       # the desired airtime for each network
@@ -26,10 +27,12 @@ param T[W]    := read "networks.dat" as "<1n> 5n" comment "#";       # average T
 
 include "unified_coordination.zpl";   # imports a variable Q := <1,1> 0, <1,2> 0, <1,3> 1 ...
 
+
 ############################################################################################################################################
 # CONSTANTS
 ##############
 #
+
 set Protocols := { "802.11g", "802.11n", "ZigBee", "AnalogPhone" };
 
 include "network_frequencies.zpl";
@@ -39,10 +42,12 @@ include "network_frequencies.zpl";
 set F  := union <i> in W : FB[i];
 set TF := W*F;   # Creating a set of all possible networks and frequencies
 
+
 ############################################################################################################################################
 # FUNCTIONS
 ##############
 #
+
 # Defining low and high frequencies of a center frequency with a given bandwidth
 defnumb LF(f,b) := f-(b/2.0);   # Given a center frequency 'c' and bandwidth 'b', gives the lower frequency bound
 defnumb HF(f,b) := f+(b/2.0);   # Given a center frequency 'c' and bandwidth 'b', gives the upper frequency bound
@@ -80,11 +85,13 @@ defnumb sigma(Au, Tu, Ti) := 1 - exp( (-Au / (Tu + Ti)));
 # VARIABLES
 ##############
 #
-var af[TF] binary;       # A binary representation of which network picks which frequency
-var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
-var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
+
+var af[TF] binary;        # A binary representation of which network picks which frequency
+#var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
+#var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
 var Airtime[W]
     real >= 0 <= 1;       # Airtime is a real number for each network between 0 and 1.
+
 
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
@@ -99,6 +106,7 @@ var Airtime[W]
 #                     /                                                       #  ----------------- # -----------
 #                       D[i]                                                  #         D_i
 #                    )                                                        #  )
+
 
 ############################################################################################################################################
 # CONSTRAINTS
@@ -116,6 +124,7 @@ subto airtime_lte_desired:    # The actual airtime for each network cannot excee
 
 subto sustained_between_01:   # Sustained interference is a loss rate, which must be between 0 and 1.
   forall <i> in W : s[i] >= 0 and s[i] <= 1;
+
 
 ############################################################################################################################################
 # INPUT CHECK
