@@ -92,6 +92,8 @@ defnumb IS_AVAIL_FREQ(i, freq) :=
 #   processes, modeled as Poisson.
 defnumb sigma(Au,Tu,Ti) := 1 - exp( (-Au / (Tu + Ti)));
 
+# Calculates whether two networks overlap given their currently active frequencies
+#defnumb 
 
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
@@ -143,8 +145,3 @@ do forall <i> in W do check card( { TYPE[i] } inter Protocols ) == 1;
 
 # Ensure that bandwidth is positive
 do forall <i> in W do check B[i] > 0;
-
-#do forall <i> in W do print card( { 2412e3 } inter F[TYPE[i]] );
-#param a := sum <i> in W  do forall <j> in F[TYPE[i]] : if(i==1) then 1 else 0 end;
-#param a := sum <j> in F[TYPE[1]] : j;
-#do print a;
