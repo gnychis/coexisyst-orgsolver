@@ -99,15 +99,16 @@ defnumb sigma(Au,Tu,Ti) := 1 - exp( (-Au / (Tu + Ti)));
 # OBJECTIVE FUNCTION
 ################
 #
-# minimize cost: min ( forall <i> in W do                                                   # min (
-#                        min( D[i], 1 - sum <c> in C : D[c] * o(i,c) )                      #  Residual          # \
-#                        *                                                                  #  *                 #  \
-#                        (1 - (                                                             #  (1 -              #   Airtime_i
-#                               1 - prod <u> in U : 1 - sigma(a[u],T[u],T[i]) * o(i,u) )    #       LossRate_i   #  /
-#                                  )                                                        #                 )  # /
-#                     /                                                                     #  ----------------- # -----------
-#                       D[i]                                                                #         D_i
-#                    )                                                                      #  )
+minimize cost: min <i> in W do                                                   # min (
+                       min( D[i], 1 - sum <c> in C : D[c] *                               #
+                            (sum <i,fi> in TF : sum <c,fc> in TF do if(O(fi,B[i],fc,B[c])==1 and af[i,fi]==1 and af[c,fc]==1) then 1 else 0 end) )   #  Residual          # \
+                       *                                                                  #  *                 #  \
+                       (1 - (                                                             #  (1 -              #   Airtime_i
+                              1 - prod <u> in U : 1 - sigma(a[u],T[u],T[i]) * 
+                            (sum <i,fi> in TF : sum <u,fu> in TF do if(O(fi,B[i],fu,B[u])==1 and af[i,fi]==1 and af[u,fu]==1) then 1 else 0 end) )    #       LossRate_i   #  /
+                                 )                                                        #                 )  # /
+                    /                                                                     #  ----------------- # -----------
+                      D[i];                                                                #         D_i
 
 
 ############################################################################################################################################
@@ -151,6 +152,9 @@ do forall <i> in W do check B[i] > 0;
 #param a := sum <j> in F[TYPE[1]] : j;
 #do print a;
 
-set G := {1 .. 10};
-param k[G*G] := <4,7> 13, <4,8> 67, <4,9> 44, <5,7> 12, <5,8> 13, <5,9> 14, <1,2> 17, <3,4> 99;
-do print sum <x,y> in k with x==4 : k[x,y];
+#set G := {1 .. 3};
+#set Y := {"A","B","C"};
+#set V := G*Y;
+#param K[V] := <1,"A">1,<1,"B">1,<1,"C">1,<2,"A">2,<2,"B">2,<2,"C">2,<3,"A">3,<3,"B">3,<3,"C">3;
+#param l := "A";
+#do print sum <k,l> in V : K[k,l];
