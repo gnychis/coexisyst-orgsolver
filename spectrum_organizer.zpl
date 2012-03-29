@@ -51,7 +51,7 @@ set TF := W*F;   # Creating a set of all possible networks and frequencies
 var af[TF] binary;        # A binary representation of which network picks which frequency
 #var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
 #var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
-var Airtime[W]
+var a[W]
     real >= 0 <= 1;       # Airtime is a real number for each network between 0 and 1.
 
 
@@ -90,22 +90,22 @@ defnumb IS_AVAIL_FREQ(i, freq) :=
 # This calculates the expected loss rate of two networks given the Airtime of U (Au), and the
 #   two average transmission lengths of both networks Tu and Ti, assuming that they are independent
 #   processes, modeled as Poisson.
-#defnumb sigma(i,u) := 1 - exp( (-Airtime[u] / (T[u] + T[i])));
+defnumb sigma(Au,Tu,Ti) := 1 - exp( (-Au / (Tu + Ti)));
 
 
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
 ################
 #
-# minimize cost: min ( forall <i> in W do                                         # min (
-#                        min( D[i], 1 - sum <c> in C : D[c] * o(i,c) )            #  Residual          # \
-#                        *                                                        #  *                 #  \
-#                        (1 - (                                                   #  (1 -              #   Airtime_i
-#                               1 - prod <u> in U : 1 - sigma(i,u) * o(i,u) )     #       LossRate_i   #  /
-#                                  )                                              #                 )  # /
-#                     /                                                           #  ----------------- # -----------
-#                       D[i]                                                      #         D_i
-#                    )                                                            #  )
+# minimize cost: min ( forall <i> in W do                                                   # min (
+#                        min( D[i], 1 - sum <c> in C : D[c] * o(i,c) )                      #  Residual          # \
+#                        *                                                                  #  *                 #  \
+#                        (1 - (                                                             #  (1 -              #   Airtime_i
+#                               1 - prod <u> in U : 1 - sigma(a[u],T[u],T[i]) * o(i,u) )    #       LossRate_i   #  /
+#                                  )                                                        #                 )  # /
+#                     /                                                                     #  ----------------- # -----------
+#                       D[i]                                                                #         D_i
+#                    )                                                                      #  )
 
 
 ############################################################################################################################################
@@ -120,10 +120,10 @@ subto active_freq:            # Every network must have one center frequency con
   forall <i> in W : sum <f> in F : af[i,f] == 1; 
 
 subto airtime_is_positive:    # Ensure that the airtime of all networks is positive, it cannot be a negative value.  Worst case is nothing.
-  forall <i> in W : Airtime[i] >= 0;
+  forall <i> in W : a[i] >= 0;
 
 subto airtime_lte_desired:    # The actual airtime for each network cannot exceed the desired airtime of the network.
-  forall <i> in W : Airtime[i] <= D[i];
+  forall <i> in W : a[i] <= D[i];
 
 #subto sustained_between_01:   # Sustained interference is a loss rate, which must be between 0 and 1.
 #  forall <i> in W : s[i] >= 0 and s[i] <= 1;
