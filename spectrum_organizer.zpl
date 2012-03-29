@@ -41,6 +41,7 @@ include "network_frequencies.zpl";
 #   of all possible frequencies which are then used to construct a table for each network about which frequency is usable given the protocol.
 set F  := union <i> in W : FB[i];
 set TF := W*F;   # Creating a set of all possible networks and frequencies
+set QD := W*W*F*F;
 
 
 ############################################################################################################################################
@@ -87,7 +88,7 @@ defnumb sigma(Au,Tu,Ti) := 1 - exp( (-Au / (Tu + Ti)));
 
 var af[TF] binary;        # A binary representation of which network picks which frequency
 var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
-var q[W*W] binary;        # The linear representation of ___ ^ ____ ^ ____
+var q[QD] binary;        # The linear representation of ___ ^ ____ ^ ____
 #var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
 var a[W]
     real >= 0 <= 1;       # Airtime is a real number for each network between 0 and 1.
@@ -116,14 +117,11 @@ var residual[W] real >= 0 <= 1;
 ################
 #
 
-subto af_overlap:             # Whether the active frequencies for two networks overlap
-  forall <i> in W : forall <r> in W : o[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : q[i,r];
+subto af_overlap:            # Whether the active frequencies for two networks overlap
+  forall <i> in W : forall <r> in W : o[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr];
 
-subto q1_cons:
-  forall <i> in W : forall <r> in W : q[i,r] <= sum <i,fi> in TF : sum <r,fr> in TF : O(fi,B[i],fr,B[r]);
-
-subto q2_cons:
-  forall <i> in W : forall <r> in W : q[i,r] <= 
+#subto q_c2:                   # Our substitution for __ ^ ___ ^ ___ must be less than whether or not i is using frequency fi
+#  forall <i> in W : forall <r> in W : forall <i,fi> in TF : q[i,r] <= af[i,fi];
 
 subto residual_lh:            # The lefthand side of our min() in the 'Residual' variable
   forall <i> in W : residual[i] <= D[i];
