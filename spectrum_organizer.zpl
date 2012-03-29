@@ -145,3 +145,12 @@ do forall <i> in W do check card( { TYPE[i] } inter Protocols ) == 1;
 
 # Ensure that bandwidth is positive
 do forall <i> in W do check B[i] > 0;
+
+#do forall <i> in W do print card( { 2412e3 } inter F[TYPE[i]] );
+#param a := sum <i> in W  do forall <j> in F[TYPE[i]] : if(i==1) then 1 else 0 end;
+#param a := sum <j> in F[TYPE[1]] : j;
+#do print a;
+
+set G := {1 .. 10};
+param k[G*G] := <4,7> 13, <4,8> 67, <4,9> 44, <5,7> 12, <5,8> 13, <5,9> 14, <1,2> 17, <3,4> 99;
+do print sum <x,y> in k with x==4 : k[x,y];
