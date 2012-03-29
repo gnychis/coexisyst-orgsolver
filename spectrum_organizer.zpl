@@ -44,18 +44,6 @@ set TF := W*F;   # Creating a set of all possible networks and frequencies
 
 
 ############################################################################################################################################
-# VARIABLES
-##############
-#
-
-var af[TF] binary;        # A binary representation of which network picks which frequency
-#var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
-#var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
-var a[W]
-    real >= 0 <= 1;       # Airtime is a real number for each network between 0 and 1.
-
-
-############################################################################################################################################
 # FUNCTIONS
 ##############
 #
@@ -92,23 +80,29 @@ defnumb IS_AVAIL_FREQ(i, freq) :=
 #   processes, modeled as Poisson.
 defnumb sigma(Au,Tu,Ti) := 1 - exp( (-Au / (Tu + Ti)));
 
-# Calculates whether two networks overlap given their currently active frequencies
-#defnumb 
+############################################################################################################################################
+# VARIABLES
+##############
+#
+
+var af[TF] binary;        # A binary representation of which network picks which frequency
+#var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
+#var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
+var a[W]
+    real >= 0 <= 1;       # Airtime is a real number for each network between 0 and 1.
+var residual[W] real >= 0 <= 1;
+
+
 
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
 ################
 #
-minimize cost: min <i> in W do                                                   # min (
-                       min( D[i], 1 - sum <c> in C : D[c] *                               #
-                            (sum <i,fi> in TF : sum <c,fc> in TF do if(O(fi,B[i],fc,B[c])==1 and af[i,fi]==1 and af[c,fc]==1) then 1 else 0 end) )   #  Residual          # \
-                       *                                                                  #  *                 #  \
-                       (1 - (                                                             #  (1 -              #   Airtime_i
-                              1 - prod <u> in U : 1 - sigma(a[u],T[u],T[i]) * 
-                            (sum <i,fi> in TF : sum <u,fu> in TF do if(O(fi,B[i],fu,B[u])==1 and af[i,fi]==1 and af[u,fu]==1) then 1 else 0 end) )    #       LossRate_i   #  /
-                                 )                                                        #                 )  # /
-                    /                                                                     #  ----------------- # -----------
-                      D[i];                                                                #         D_i
+maximize min_prop_airtime: 
+    sum <i> in W :
+     residual[i] * (1 - prod <u> in U[i] : sigma(D[u],T[u],T[i]) )
+      / 
+         D[i];
 
 
 ############################################################################################################################################
@@ -116,6 +110,12 @@ minimize cost: min <i> in W do                                                  
 ################
 #
 
+subto residual_lh:            # The lefthand side of our min() in the 'Residual' variable
+  forall <i> in W : residual[i] <= D[i];
+
+subto residual_rh:            # The righthand side of our min() in the 'Residual' variable
+  forall <i> in W : residual[i] <= 1 - (sum <c> in C[i] : D[c] * (sum<i,fi> in TF : sum<c,fc> in TF : O(fi,B[i],fc,B[c])*af[i,fi]*af[c,fc]));
+  
 subto valid_freq:             # The frequency selected by each network must be one in its list, if not it cannot be used and must have a val of 0.
   forall <i,f> in TF with IS_AVAIL_FREQ(i,f)==0 : af[i,f] == 0;
 
@@ -155,6 +155,6 @@ do forall <i> in W do check B[i] > 0;
 #set G := {1 .. 3};
 #set Y := {"A","B","C"};
 #set V := G*Y;
-#param K[V] := <1,"A">1,<1,"B">1,<1,"C">1,<2,"A">2,<2,"B">2,<2,"C">2,<3,"A">3,<3,"B">3,<3,"C">3;
+#param K[V] := <1,"A">1,<1,"B">1,<1,"C">1,<2,"A">2,<2,"B">2,<2,"C">2,<3,"A">3,<3,"B">3,<3,"C">7;
 #param l := "A";
-#do print sum <k,l> in V : K[k,l];
+#do print max <k,l> in V : K[k,l];
