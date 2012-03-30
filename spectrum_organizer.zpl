@@ -100,16 +100,11 @@ var residual[W] real >= 0 <= 1;
 # OBJECTIVE FUNCTION
 ################
 #
-#maximize min_prop_airtime: 
-#    sum <i> in W :
-#     residual[i] * (1 - 
-#        (   1 - prod <u> in U[i] : (  1 - sigma(D[u],T[u],T[i]) * 
-#                                            ( sum<i,fi> in TF : sum <u,fu> in TF : O(fi,B[i],fu,B[u]) ) 
-#                                   )    
-#        )  # LossRate
-#     )  # Enf of residual * ()
-#      / 
-#         D[i];
+  maximize min_prop_airtime: 
+      sum <i> in W :
+       residual[i]  # * (1 - prod <u> in U[i] : (1 - sigma(D[u],T[u],T[i]) * o[i,u]))
+        / 
+           D[i];
 
 
 ############################################################################################################################################
@@ -117,29 +112,41 @@ var residual[W] real >= 0 <= 1;
 ################
 #
 
-subto af_overlap:            # Whether the active frequencies for two networks overlap
-  forall <i> in W : forall <r> in W : o[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr];
+  subto residual_lh:            # The lefthand side of our min() in the 'Residual' variable
+    forall <i> in W : residual[i] <= D[i];
 
-#subto q_c2:                   # Our substitution for __ ^ ___ ^ ___ must be less than whether or not i is using frequency fi
-#  forall <i> in W : forall <r> in W : forall <i,fi> in TF : q[i,r] <= af[i,fi];
+  subto residual_rh:            # The righthand side of our min() in the 'Residual' variable
+    forall <i> in W : residual[i] <= 1 - (sum <c> in C[i] : D[c] * o[i,c]);
+    
+  subto valid_freq:             # The frequency selected by each network must be one in its list, if not it cannot be used and must have a val of 0.
+    forall <i,f> in TF with IS_AVAIL_FREQ(i,f)==0 : af[i,f] == 0;
 
-subto residual_lh:            # The lefthand side of our min() in the 'Residual' variable
-  forall <i> in W : residual[i] <= D[i];
+  subto active_freq:            # Every network must have one center frequency considered active.
+    forall <i> in W : sum <f> in F : af[i,f] == 1; 
 
-subto residual_rh:            # The righthand side of our min() in the 'Residual' variable
-  forall <i> in W : residual[i] <= 1 - (sum <c> in C[i] : D[c] * (sum<i,fi> in TF : sum<c,fc> in TF : O(fi,B[i],fc,B[c])*af[i,fi]*af[c,fc]));
+  subto airtime_is_positive:    # Ensure that the airtime of all networks is positive, it cannot be a negative value.  Worst case is nothing.
+    forall <i> in W : a[i] >= 0;
+
+  subto airtime_lte_desired:    # The actual airtime for each network cannot exceed the desired airtime of the network.
+    forall <i> in W : a[i] <= D[i];
+
+  # ***************************************************************************************************
+  # Related to substitution for  O_ifrf ^ f_i ^ f_r
+  subto af_overlap:             # Whether the active frequencies for two networks overlap
+    forall <i> in W : forall <r> in W : o[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr];
   
-subto valid_freq:             # The frequency selected by each network must be one in its list, if not it cannot be used and must have a val of 0.
-  forall <i,f> in TF with IS_AVAIL_FREQ(i,f)==0 : af[i,f] == 0;
+  subto q_c1:                   # Must be less than whether or not the frequencies overlap
+    forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= O(fi,B[i],fr,B[r]);
 
-subto active_freq:            # Every network must have one center frequency considered active.
-  forall <i> in W : sum <f> in F : af[i,f] == 1; 
+  subto q_c2:                   # Must be less than whether or not i is using frequency fi
+    forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= af[i,fi];
 
-subto airtime_is_positive:    # Ensure that the airtime of all networks is positive, it cannot be a negative value.  Worst case is nothing.
-  forall <i> in W : a[i] >= 0;
+  subto q_c3:                   # Must be less than whether or not r is using frequency fr
+    forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= af[r,fr];
 
-subto airtime_lte_desired:    # The actual airtime for each network cannot exceed the desired airtime of the network.
-  forall <i> in W : a[i] <= D[i];
+  subto q_c4:                   # Must be greater than the sum of the them
+    forall <i,r,fi,fr> in QD: q[i,r,fi,fr] >= O(fi,B[i],fr,B[r]) + af[i,fi] + af[r,fr];
+  # ***************************************************************************************************
 
 #subto sustained_between_01:   # Sustained interference is a loss rate, which must be between 0 and 1.
 #  forall <i> in W : s[i] >= 0 and s[i] <= 1;
