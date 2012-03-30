@@ -90,24 +90,18 @@ var af[TF] binary;        # A binary representation of which network picks which
 var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
 var q[QD] binary;        # The linear representation of ___ ^ ____ ^ ____
 #var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
-var a[W]
-    real >= 0 <= 1;       # Airtime is a real number for each network between 0 and 1.
+var a[W] real >= 0 <= 1;       # Airtime is a real number for each network between 0 and 1.
 var residual[W] real >= 0 <= 1;
-
 var x;
-var y;
-minimize cost: 2 * x + 3 * y; 
-subto c1: x + y <= 6;
 
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
 ################
 #
-  maximize min_prop_airtime: 
-      sum <i> in W :
-       residual[i]  # * (1 - prod <u> in U[i] : (1 - sigma(D[u],T[u],T[i]) * o[i,u]))
-        / 
-           D[i];
+  minimize min_prop_airtime: 1 + 0*x;
+       #residual[i]  # * (1 - prod <u> in U[i] : (1 - sigma(D[u],T[u],T[i]) * o[i,u]))
+       # / 
+       #    D[i];
 
 
 ############################################################################################################################################
@@ -115,12 +109,12 @@ subto c1: x + y <= 6;
 ################
 #
 
-  subto residual_lh:            # The lefthand side of our min() in the 'Residual' variable
-    forall <i> in W : residual[i] <= D[i];
-
-  subto residual_rh:            # The righthand side of our min() in the 'Residual' variable
-    forall <i> in W : residual[i] <= 1 - (sum <c> in C[i] : D[c] * o[i,c]);
-    
+#  subto residual_lh:            # The lefthand side of our min() in the 'Residual' variable
+#    forall <i> in W : residual[i] <= D[i];
+#
+#  subto residual_rh:            # The righthand side of our min() in the 'Residual' variable
+#    forall <i> in W : residual[i] <= 1 - (sum <c> in C[i] : D[c] * o[i,c]);
+#    
   subto valid_freq:             # The frequency selected by each network must be one in its list, if not it cannot be used and must have a val of 0.
     forall <i,f> in TF with IS_AVAIL_FREQ(i,f)==0 : af[i,f] == 0;
 
@@ -148,7 +142,7 @@ subto c1: x + y <= 6;
     forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= af[r,fr];
 
   subto q_c4:                   # Must be greater than the sum of the them
-    forall <i,r,fi,fr> in QD: q[i,r,fi,fr] >= O(fi,B[i],fr,B[r]) + af[i,fi] + af[r,fr];
+    forall <i,r,fi,fr> in QD: q[i,r,fi,fr] >= O(fi,B[i],fr,B[r]) + af[i,fi] + af[r,fr] - 2;
   # ***************************************************************************************************
 
 #subto sustained_between_01:   # Sustained interference is a loss rate, which must be between 0 and 1.
