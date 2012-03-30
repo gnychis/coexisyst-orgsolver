@@ -94,7 +94,10 @@ var a[W]
     real >= 0 <= 1;       # Airtime is a real number for each network between 0 and 1.
 var residual[W] real >= 0 <= 1;
 
-
+var x;
+var y;
+minimize cost: 2 * x + 3 * y; 
+subto c1: x + y <= 6;
 
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
@@ -166,15 +169,3 @@ do forall <i> in W do check card( { TYPE[i] } inter Protocols ) == 1;
 
 # Ensure that bandwidth is positive
 do forall <i> in W do check B[i] > 0;
-
-#do forall <i> in W do print card( { 2412e3 } inter F[TYPE[i]] );
-#param a := sum <i> in W  do forall <j> in F[TYPE[i]] : if(i==1) then 1 else 0 end;
-#param a := sum <j> in F[TYPE[1]] : j;
-#do print a;
-
-#set G := {1 .. 3};
-#set Y := {"A","B","C"};
-#set V := G*Y;
-#param K[V] := <1,"A">1,<1,"B">1,<1,"C">1,<2,"A">2,<2,"B">2,<2,"C">2,<3,"A">3,<3,"B">3,<3,"C">7;
-#param l := "A";
-#do print max <k,l> in V : K[k,l];
