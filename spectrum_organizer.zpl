@@ -98,8 +98,8 @@ var x;
 # OBJECTIVE FUNCTION
 ################
 #
-  maximize min_prop_airtime: 
-    sum <i> in W : residual[i];    
+  minimize min_prop_airtime: 
+    sum <i> in W : a[i]; 
 
 
 ############################################################################################################################################
@@ -111,7 +111,7 @@ var x;
     forall <i> in W : residual[i] <= D[i];
 
   subto residual_rh:            # The righthand side of our min() in the 'Residual' variable
-    forall <i> in W : residual[i] <= 1 - (sum <c> in C[i] : D[c] * o[i,c]);
+    forall <i> in W : residual[i] <= 1 - (sum <c> in C[i] with (c!=i) : D[c] * o[i,c]);
     
   subto valid_freq:             # The frequency selected by each network must be one in its list, if not it cannot be used and must have a val of 0.
     forall <i,f> in TF with IS_AVAIL_FREQ(i,f)==0 : af[i,f] == 0;
@@ -125,10 +125,13 @@ var x;
   subto airtime_lte_desired:    # The actual airtime for each network cannot exceed the desired airtime of the network.
     forall <i> in W : a[i] <= D[i];
 
+  subto airtime_eq_residual:
+    forall <i> in W : a[i] == residual[i];
+
   # ***************************************************************************************************
   # Related to substitution for  O_ifrf ^ f_i ^ f_r
   subto af_overlap:             # Whether the active frequencies for two networks overlap
-    forall <i> in W : forall <r> in W : o[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr];
+    forall <i> in W : forall <r> in W with i != r : o[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr];
   
   subto q_c1:                   # Must be less than whether or not the frequencies overlap
     forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= O(fi,B[i],fr,B[r]);
