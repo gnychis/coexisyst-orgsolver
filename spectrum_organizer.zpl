@@ -98,10 +98,8 @@ var x;
 # OBJECTIVE FUNCTION
 ################
 #
-  minimize min_prop_airtime: 1 + 0*x;
-       #residual[i]  # * (1 - prod <u> in U[i] : (1 - sigma(D[u],T[u],T[i]) * o[i,u]))
-       # / 
-       #    D[i];
+  maximize min_prop_airtime: 
+    sum <i> in W : residual[i];    
 
 
 ############################################################################################################################################
@@ -109,12 +107,12 @@ var x;
 ################
 #
 
-#  subto residual_lh:            # The lefthand side of our min() in the 'Residual' variable
-#    forall <i> in W : residual[i] <= D[i];
-#
-#  subto residual_rh:            # The righthand side of our min() in the 'Residual' variable
-#    forall <i> in W : residual[i] <= 1 - (sum <c> in C[i] : D[c] * o[i,c]);
-#    
+  subto residual_lh:            # The lefthand side of our min() in the 'Residual' variable
+    forall <i> in W : residual[i] <= D[i];
+
+  subto residual_rh:            # The righthand side of our min() in the 'Residual' variable
+    forall <i> in W : residual[i] <= 1 - (sum <c> in C[i] : D[c] * o[i,c]);
+    
   subto valid_freq:             # The frequency selected by each network must be one in its list, if not it cannot be used and must have a val of 0.
     forall <i,f> in TF with IS_AVAIL_FREQ(i,f)==0 : af[i,f] == 0;
 
