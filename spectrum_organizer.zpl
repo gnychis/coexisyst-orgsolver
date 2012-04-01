@@ -92,13 +92,16 @@ var q[QD] binary;        # The linear representation of ___ ^ ____ ^ ____
 #var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
 var a[W] real >= 0 <= 1;       # Airtime is a real number for each network between 0 and 1.
 var residual[W] real >= 0 <= 1;
-var x;
+var residual_lhv[W];
+var residual_rhv[W];
+var residual_z1[W];
+var residual_z2[W];
 
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
 ################
 #
-  minimize min_prop_airtime: 
+  maximize min_prop_airtime: 
     sum <i> in W : a[i]; 
 
 
@@ -107,12 +110,6 @@ var x;
 ################
 #
 
-  subto residual_lh:            # The lefthand side of our min() in the 'Residual' variable
-    forall <i> in W : residual[i] <= D[i];
-
-  subto residual_rh:            # The righthand side of our min() in the 'Residual' variable
-    forall <i> in W : residual[i] <= 1 - (sum <c> in C[i] with (c!=i) : D[c] * o[i,c]);
-    
   subto valid_freq:             # The frequency selected by each network must be one in its list, if not it cannot be used and must have a val of 0.
     forall <i,f> in TF with IS_AVAIL_FREQ(i,f)==0 : af[i,f] == 0;
 
@@ -127,6 +124,28 @@ var x;
 
   subto airtime_eq_residual:
     forall <i> in W : a[i] == residual[i];
+  
+  # ***************************************************************************************************
+  # Related to substitution for the min() in the residual
+  subto residual_lhv_eq:
+    forall <i> in W : residual_lhv[i] == D[i];
+
+  subto residual_rhv_eq:
+    forall <i> in W : residual_rhv[i] == 1 - (sum <c> in C[i] with (c!=i) : D[c] * o[i,c]);
+
+  subto residual_min:
+    forall <i> in W : residual[i] == 0.5 * (residual_lhv[i] + residual_rhv[i] - residual_z1[i] - residual_z2[i]);
+
+  subto residual_z1_ge0:
+    forall <i> in W : residual_z1[i] >= 0;
+
+  subto residual_z2_ge0:
+    forall <i> in W : residual_z2[i] >= 0;
+
+  subto residual_z1z2:
+    forall <i> in W : residual_z1[i] - residual_z2[i] == residual_lhv[i] - residual_rhv[i];
+  # ***************************************************************************************************
+
 
   # ***************************************************************************************************
   # Related to substitution for  O_ifrf ^ f_i ^ f_r
