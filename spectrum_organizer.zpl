@@ -90,8 +90,8 @@ var af[TF] binary;        # A binary representation of which network picks which
 var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
 var q[QD] binary;        # The linear representation of ___ ^ ____ ^ ____
 #var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
-var a[W] real >= 0 <= 1;       # Airtime is a real number for each network between 0 and 1.
-var residual[W] real >= 0 <= 1;
+var a[W] real;       # Airtime is a real number for each network between 0 and 1.
+var residual[W] real;
 var residual_lhv[W];
 var residual_rhv[W];
 var residual_z1[W];
@@ -127,14 +127,14 @@ var residual_z2[W];
   
   # ***************************************************************************************************
   # Related to substitution for the min() in the residual
+  subto residual_min:    # Residual of network 'i' is equal to the min
+    forall <i> in W : residual[i] == 0.5 * (residual_lhv[i] + residual_rhv[i] - residual_z1[i] + residual_z2[i]);
+
   subto residual_lhv_eq:
     forall <i> in W : residual_lhv[i] == D[i];
 
   subto residual_rhv_eq:
     forall <i> in W : residual_rhv[i] == 1 - (sum <c> in C[i] with (c!=i) : D[c] * o[i,c]);
-
-  subto residual_min:
-    forall <i> in W : residual[i] == 0.5 * (residual_lhv[i] + residual_rhv[i] - residual_z1[i] - residual_z2[i]);
 
   subto residual_z1_ge0:
     forall <i> in W : residual_z1[i] >= 0;
