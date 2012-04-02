@@ -86,31 +86,41 @@ defnumb sigma(Au,Tu,Ti) := 1 - exp( (-Au / (Tu + Ti)));
 ##############
 #
 
-var af[TF] binary;        # A binary representation of which network picks which frequency
-var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
-var q[QD] binary;        # The linear representation of ___ ^ ____ ^ ____
-#var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
-var a[W] real;       # Airtime is a real number for each network between 0 and 1.
+  var af[TF] binary;        # A binary representation of which network picks which frequency
+  var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
+  var q[QD] binary;        # The linear representation of ___ ^ ____ ^ ____
+  #var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
+  var a[W] real;       # Airtime is a real number for each network between 0 and 1.
 
-var residual[W] real;
-var residual_min_lhv[W];
-var residual_min_rhv[W];
-var residual_min[W];
-var residual_min_y[W] binary;
-param residual_min_M := 100;
+  # ***************************************************************************************************
+  # Variables related to calculating the residual airtime for each network.  The additional variables
+  # are related to accounting for the min(Desired,Residual).  This uses an LP substitution for min().
+  var residual[W] real;
+  var residual_min_lhv[W];
+  var residual_min_rhv[W];
+  var residual_min[W];
+  var residual_min_y[W] binary;
+  param residual_min_M := 100;
+  # ***************************************************************************************************
 
-var airtime_sensed[W];
-var airtime_sensed_act[W];
-var airtime_sensed_min_lhv[W];
-param airtime_sensed_min_rhv := 1;
-var airtime_sensed_min_y[W] binary;
-param airtime_sensed_min_M := 100;
+  # ***************************************************************************************************
+  # Variables that are related to calculating the airtime sensed by each network.
+  # There are two main variables here:
+  #   * airtime_sensed:       the sum of the airtime sensed by all networks
+  #   * airtime_sensed_act:   min(sum,1) so that it doesn't exceed 1
+  var airtime_sensed[W];
+  var airtime_sensed_act[W];
+  var airtime_sensed_min_lhv[W];
+  param airtime_sensed_min_rhv := 1;
+  var airtime_sensed_min_y[W] binary;
+  param airtime_sensed_min_M := 100;
+  # ***************************************************************************************************
 
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
 ################
 #
-  maximize min_prop_airtime: 
+  minimize min_prop_airtime: 
     sum <i> in W : a[i]; 
 
 
