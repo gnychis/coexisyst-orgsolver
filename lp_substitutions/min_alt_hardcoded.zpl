@@ -1,6 +1,5 @@
-param a := 8;
-param b := 3;
-param M := 100000000;
+param a := 4;
+param b := 9;
 var z;
 var y binary;
 
@@ -12,5 +11,8 @@ subto min_za:
 subto min_zb:
   z <= b;
 
-subto min_c1:
-  -z <= -b;
+#subto min_c1:  # Active if b is elss than a
+#  -z <= -b;
+
+subto min_c2:  # Active if a is less than b
+  -z <= -a;
