@@ -99,6 +99,13 @@ var residual_min[W];
 var residual_min_y[W] binary;
 param residual_min_M := 100;
 
+var airtime_sensed[W];
+var airtime_sensed_act[W];
+var airtime_sensed_min_lhv[W];
+param airtime_sensed_min_rhv := 1;
+var airtime_sensed_min_y[W] binary;
+param airtime_sensed_min_M := 100;
+
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
 ################
@@ -126,6 +133,26 @@ param residual_min_M := 100;
 
   subto airtime_eq_residual:
     forall <i> in W : a[i] == residual[i];
+
+  # ***************************************************************************************************
+  # Related to substitution for the min() in the airtime sensed so that the "actual" sensed is <= 1
+  subto airtime_sensed_eq:      # The airtime each network senses is equal to...
+    forall <i> in W : airtime_sensed[i] == sum <c> in C[i] with (c!=i) : D[c] * o[i,c];
+
+  subto airtime_sensed_min_lhv_eq:  # The left hand value of the min for airtime sensed is airtime sensed
+    forall <i> in W : airtime_sensed_min_lhv[i] == airtime_sensed[i];
+
+  subto airtime_sensed_min1:        # The value (airtime_sensed_act)  must be less than the lhv
+    forall <i> in W : airtime_sensed_act[i] <= airtime_sensed_min_lhv[i];
+
+  subto airtime_sensed_min2:        # The value (airtime_sensed_act) must be less than the rhv (fixed to 1)
+    forall <i> in W : airtime_sensed_act[i] <= airtime_sensed_min_rhv;
+
+  subto airtime_sensed_min_c1:      # A possible constraint given the min LP sub (see example in 'lp_substitutions/')
+    forall <i> in W : -airtime_sensed_act[i] <= -airtime_sensed_min_lhv[i] + airtime_sensed_min_M*airtime_sensed_min_y[i];
+
+  subto airtime_sensed_min_c2:      # A possible constraint...
+    forall <i> in W : -airtime_sensed_act[i] <= -airtime_sensed_min_rhv + airtime_sensed_min_M*(1-airtime_sensed_min_y[i]);
   
   # ***************************************************************************************************
   # Related to substitution for the min() in the residual
@@ -136,7 +163,7 @@ param residual_min_M := 100;
     forall <i> in W : residual_min_lhv[i] == D[i];
 
   subto residual_min_rhv_eq:  # The right hand value in the min function: min(lhv,rhv)
-    forall <i> in W : residual_min_rhv[i] == 1 - (sum <c> in C[i] with (c!=i) : D[c] * o[i,c]);
+    forall <i> in W : residual_min_rhv[i] == 1 - airtime_sensed_act[i];
 
   subto residual_min1:      # The subsitution variable 'z' must be less than LHV
     forall <i> in W : residual_min[i] <= residual_min_lhv[i];
