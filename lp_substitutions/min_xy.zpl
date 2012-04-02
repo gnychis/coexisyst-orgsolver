@@ -1,14 +1,13 @@
-param x := 6;
-param y := 8;
-var a;
+param x := 9;
+param y := 6;
 var m;
 var z1;
 var z2;
 
-maximize goal: 1 + 0*a;
+maximize goal: m;
 
 subto min_m:
-  m == 0.5 * (x + y - z1 + z2);
+  m == 0.5 * (x + y - z1 - z2);
 
 subto min_z1:
   z1 >= 0;

@@ -128,7 +128,7 @@ var residual_z2[W];
   # ***************************************************************************************************
   # Related to substitution for the min() in the residual
   subto residual_min:    # Residual of network 'i' is equal to the min
-    forall <i> in W : residual[i] == 0.5 * (residual_lhv[i] + residual_rhv[i] - residual_z1[i] + residual_z2[i]);
+    forall <i> in W : residual[i] == 0.5 * (residual_lhv[i] + residual_rhv[i] - residual_z1[i] - residual_z2[i]);
 
   subto residual_lhv_eq:
     forall <i> in W : residual_lhv[i] == D[i];
