@@ -110,7 +110,7 @@ param airtime_sensed_min_M := 100;
 # OBJECTIVE FUNCTION
 ################
 #
-  minimize min_prop_airtime: 
+  maximize min_prop_airtime: 
     sum <i> in W : a[i]; 
 
 
