@@ -91,17 +91,19 @@ var o[W*W] binary;        # Do the networks, given their center frequencies, ove
 var q[QD] binary;        # The linear representation of ___ ^ ____ ^ ____
 #var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
 var a[W] real;       # Airtime is a real number for each network between 0 and 1.
+
 var residual[W] real;
 var residual_lhv[W];
 var residual_rhv[W];
-var residual_z1[W];
-var residual_z2[W];
+var residual_z[W];
+var residual_y[W] binary;
+param residual_M := 100;
 
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
 ################
 #
-  maximize min_prop_airtime: 
+  minimize min_prop_airtime: 
     sum <i> in W : a[i]; 
 
 
@@ -127,23 +129,26 @@ var residual_z2[W];
   
   # ***************************************************************************************************
   # Related to substitution for the min() in the residual
-  subto residual_min:    # Residual of network 'i' is equal to the min
-    forall <i> in W : residual[i] == 0.5 * (residual_lhv[i] + residual_rhv[i] - residual_z1[i] - residual_z2[i]);
+  subto residual_min:     # The residual is equal to our subsitution for the min, 'z'
+    forall <i> in W : residual[i] == residual_z[i];
 
-  subto residual_lhv_eq:
+  subto residual_lhv_eq:  # The left hand value in the min function: min(lhv,rhv)
     forall <i> in W : residual_lhv[i] == D[i];
 
-  subto residual_rhv_eq:
+  subto residual_rhv_eq:  # The right hand value in the min function: min(lhv,rhv)
     forall <i> in W : residual_rhv[i] == 1 - (sum <c> in C[i] with (c!=i) : D[c] * o[i,c]);
 
-  subto residual_z1_ge0:
-    forall <i> in W : residual_z1[i] >= 0;
+  subto residual_z1:      # The subsitution variable 'z' must be less than LHV
+    forall <i> in W : residual_z[i] <= residual_lhv[i];
 
-  subto residual_z2_ge0:
-    forall <i> in W : residual_z2[i] >= 0;
+  subto residual_z2:      # The subsitution variable 'z' must be less than RHV
+    forall <i> in W : residual_z[i] <= residual_rhv[i];
 
-  subto residual_z1z2:
-    forall <i> in W : residual_z1[i] - residual_z2[i] == residual_lhv[i] - residual_rhv[i];
+  subto residual_z_c1:    # A possible constraint given the min LP sub (see example in 'lp_substitutions/') 
+    forall <i> in W : -residual_z[i] <= -residual_lhv[i] + residual_M*residual_y[i];
+
+  subto residual_z_c2:    # A possible constraint ...
+    forall <i> in W : -residual_z[i] <= -residual_rhv[i] + residual_M*(1-residual_y[i]);
   # ***************************************************************************************************
 
 
