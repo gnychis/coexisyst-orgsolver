@@ -120,6 +120,7 @@
   # Variables that are related to calculating the loss rate for each network which is a product.
   # This computes the product in the most linear-way possible.
   var lossrate[W] real; 
+  var successrate_prod_vals[W*W] real;   # For each network, calculate loss rate due to each network
   # ***************************************************************************************************
 
 
@@ -155,6 +156,15 @@
   # Related to calculating the lossrate variable
   subto lossrate_eq:
     forall <i> in W : lossrate[i] == sum <u> in U[i] with (u!=i) : (1 - sigma(D[u],T[u],T[i]) * o[i,u]);
+  
+  subto successrate_prod_vars_eq_self:  # Success rate for every network with itself is 1, no loss caused
+    forall <i> in W : forall <u> in W with i==u: successrate_prod_vals[i,u] == 1;
+
+  subto successrate_prod_vars_eq_inC:   # Success rate for every network in C is considered to be 1
+    forall <i> in W : forall <c> in C[i] : successrate_prod_vals[i,c] == 1;
+
+  subto lossrate_prod_vars_eq:  # Loss rate on network i due to network u
+    forall <i> in W : forall <u> in U[i] : successrate_prod_vals[i,u] == (1 - sigma(D[u],T[u],T[i]) * o[i,u]);
   # ***************************************************************************************************
 
   # ***************************************************************************************************
