@@ -86,11 +86,12 @@ defnumb sigma(Au,Tu,Ti) := 1 - exp( (-Au / (Tu + Ti)));
 ##############
 #
 
-  var af[TF] binary;        # A binary representation of which network picks which frequency
-  var o[W*W] binary;        # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
-  var q[QD] binary;        # The linear representation of ___ ^ ____ ^ ____
-  #var s[W] real >= 0 <= 1;  # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
-  var a[W] real;       # Airtime is a real number for each network between 0 and 1.
+  var af[TF] binary;          # A binary representation of which network picks which frequency
+  var o[W*W] binary;          # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
+  var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
+  var a[W] real;              # Airtime is a real number for each network between 0 and 1.
+  var lossrate[W] real;       #
+  #var s[W] real >= 0 <= 1;   # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
 
   # ***************************************************************************************************
   # Variables related to calculating the residual airtime for each network.  The additional variables
@@ -116,12 +117,13 @@ defnumb sigma(Au,Tu,Ti) := 1 - exp( (-Au / (Tu + Ti)));
   param airtime_sensed_min_M := 100;
   # ***************************************************************************************************
 
+
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
 ################
 #
-  minimize min_prop_airtime: 
-    sum <i> in W : a[i]; 
+  maximize min_prop_airtime: 
+    sum <i> in W : a[i] / D[i]; 
 
 
 ############################################################################################################################################
@@ -142,12 +144,18 @@ defnumb sigma(Au,Tu,Ti) := 1 - exp( (-Au / (Tu + Ti)));
     forall <i> in W : a[i] <= D[i];
 
   subto airtime_eq_residual:
-    forall <i> in W : a[i] == residual[i];
+    forall <i> in W : a[i] == residual[i] * (1 - lossrate[i]);
+  
+  # ***************************************************************************************************
+  # Related to calculating the lossrate variable
+  subto lossrate_eq:
+    forall <i> in W : lossrate[i] == sum <u> in U[i] with (u!=i) : (1 - sigma(D[u],T[u],T[i]) * o[i,u]);
+  # ***************************************************************************************************
 
   # ***************************************************************************************************
   # Related to substitution for the min() in the airtime sensed so that the "actual" sensed is <= 1
   subto airtime_sensed_eq:      # The airtime each network senses is equal to...
-    forall <i> in W : airtime_sensed[i] == sum <c> in C[i] with (c!=i) : D[c] * o[i,c];
+    forall <i> in W : airtime_sensed[i] == sum <c> in C[i] with (c!=i) : (D[c] * o[i,c]);
 
   subto airtime_sensed_min_lhv_eq:  # The left hand value of the min for airtime sensed is airtime sensed
     forall <i> in W : airtime_sensed_min_lhv[i] == airtime_sensed[i];
