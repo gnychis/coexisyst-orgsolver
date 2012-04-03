@@ -90,7 +90,6 @@
   var o[W*W] binary;          # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
   var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
   var a[W] real;              # Airtime is a real number for each network between 0 and 1.
-  var lossrate[W] real;       #
   #var s[W] real >= 0 <= 1;   # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
 
   # ***************************************************************************************************
@@ -115,6 +114,12 @@
   param airtime_sensed_min_rhv := 1;
   var airtime_sensed_min_y[W] binary;
   param airtime_sensed_min_M := 100;
+  # ***************************************************************************************************
+  
+  # ***************************************************************************************************
+  # Variables that are related to calculating the loss rate for each network which is a product.
+  # This computes the product in the most linear-way possible.
+  var lossrate[W] real; 
   # ***************************************************************************************************
 
 
