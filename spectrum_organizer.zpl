@@ -119,7 +119,7 @@
   # ***************************************************************************************************
   # Variables that are related to calculating the loss rate for each network which is a product.
   # This computes the product in the most linear-way possible.
-  var lossrate[W] real; 
+  var lossrate[W] real >= 0 <= 1; 
   var successrate_prod_vals[W*W] real;    # For each network, calculate loss rate due to each network
   var successrate_prod_vars[W*W] real;    # For the calculation of loss rate using a product
   # ***************************************************************************************************
@@ -130,7 +130,7 @@
 ################
 #
   maximize min_prop_airtime: 
-    sum <i> in W : a[i] / D[i]; 
+    sum <i> in W : a[i]; 
 
 
 ############################################################################################################################################
@@ -151,7 +151,7 @@
     forall <i> in W : a[i] <= D[i];
 
   subto airtime_eq_residual:    # The airtime is equal to the residual minus the loss rate...
-    forall <i> in W : a[i] == residual[i] * (1 - lossrate[i]);
+    forall <i> in W : a[i] == residual[i]  * (1 - lossrate[i]);
 
   # ***************************************************************************************************
   # Related to calculating the lossrate variable
