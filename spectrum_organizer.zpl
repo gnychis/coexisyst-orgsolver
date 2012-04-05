@@ -119,9 +119,10 @@
   # ***************************************************************************************************
   # Variables that are related to calculating the loss rate for each network which is a product.
   # This computes the product in the most linear-way possible.
+  var pps[W] integer;                     # For each network, the packets per second generated
   var lossrate[W] real; 
-  var successrate_prod_vals[W*W] real;   # For each network, calculate loss rate due to each network
-  var successrate_prod_vars[W*W] real;   # For the calculation of loss rate using a product
+  var successrate_prod_vals[W*W] real;    # For each network, calculate loss rate due to each network
+  var successrate_prod_vars[W*W] real;    # For the calculation of loss rate using a product
   # ***************************************************************************************************
 
 
@@ -152,6 +153,9 @@
 
   subto airtime_eq_residual:    # The airtime is equal to the residual minus the loss rate...
     forall <i> in W : a[i] == residual[i] * (1 - lossrate[i]);
+
+  subto pps_eq:                 # The estimated packets per second for each network
+    forall <i> in W : pps[i] == a[i] / (T[i] / 1000000);
   
   # ***************************************************************************************************
   # Related to calculating the lossrate variable
@@ -162,7 +166,7 @@
     forall <i> in W : forall <c> in C[i]  : successrate_prod_vals[i,c] == 1;
 
   subto lossrate_prod_vals_eq:          # Loss rate on network i due to network u
-    forall <i> in W : forall <u> in U[i] : successrate_prod_vals[i,u] == (1 - sigma(D[u],T[u],T[i]) * o[i,u]);
+    forall <i> in W : forall <u> in U[i] : successrate_prod_vals[i,u] == (1 - exp(-pps[i] * (T[i] + T[u]))  * o[i,u]);
 
   subto lossrate_prod_vars_eq_init:     # Initialize the first multiplication in the chain
     forall <i> in W : successrate_prod_vars[i,1] == successrate_prod_vals[i,1];
