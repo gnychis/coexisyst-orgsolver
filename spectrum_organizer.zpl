@@ -123,6 +123,13 @@
   var sr_vals[W*W] real;    # For each network, calculate loss rate due to each network
   var sr_vars[W*W] real;    # For the calculation of loss rate using a product
   # ***************************************************************************************************
+  
+  # ***************************************************************************************************
+  # For calculating the rough estimated of an expected "fair share" (fs) of airtime due to networks that
+  # the network coordinates with.
+  var fs[W];
+  var nsharing[W];
+  # ***************************************************************************************************
 
 
 ############################################################################################################################################
@@ -152,6 +159,12 @@
 
   subto airtime_eq_residual:    # The airtime is equal to the residual minus the loss rate...
     forall <i> in W : a[i] == residual[i]  * (1 - lossrate[i]);
+
+  subto nsharing_eq:            # The number of networks sharing a frequency with each other (including self)
+    forall <i> in W : nsharing[i] == sum <c> in C[i] : o[i,c];
+
+  subto fs_eq:                  # The expected fair share, this makes fs[i] equal to 1/nsharing, just written without division
+    forall <i> in W : fs[i] * nsharing[i] == 1;
 
   # ***************************************************************************************************
   # Related to calculating the lossrate variable
