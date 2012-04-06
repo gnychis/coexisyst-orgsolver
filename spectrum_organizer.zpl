@@ -156,7 +156,7 @@
   # ***************************************************************************************************
   # Related to calculating the lossrate variable
   subto lossrate_eq:    # Lossrate is the last variable in the series of multiplications (variables)
-    forall <i> in W : lossrate[i] == sr_vars[i,card(W)];
+    forall <i> in W : lossrate[i] == 1 - sr_vars[i,card(W)];
   
   subto sr_vars_eq_inC:   # Success rate for every network in C is considered to be 1
     forall <i> in W : forall <c> in C[i]  : sr_vals[i,c] == 1;
