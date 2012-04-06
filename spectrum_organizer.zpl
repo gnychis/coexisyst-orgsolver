@@ -120,8 +120,8 @@
   # Variables that are related to calculating the loss rate for each network which is a product.
   # This computes the product in the most linear-way possible.
   var lossrate[W] real >= 0 <= 1; 
-  var successrate_prod_vals[W*W] real;    # For each network, calculate loss rate due to each network
-  var successrate_prod_vars[W*W] real;    # For the calculation of loss rate using a product
+  var sr_vals[W*W] real;    # For each network, calculate loss rate due to each network
+  var sr_vars[W*W] real;    # For the calculation of loss rate using a product
   # ***************************************************************************************************
 
 
@@ -156,19 +156,19 @@
   # ***************************************************************************************************
   # Related to calculating the lossrate variable
   subto lossrate_eq:    # Lossrate is the last variable in the series of multiplications (variables)
-    forall <i> in W : lossrate[i] == successrate_prod_vars[i,card(W)];
+    forall <i> in W : lossrate[i] == sr_vars[i,card(W)];
   
-  subto successrate_prod_vars_eq_inC:   # Success rate for every network in C is considered to be 1
-    forall <i> in W : forall <c> in C[i]  : successrate_prod_vals[i,c] == 1;
+  subto sr_vars_eq_inC:   # Success rate for every network in C is considered to be 1
+    forall <i> in W : forall <c> in C[i]  : sr_vals[i,c] == 1;
 
   subto lossrate_prod_vals_eq:          # Loss rate on network i due to network u
-    forall <i> in W : forall <u> in U[i] : successrate_prod_vals[i,u] == (1 - exp(- (D[u] / T[u]) * (T[i] + T[u]))  * o[i,u]);
+    forall <i> in W : forall <u> in U[i] : sr_vals[i,u] == (1 - exp(- (D[u] / T[u]) * (T[i] + T[u]))  * o[i,u]);
 
   subto lossrate_prod_vars_eq_init:     # Initialize the first multiplication in the chain
-    forall <i> in W : successrate_prod_vars[i,1] == successrate_prod_vals[i,1];
+    forall <i> in W : sr_vars[i,1] == sr_vals[i,1];
 
   subto lossrate_prod_vars_eq:          # Loss rate variables which is a chain of multiplications
-    forall <i> in W : forall <j> in W with j!=1 : successrate_prod_vars[i,j] == successrate_prod_vars[i,j-1] * successrate_prod_vals[i,j];
+    forall <i> in W : forall <j> in W with j!=1 : sr_vars[i,j] == sr_vars[i,j-1] * sr_vals[i,j];
   # ***************************************************************************************************
 
   # ***************************************************************************************************
