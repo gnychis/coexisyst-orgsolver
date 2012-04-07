@@ -133,7 +133,7 @@
 
   # ***************************************************************************************************
   # Calculation of the max(residual,fairshare)
-  var rfs_max;
+  var rfs_max[W];
   # ***************************************************************************************************
 
 ############################################################################################################################################
@@ -162,7 +162,7 @@
     forall <i> in W : a[i] <= D[i];
 
   subto airtime_eq_residual:    # The airtime is equal to the residual minus the loss rate...
-    forall <i> in W : a[i] == residual[i]  * (1 - lossrate[i]);
+    forall <i> in W : a[i] == rfs_max[i]  * (1 - lossrate[i]);
 
 
   # ***************************************************************************************************
@@ -176,10 +176,10 @@
 
   # ***************************************************************************************************
   # Related to calculating the lossrate variable
-  subto lossrate_eq:    # Lossrate is the last variable in the series of multiplications (variables)
+  subto lossrate_eq:                    # Lossrate is the last variable in the series of multiplications (variables)
     forall <i> in W : lossrate[i] == 1 - sr_vars[i,card(W)];
   
-  subto sr_vars_eq_inC:   # Success rate for every network in C is considered to be 1
+  subto sr_vars_eq_inC:                 # Success rate for every network in C is considered to be 1
     forall <i> in W : forall <c> in C[i]  : sr_vals[i,c] == 1;
 
   subto lossrate_prod_vals_eq:          # Loss rate on network i due to network u
@@ -194,64 +194,64 @@
 
   # ***************************************************************************************************
   # Related to substitution for the min() in the airtime sensed so that the "actual" sensed is <= 1
-  subto airtime_sensed_eq:      # The airtime each network senses is equal to...
+  subto airtime_sensed_eq:              # The airtime each network senses is equal to...
     forall <i> in W : airtime_sensed[i] == sum <c> in C[i] with (c!=i) : (D[c] * o[i,c]);
 
-  subto airtime_sensed_min_lhv_eq:  # The left hand value of the min for airtime sensed is airtime sensed
+  subto airtime_sensed_min_lhv_eq:      # The left hand value of the min for airtime sensed is airtime sensed
     forall <i> in W : airtime_sensed_min_lhv[i] == airtime_sensed[i];
 
-  subto airtime_sensed_min1:        # The value (airtime_sensed_act)  must be less than the lhv
+  subto airtime_sensed_min1:            # The value (airtime_sensed_act)  must be less than the lhv
     forall <i> in W : airtime_sensed_act[i] <= airtime_sensed_min_lhv[i];
 
-  subto airtime_sensed_min2:        # The value (airtime_sensed_act) must be less than the rhv (fixed to 1)
+  subto airtime_sensed_min2:            # The value (airtime_sensed_act) must be less than the rhv (fixed to 1)
     forall <i> in W : airtime_sensed_act[i] <= airtime_sensed_min_rhv;
 
-  subto airtime_sensed_min_c1:      # A possible constraint given the min LP sub (see example in 'lp_substitutions/')
+  subto airtime_sensed_min_c1:          # A possible constraint given the min LP sub (see example in 'lp_substitutions/')
     forall <i> in W : -airtime_sensed_act[i] <= -airtime_sensed_min_lhv[i] + airtime_sensed_min_M*airtime_sensed_min_y[i];
 
-  subto airtime_sensed_min_c2:      # A possible constraint...
+  subto airtime_sensed_min_c2:          # A possible constraint...
     forall <i> in W : -airtime_sensed_act[i] <= -airtime_sensed_min_rhv + airtime_sensed_min_M*(1-airtime_sensed_min_y[i]);
   
   # ***************************************************************************************************
   # Related to substitution for the min() in the residual
-  subto residual_min:     # The residual is equal to our subsitution for the min, 'z'
+  subto residual_min:                   # The residual is equal to our subsitution for the min, 'z'
     forall <i> in W : residual[i] == residual_min[i];
 
-  subto residual_min_lhv_eq:  # The left hand value in the min function: min(lhv,rhv)
+  subto residual_min_lhv_eq:            # The left hand value in the min function: min(lhv,rhv)
     forall <i> in W : residual_min_lhv[i] == D[i];
 
-  subto residual_min_rhv_eq:  # The right hand value in the min function: min(lhv,rhv)
+  subto residual_min_rhv_eq:            # The right hand value in the min function: min(lhv,rhv)
     forall <i> in W : residual_min_rhv[i] == 1 - airtime_sensed_act[i];
 
-  subto residual_min1:      # The subsitution variable 'z' must be less than LHV
+  subto residual_min1:                  # The subsitution variable 'z' must be less than LHV
     forall <i> in W : residual_min[i] <= residual_min_lhv[i];
 
-  subto residual_min2:      # The subsitution variable 'z' must be less than RHV
+  subto residual_min2:                  # The subsitution variable 'z' must be less than RHV
     forall <i> in W : residual_min[i] <= residual_min_rhv[i];
 
-  subto residual_min_c1:    # A possible constraint given the min LP sub (see example in 'lp_substitutions/') 
+  subto residual_min_c1:                # A possible constraint given the min LP sub (see example in 'lp_substitutions/') 
     forall <i> in W : -residual_min[i] <= -residual_min_lhv[i] + residual_min_M*residual_min_y[i];
 
-  subto residual_min_c2:    # A possible constraint ...
+  subto residual_min_c2:                # A possible constraint ...
     forall <i> in W : -residual_min[i] <= -residual_min_rhv[i] + residual_min_M*(1-residual_min_y[i]);
   # ***************************************************************************************************
 
 
   # ***************************************************************************************************
   # Related to substitution for  O_ifrf ^ f_i ^ f_r
-  subto af_overlap:             # Whether the active frequencies for two networks overlap
+  subto af_overlap:                     # Whether the active frequencies for two networks overlap
     forall <i> in W : forall <r> in W with i != r : o[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr];
   
-  subto q_c1:                   # Must be less than whether or not the frequencies overlap
+  subto q_c1:                           # Must be less than whether or not the frequencies overlap
     forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= O(fi,B[i],fr,B[r]);
 
-  subto q_c2:                   # Must be less than whether or not i is using frequency fi
+  subto q_c2:                           # Must be less than whether or not i is using frequency fi
     forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= af[i,fi];
 
-  subto q_c3:                   # Must be less than whether or not r is using frequency fr
+  subto q_c3:                           # Must be less than whether or not r is using frequency fr
     forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= af[r,fr];
 
-  subto q_c4:                   # Must be greater than the sum of the them
+  subto q_c4:                           # Must be greater than the sum of the them
     forall <i,r,fi,fr> in QD: q[i,r,fi,fr] >= O(fi,B[i],fr,B[r]) + af[i,fi] + af[r,fr] - 2;
   # ***************************************************************************************************
 
