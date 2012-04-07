@@ -134,6 +134,8 @@
   # ***************************************************************************************************
   # Calculation of the max(residual,fairshare)
   var rfs_max[W];
+  var rfs_max_y[W] binary;
+  param rfs_max_M := 100;
   # ***************************************************************************************************
 
 ############################################################################################################################################
@@ -148,7 +150,6 @@
 # CONSTRAINTS
 ################
 #
-
   subto valid_freq:             # The frequency selected by each network must be one in its list, if not it cannot be used and must have a val of 0.
     forall <i,f> in TF with IS_AVAIL_FREQ(i,f)==0 : af[i,f] == 0;
 
@@ -161,7 +162,7 @@
   subto airtime_lte_desired:    # The actual airtime for each network cannot exceed the desired airtime of the network.
     forall <i> in W : a[i] <= D[i];
 
-  subto airtime_eq_residual:    # The airtime is equal to the residual minus the loss rate...
+  subto airtime_eq_residual:    # The airtime is equal to the max of residual and fairshare, minus loss
     forall <i> in W : a[i] == rfs_max[i]  * (1 - lossrate[i]);
 
 
@@ -173,7 +174,7 @@
   subto fs_eq:                  # The expected fair share, this makes fs[i] equal to 1/nsharing, just written without division
     forall <i> in W : fs[i] * (nsharing[i]+1) == 1;
   # ***************************************************************************************************
-
+  
   # ***************************************************************************************************
   # Related to calculating the lossrate variable
   subto lossrate_eq:                    # Lossrate is the last variable in the series of multiplications (variables)
@@ -190,6 +191,21 @@
 
   subto lossrate_prod_vars_eq:          # Loss rate variables which is a chain of multiplications
     forall <i> in W : forall <j> in W with j!=1 : sr_vars[i,j] == sr_vars[i,j-1] * sr_vals[i,j];
+  # ***************************************************************************************************
+  
+  # ***************************************************************************************************
+  # Calculating the max of residual airtime and the fairshare, giving the maximum of them
+  subto rfs_max_gt_residual:            # rfs_max has to be greater than the residual
+    forall <i> in W : rfs_max[i] >= residual[i];
+
+  subto rfs_max_gt_fs:                  # rfs_max has to be greater than the fair share
+    forall <i> in W : rfs_max[i] >= fs[i];
+
+  subto rfs_max_c1:                     # A possible constraint given the max LP sub
+    forall <i> in W : -rfs_max[i] + rfs_max_M*rfs_max_y[i] >= -residual[i];
+
+  subto rfs_max_c2:                     # A possible constraint...
+    forall <i> in W : -rfs_max[i] + rfs_max_M*(1-rfs_max_y[i]) >= -fs[i];
   # ***************************************************************************************************
 
   # ***************************************************************************************************
