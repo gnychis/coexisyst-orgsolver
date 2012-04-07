@@ -96,24 +96,24 @@
   # Variables related to calculating the residual airtime for each network.  The additional variables
   # are related to accounting for the min(Desired,Residual).  This uses an LP substitution for min().
   var residual[W] real;
-  var residual_min_lhv[W];
-  var residual_min_rhv[W];
-  var residual_min[W];
-  var residual_min_y[W] binary;
-  param residual_min_M := 100;
+  #var residual_min_lhv[W];
+  #var residual_min_rhv[W];
+  #var residual_min[W];
+  #var residual_min_y[W] binary;
+  #param residual_min_M := 100;
   # ***************************************************************************************************
 
   # ***************************************************************************************************
   # Variables that are related to calculating the airtime sensed by each network.
   # There are two main variables here:
-  #   * airtime_sensed:       the sum of the airtime sensed by all networks
-  #   * airtime_sensed_act:   min(sum,1) so that it doesn't exceed 1
-  var airtime_sensed[W];
-  var airtime_sensed_act[W];
-  var airtime_sensed_min_lhv[W];
-  param airtime_sensed_min_rhv := 1;
-  var airtime_sensed_min_y[W] binary;
-  param airtime_sensed_min_M := 100;
+  #   * ats:       the sum of the airtime sensed by all networks
+  #   * ats_act:   min(sum,1) so that it doesn't exceed 1
+  var ats[W];
+  var ats_act[W];
+  var ats_min_lhv[W];
+  param ats_min_rhv := 1;
+  var ats_min_y[W] binary;
+  param ats_min_M := 100;
   # ***************************************************************************************************
   
   # ***************************************************************************************************
@@ -161,24 +161,33 @@
 
   subto airtime_lte_desired:    # The actual airtime for each network cannot exceed the desired airtime of the network.
     forall <i> in W : a[i] <= D[i];
+  
+  subto residual_eq:                    # The residual is equal to 1 minus the airtime sensed
+    forall <i> in W : residual[i] == 1 - ats_act[i];
 
-  subto airtime_eq_residual:    # The airtime is equal to the max of residual and fairshare, minus loss
-    forall <i> in W : a[i] == residual[i]  * (1 - lossrate[i]);
+  subto airtime_eq_residual:            # The airtime is equal to the max of residual and fairshare, minus loss
+    forall <i> in W : a[i] == 0.1; #;residual[i]; #  * (1 - lossrate[i]);
 
+  # ***************************************************************************************************
+  # The top most function is that you get the max of residual and airtime, but then you must take the
+  # min of the desired airtime with the result of that function.  That way you never have more than
+  # you ask for.
+
+  # ***************************************************************************************************
   
   # ***************************************************************************************************
   # Calculating the max of residual airtime and the fairshare, giving the maximum of them
-  #subto rfs_max_gt_residual:            # rfs_max has to be greater than the residual
-  #  forall <i> in W : rfs_max[i] >= residual[i];
+  subto rfs_max_gt_residual:            # rfs_max has to be greater than the residual
+    forall <i> in W : rfs_max[i] >= residual[i];
 
-  #subto rfs_max_gt_fs:                  # rfs_max has to be greater than the fair share
-  #  forall <i> in W : rfs_max[i] >= fs[i];
+  subto rfs_max_gt_fs:                  # rfs_max has to be greater than the fair share
+    forall <i> in W : rfs_max[i] >= fs[i];
 
-  #subto rfs_max_c1:                     # A possible constraint given the max LP sub
-  #  forall <i> in W : -rfs_max[i] + rfs_max_M*rfs_max_y[i] >= -residual[i];
+  subto rfs_max_c1:                     # A possible constraint given the max LP sub
+    forall <i> in W : -rfs_max[i] + rfs_max_M*rfs_max_y[i] >= -residual[i];
 
-  #subto rfs_max_c2:                     # A possible constraint...
-  #  forall <i> in W : -rfs_max[i] + rfs_max_M*(1-rfs_max_y[i]) >= -fs[i];
+  subto rfs_max_c2:                     # A possible constraint...
+    forall <i> in W : -rfs_max[i] + rfs_max_M*(1-rfs_max_y[i]) >= -fs[i];
   # ***************************************************************************************************
 
   # ***************************************************************************************************
@@ -210,48 +219,23 @@
 
   # ***************************************************************************************************
   # Related to substitution for the min() in the airtime sensed so that the "actual" sensed is <= 1
-  subto airtime_sensed_eq:              # The airtime each network senses is equal to...
-    forall <i> in W : airtime_sensed[i] == sum <c> in C[i] with (c!=i) : (D[c] * o[i,c]);
+  subto ats_eq:              # The airtime each network senses is equal to...
+    forall <i> in W : ats[i] == sum <c> in C[i] with (c!=i) : (D[c] * o[i,c]);
 
-  subto airtime_sensed_min_lhv_eq:      # The left hand value of the min for airtime sensed is airtime sensed
-    forall <i> in W : airtime_sensed_min_lhv[i] == airtime_sensed[i];
+  subto ats_min_lhv_eq:      # The left hand value of the min for airtime sensed is airtime sensed
+    forall <i> in W : ats_min_lhv[i] == ats[i];
 
-  subto airtime_sensed_min1:            # The value (airtime_sensed_act)  must be less than the lhv
-    forall <i> in W : airtime_sensed_act[i] <= airtime_sensed_min_lhv[i];
+  subto ats_min1:            # The value (ats_act)  must be less than the lhv
+    forall <i> in W : ats_act[i] <= ats_min_lhv[i];
 
-  subto airtime_sensed_min2:            # The value (airtime_sensed_act) must be less than the rhv (fixed to 1)
-    forall <i> in W : airtime_sensed_act[i] <= airtime_sensed_min_rhv;
+  subto ats_min2:            # The value (ats_act) must be less than the rhv (fixed to 1)
+    forall <i> in W : ats_act[i] <= ats_min_rhv;
 
-  subto airtime_sensed_min_c1:          # A possible constraint given the min LP sub (see example in 'lp_substitutions/')
-    forall <i> in W : -airtime_sensed_act[i] <= -airtime_sensed_min_lhv[i] + airtime_sensed_min_M*airtime_sensed_min_y[i];
+  subto ats_min_c1:          # A possible constraint given the min LP sub (see example in 'lp_substitutions/')
+    forall <i> in W : -ats_act[i] <= -ats_min_lhv[i] + ats_min_M*ats_min_y[i];
 
-  subto airtime_sensed_min_c2:          # A possible constraint...
-    forall <i> in W : -airtime_sensed_act[i] <= -airtime_sensed_min_rhv + airtime_sensed_min_M*(1-airtime_sensed_min_y[i]);
-  
-  # ***************************************************************************************************
-  # Related to substitution for the min() in the residual
-  subto residual_min:                   # The residual is equal to our subsitution for the min, 'z'
-    forall <i> in W : residual[i] == residual_min[i];
-
-  subto residual_min_lhv_eq:            # The left hand value in the min function: min(lhv,rhv)
-    forall <i> in W : residual_min_lhv[i] == D[i];
-
-  subto residual_min_rhv_eq:            # The right hand value in the min function: min(lhv,rhv)
-    forall <i> in W : residual_min_rhv[i] == 1 - airtime_sensed_act[i];
-
-  subto residual_min1:                  # The subsitution variable 'z' must be less than LHV
-    forall <i> in W : residual_min[i] <= residual_min_lhv[i];
-
-  subto residual_min2:                  # The subsitution variable 'z' must be less than RHV
-    forall <i> in W : residual_min[i] <= residual_min_rhv[i];
-
-  subto residual_min_c1:                # A possible constraint given the min LP sub (see example in 'lp_substitutions/') 
-    forall <i> in W : -residual_min[i] <= -residual_min_lhv[i] + residual_min_M*residual_min_y[i];
-
-  subto residual_min_c2:                # A possible constraint ...
-    forall <i> in W : -residual_min[i] <= -residual_min_rhv[i] + residual_min_M*(1-residual_min_y[i]);
-  # ***************************************************************************************************
-
+  subto ats_min_c2:          # A possible constraint...
+    forall <i> in W : -ats_act[i] <= -ats_min_rhv + ats_min_M*(1-ats_min_y[i]);
 
   # ***************************************************************************************************
   # Related to substitution for  O_ifrf ^ f_i ^ f_r
