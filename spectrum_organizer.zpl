@@ -90,18 +90,7 @@
   var o[W*W] binary;          # Do the networks, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
   var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
   var a[W] real;              # Airtime is a real number for each network between 0 and 1.
-  #var s[W] real >= 0 <= 1;   # The sustained interference on each network is a real number between 0 and 1 (loss rate due to uncoordination)
-
-  # ***************************************************************************************************
-  # Variables related to calculating the residual airtime for each network.  The additional variables
-  # are related to accounting for the min(Desired,Residual).  This uses an LP substitution for min().
-  var residual[W] real;
-  #var residual_min_lhv[W];
-  #var residual_min_rhv[W];
-  #var residual_min[W];
-  #var residual_min_y[W] binary;
-  #param residual_min_M := 100;
-  # ***************************************************************************************************
+  var residual[W] real;       # The residual airtime sensed for each network.
 
   # ***************************************************************************************************
   # Variables that are related to calculating the airtime sensed by each network.
@@ -161,9 +150,6 @@
 
   subto airtime_lte_desired:    # The actual airtime for each network cannot exceed the desired airtime of the network.
     forall <i> in W : a[i] <= D[i];
-  
-  subto residual_eq:                    # The residual is equal to 1 minus the airtime sensed
-    forall <i> in W : residual[i] == 1 - ats_act[i];
 
   subto airtime_eq_residual:            # The airtime is equal to the max of residual and fairshare, minus loss
     forall <i> in W : a[i] == 0.1; #;residual[i]; #  * (1 - lossrate[i]);
@@ -218,7 +204,8 @@
   # ***************************************************************************************************
 
   # ***************************************************************************************************
-  # Related to substitution for the min() in the airtime sensed so that the "actual" sensed is <= 1
+  # Related to substitution for the min() in the airtime sensed so that the "actual" sensed is <= 1.
+  # The residual airtime ends up being 1 minus this value
   subto ats_eq:              # The airtime each network senses is equal to...
     forall <i> in W : ats[i] == sum <c> in C[i] with (c!=i) : (D[c] * o[i,c]);
 
@@ -236,6 +223,10 @@
 
   subto ats_min_c2:          # A possible constraint...
     forall <i> in W : -ats_act[i] <= -ats_min_rhv + ats_min_M*(1-ats_min_y[i]);
+  
+  subto residual_eq:                    # The residual is equal to 1 minus the airtime sensed
+    forall <i> in W : residual[i] == 1 - ats_act[i];
+  # ***************************************************************************************************
 
   # ***************************************************************************************************
   # Related to substitution for  O_ifrf ^ f_i ^ f_r
