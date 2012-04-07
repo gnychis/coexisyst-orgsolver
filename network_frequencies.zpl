@@ -1,7 +1,7 @@
 # The possible set of center frequencies (KHz) broken down ('F'requency 'B'reakdown) for each network.  There 
 #   should be one entry for every network in networks.dat
 set FB[W] := <1> {2412e3},
-             <2> {2437e3};
+             <2> {2412e3,2437e3};
 
 #set FB[W] := <1> {2412e3,2437e3,2462e3},
 #             <2> {2412e3,2437e3,2462e3},

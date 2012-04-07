@@ -91,6 +91,15 @@
   var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
   var a[W] real;              # Airtime is a real number for each network between 0 and 1.
   var residual[W] real;       # The residual airtime sensed for each network.
+  
+  # ***************************************************************************************************
+  # Variables related to finding the min between rfs (the max between residual and fairshare) and
+  # the desired airtime, because you can't get more than what you ask for!
+  # ... I call this 'eat' : expected airtime
+  var eat[W];
+  var eat_min_y[W] binary;
+  param eat_min_M := 100;
+  # ***************************************************************************************************
 
   # ***************************************************************************************************
   # Variables that are related to calculating the airtime sensed by each network.
@@ -139,26 +148,36 @@
 # CONSTRAINTS
 ################
 #
-  subto valid_freq:             # The frequency selected by each network must be one in its list, if not it cannot be used and must have a val of 0.
+  subto valid_freq:                     # The frequency selected by each network must be one in its list
     forall <i,f> in TF with IS_AVAIL_FREQ(i,f)==0 : af[i,f] == 0;
 
-  subto active_freq:            # Every network must have one center frequency considered active.
+  subto active_freq:                    # Every network must have one center frequency considered active.
     forall <i> in W : sum <f> in F : af[i,f] == 1; 
 
-  subto airtime_is_positive:    # Ensure that the airtime of all networks is positive, it cannot be a negative value.  Worst case is nothing.
+  subto airtime_is_positive:            # Ensure that the airtime of all networks is positive, it cannot be a negative value.
     forall <i> in W : a[i] >= 0;
 
-  subto airtime_lte_desired:    # The actual airtime for each network cannot exceed the desired airtime of the network.
+  subto airtime_lte_desired:            # The actual airtime for each network cannot exceed the desired airtime of the network.
     forall <i> in W : a[i] <= D[i];
 
   subto airtime_eq_residual:            # The airtime is equal to the max of residual and fairshare, minus loss
-    forall <i> in W : a[i] == 0.1; #;residual[i]; #  * (1 - lossrate[i]);
+    forall <i> in W : a[i] == eat[i] * (1 - lossrate[i]);
 
   # ***************************************************************************************************
   # The top most function is that you get the max of residual and airtime, but then you must take the
   # min of the desired airtime with the result of that function.  That way you never have more than
   # you ask for.
+  subto eat_lte_rfs:                    # eat has to be less than max(residual,fairshare)
+    forall <i> in W : eat[i] <= rfs_max[i];
 
+  subto eat_lte_D:                      # eat has to be less than your desired airtime
+    forall <i> in W : eat[i] <= D[i];
+
+  subto eat_c1:                         # A possible constraint given the min substitution
+    forall <i> in W : -eat[i] <= -rfs_max[i] + eat_min_M*eat_min_y[i];
+
+  subto eat_c2:                         # A possible constraint ...
+    forall <i> in W : -eat[i] <= -D[i] + eat_min_M*(1-eat_min_y[i]);
   # ***************************************************************************************************
   
   # ***************************************************************************************************
@@ -178,10 +197,10 @@
 
   # ***************************************************************************************************
   # Related to calculating the fairshare of airtime for each network
-  subto nsharing_eq:            # The number of networks sharing a frequency with each other
+  subto nsharing_eq:                    # The number of networks sharing a frequency with each other
     forall <i> in W : nsharing[i] == sum <c> in C[i] with c!=i : o[i,c];
 
-  subto fs_eq:                  # The expected fair share, this makes fs[i] equal to 1/nsharing, just written without division
+  subto fs_eq:                          # Expected fs[i] equal to 1/nsharing, just written without division
     forall <i> in W : fs[i] * (nsharing[i]+1) == 1;
   # ***************************************************************************************************
   
@@ -206,22 +225,22 @@
   # ***************************************************************************************************
   # Related to substitution for the min() in the airtime sensed so that the "actual" sensed is <= 1.
   # The residual airtime ends up being 1 minus this value
-  subto ats_eq:              # The airtime each network senses is equal to...
+  subto ats_eq:                         # The airtime each network senses is equal to...
     forall <i> in W : ats[i] == sum <c> in C[i] with (c!=i) : (D[c] * o[i,c]);
 
-  subto ats_min_lhv_eq:      # The left hand value of the min for airtime sensed is airtime sensed
+  subto ats_min_lhv_eq:                 # The left hand value of the min for airtime sensed is airtime sensed
     forall <i> in W : ats_min_lhv[i] == ats[i];
 
-  subto ats_min1:            # The value (ats_act)  must be less than the lhv
+  subto ats_min1:                       # The value (ats_act)  must be less than the lhv
     forall <i> in W : ats_act[i] <= ats_min_lhv[i];
 
-  subto ats_min2:            # The value (ats_act) must be less than the rhv (fixed to 1)
+  subto ats_min2:                       # The value (ats_act) must be less than the rhv (fixed to 1)
     forall <i> in W : ats_act[i] <= ats_min_rhv;
 
-  subto ats_min_c1:          # A possible constraint given the min LP sub (see example in 'lp_substitutions/')
+  subto ats_min_c1:                     # A possible constraint given the min LP sub (see example in 'lp_substitutions/')
     forall <i> in W : -ats_act[i] <= -ats_min_lhv[i] + ats_min_M*ats_min_y[i];
 
-  subto ats_min_c2:          # A possible constraint...
+  subto ats_min_c2:                     # A possible constraint...
     forall <i> in W : -ats_act[i] <= -ats_min_rhv + ats_min_M*(1-ats_min_y[i]);
   
   subto residual_eq:                    # The residual is equal to 1 minus the airtime sensed
