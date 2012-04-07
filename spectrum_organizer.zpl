@@ -165,6 +165,21 @@
   subto airtime_eq_residual:    # The airtime is equal to the max of residual and fairshare, minus loss
     forall <i> in W : a[i] == rfs_max[i]  * (1 - lossrate[i]);
 
+  
+  # ***************************************************************************************************
+  # Calculating the max of residual airtime and the fairshare, giving the maximum of them
+  subto rfs_max_gt_residual:            # rfs_max has to be greater than the residual
+    forall <i> in W : rfs_max[i] >= residual[i];
+
+  subto rfs_max_gt_fs:                  # rfs_max has to be greater than the fair share
+    forall <i> in W : rfs_max[i] >= fs[i];
+
+  subto rfs_max_c1:                     # A possible constraint given the max LP sub
+    forall <i> in W : -rfs_max[i] + rfs_max_M*rfs_max_y[i] >= -residual[i];
+
+  subto rfs_max_c2:                     # A possible constraint...
+    forall <i> in W : -rfs_max[i] + rfs_max_M*(1-rfs_max_y[i]) >= -fs[i];
+  # ***************************************************************************************************
 
   # ***************************************************************************************************
   # Related to calculating the fairshare of airtime for each network
@@ -191,21 +206,6 @@
 
   subto lossrate_prod_vars_eq:          # Loss rate variables which is a chain of multiplications
     forall <i> in W : forall <j> in W with j!=1 : sr_vars[i,j] == sr_vars[i,j-1] * sr_vals[i,j];
-  # ***************************************************************************************************
-  
-  # ***************************************************************************************************
-  # Calculating the max of residual airtime and the fairshare, giving the maximum of them
-  subto rfs_max_gt_residual:            # rfs_max has to be greater than the residual
-    forall <i> in W : rfs_max[i] >= residual[i];
-
-  subto rfs_max_gt_fs:                  # rfs_max has to be greater than the fair share
-    forall <i> in W : rfs_max[i] >= fs[i];
-
-  subto rfs_max_c1:                     # A possible constraint given the max LP sub
-    forall <i> in W : -rfs_max[i] + rfs_max_M*rfs_max_y[i] >= -residual[i];
-
-  subto rfs_max_c2:                     # A possible constraint...
-    forall <i> in W : -rfs_max[i] + rfs_max_M*(1-rfs_max_y[i]) >= -fs[i];
   # ***************************************************************************************************
 
   # ***************************************************************************************************
