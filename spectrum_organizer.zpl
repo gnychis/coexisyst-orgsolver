@@ -265,9 +265,6 @@
     forall <i,r,fi,fr> in QD: q[i,r,fi,fr] >= O(fi,B[i],fr,B[r]) + af[i,fi] + af[r,fr] - 2;
   # ***************************************************************************************************
 
-#subto sustained_between_01:   # Sustained interference is a loss rate, which must be between 0 and 1.
-#  forall <i> in W : s[i] >= 0 and s[i] <= 1;
-
 
 ############################################################################################################################################
 # INPUT CHECK
