@@ -99,7 +99,6 @@
   var eat[W];
   var eat_min_y[W] binary;
   param eat_min_M := 100;
-  # ***************************************************************************************************
 
   # ***************************************************************************************************
   # Variables that are related to calculating the airtime sensed by each network.
@@ -112,7 +111,6 @@
   param ats_min_rhv := 1;
   var ats_min_y[W] binary;
   param ats_min_M := 100;
-  # ***************************************************************************************************
   
   # ***************************************************************************************************
   # Variables that are related to calculating the loss rate for each network which is a product.
@@ -120,21 +118,18 @@
   var lossrate[W] real >= 0 <= 1; 
   var sr_vals[W*W] real;    # For each network, calculate loss rate due to each network
   var sr_vars[W*W] real;    # For the calculation of loss rate using a product
-  # ***************************************************************************************************
   
   # ***************************************************************************************************
   # For calculating the rough estimated of an expected "fair share" (fs) of airtime due to networks that
   # the network coordinates with.
   var fs[W];
   var nsharing[W];
-  # ***************************************************************************************************
 
   # ***************************************************************************************************
   # Calculation of the max(residual,fairshare)
   var rfs_max[W];
   var rfs_max_y[W] binary;
   param rfs_max_M := 100;
-  # ***************************************************************************************************
 
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
@@ -178,7 +173,6 @@
 
   subto eat_c2:                         # A possible constraint ...
     forall <i> in W : -eat[i] <= -D[i] + eat_min_M*(1-eat_min_y[i]);
-  # ***************************************************************************************************
   
   # ***************************************************************************************************
   # Calculating the max of residual airtime and the fairshare, giving the maximum of them
@@ -193,7 +187,6 @@
 
   subto rfs_max_c2:                     # A possible constraint...
     forall <i> in W : -rfs_max[i] + rfs_max_M*(1-rfs_max_y[i]) >= -fs[i];
-  # ***************************************************************************************************
 
   # ***************************************************************************************************
   # Related to calculating the fairshare of airtime for each network
@@ -202,7 +195,6 @@
 
   subto fs_eq:                          # Expected fs[i] equal to 1/nsharing, just written without division
     forall <i> in W : fs[i] * (nsharing[i]+1) == 1;
-  # ***************************************************************************************************
   
   # ***************************************************************************************************
   # Related to calculating the lossrate variable
@@ -220,7 +212,6 @@
 
   subto lossrate_prod_vars_eq:          # Loss rate variables which is a chain of multiplications
     forall <i> in W : forall <j> in W with j!=1 : sr_vars[i,j] == sr_vars[i,j-1] * sr_vals[i,j];
-  # ***************************************************************************************************
 
   # ***************************************************************************************************
   # Related to substitution for the min() in the airtime sensed so that the "actual" sensed is <= 1.
@@ -245,7 +236,6 @@
   
   subto residual_eq:                    # The residual is equal to 1 minus the airtime sensed
     forall <i> in W : residual[i] == 1 - ats_act[i];
-  # ***************************************************************************************************
 
   # ***************************************************************************************************
   # Related to substitution for  O_ifrf ^ f_i ^ f_r
@@ -263,7 +253,6 @@
 
   subto q_c4:                           # Must be greater than the sum of the them
     forall <i,r,fi,fr> in QD: q[i,r,fi,fr] >= O(fi,B[i],fr,B[r]) + af[i,fi] + af[r,fr] - 2;
-  # ***************************************************************************************************
 
 
 ############################################################################################################################################
