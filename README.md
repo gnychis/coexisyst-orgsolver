@@ -52,8 +52,8 @@ radio that must have an entry in map.dat is the "baseline radio."  We consider t
 captured.  So, if the monitor captured this data near the Xbox, the Xbox is the baseline radio.
 
     <baselineRadio>
-    <radioID> <protoID> <freq> <rssi> <bandwidth> <airtime>
-    <radioID> <protoID> <freq> <rssi> <bandwidth> <airtime>
+    <radioID> <protoID> <freq> <rssi> <bandwidth> <airtime> <txLen>
+    <radioID> <protoID> <freq> <rssi> <bandwidth> <airtime> <txLen>
     ...
 
   * **baselineRadio**: a radioID or radioName for the baseline radio of the capture
@@ -63,3 +63,4 @@ captured.  So, if the monitor captured this data near the Xbox, the Xbox is the 
   * **rssi**: the received signal strength of the radio at the monitor (dBm)
   * **bandwidth**: the observed bandwidth used by the radio
   * **airtime**: the estimated airtime use of the radio
+  * **txLen**: the average TX time in microseconds of a packet from the radio
