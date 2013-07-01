@@ -31,7 +31,7 @@ def frequencies(type)
 end
 
 # Benchmark for 1 network, all the way up to 50 networks
-(1 .. 5).each do |n|
+(2 .. 10).each do |n|
 
   fn=File.new("networks.dat","w")
   ff=File.new("network_frequencies.zpl","w")
