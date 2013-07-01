@@ -3,6 +3,10 @@ coexisyst-orgsolver
   
 ## Overview
 
+The coexisyst-orgsolver is meant to take a series of data from heterogeneous monitors and be able to output better spectrum
+organizations for reduced heterogeneous interference and better performance.  This is done by modeling the problem as a MIP
+optimization, which uses the SCIP optimization suite.
+
 **SCIP Optimization Suite**:  ZIMPL, SoPlex, & SCIP packaged together
 
 * **ZIMPL**:  Markup language for LP problem  
