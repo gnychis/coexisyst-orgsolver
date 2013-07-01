@@ -1,6 +1,3 @@
-coexisyst-orgsolver
-===================
-  
 ## Overview
 
 The coexisyst-orgsolver is meant to take a series of data from heterogeneous monitors and be able to output better spectrum
