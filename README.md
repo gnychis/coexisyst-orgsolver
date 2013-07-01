@@ -13,3 +13,5 @@ ZIB Optimization Suite:  ZIMPL, SoPlex, & SCIP packaged together
 Download the ZIB Optimization Suite: http://zibopt.zib.de/download.shtml 
 
 Get a dependency:  sudo apt-get install libgmp-dev
+
+
