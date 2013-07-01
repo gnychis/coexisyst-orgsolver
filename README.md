@@ -1,20 +1,22 @@
 coexisyst-orgsolver
 ===================
+  
+# Overview
 
-ZIMPL:  Markup language for LP problem  
-SoPlex: LP solver 
+SCIP Optimization Suite:  ZIMPL, SoPlex, & SCIP packaged together
 
-SCIP: MIP solver 
+* ZIMPL:  Markup language for LP problem  
+* SoPlex: LP solver 
+* SCIP: MIP solver 
 
-ZIB Optimization Suite:  ZIMPL, SoPlex, & SCIP packaged together 
- 
- 
-Download the ZIB Optimization Suite: http://zibopt.zib.de/download.shtml 
+# Install 
 
-Get a dependency:  sudo apt-get install libgmp-dev
+On Ubuntu, make sure to:
 
-    blah
-    blah2
-    blah3
+    sudo apt-get install libgmp-dev
 
-something
+Then, you should be able to run the following script which will build and test the suite.
+
+    sudo ./install.sh
+
+
