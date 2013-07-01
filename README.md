@@ -2,7 +2,6 @@ coexisyst-orgsolver
 ===================
 
 ZIMPL:  Markup language for LP problem 
-
 SoPlex: LP solver 
 
 SCIP: MIP solver 
