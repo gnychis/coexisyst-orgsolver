@@ -64,3 +64,12 @@ captured.  So, if the monitor captured this data near the Xbox, the Xbox is the 
   * **bandwidth**: the observed bandwidth used by the radio
   * **airtime**: the estimated airtime use of the radio
   * **txLen**: the average TX time in microseconds of a packet from the radio
+
+## Protocol Types
+
+There are some basic protocol types that the code supports.  These types are used for using the lookup tables and SINR data to determine if overlap
+of the packets is harmful or not, in addition to whether the nodes sense each other.  These are numberic values, also used by _capture.dat_ and _map.dat_
+as _<protoID\>_.
+
+  * [1] **802.11b/g/n**: 802.11 devices that use the legacy pre-amble for carrier sense reasons
+  * [2] **802.11n**: newer 802.11 devices that use 
