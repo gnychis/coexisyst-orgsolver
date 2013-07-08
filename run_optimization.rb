@@ -69,6 +69,8 @@ begin
       if(baselineRadio.nil?)
         baselineRadio = line.chomp       
         linksByBaseline[baselineRadio]=Array.new if(not linksByBaseline.has_key?(baselineRadio))
+        puts mapByName.inspect
+        linksByID[mapByName[baselineRadio].radioID]=Array.new
         next
       end
 
@@ -108,5 +110,17 @@ begin
     uidToID[uid]=id
     uid+=1
   end
+  
+  #################################################################################################
+  ## Output the frequencies to the appropriate ZIMPL file.  This specifies, for each transmitter,
+  ## the possible set of frequencies that can be *configured*.  That means, if we cannot reconfigure
+  ## the transmitter, it should only have 1 possible frequency: its current.
+  of = File.new("radio_frequencies.zpl","w")
+  of.puts "set FB[W] :="
+  (1 .. uidToID.size-1).each do |uid|
+    puts "#{uid} --> #{uidToID[uid]}"
+  end
+  of.close
+
 
 end
