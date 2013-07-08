@@ -20,6 +20,9 @@ end
 
 begin
   
+  #################################################################################################
+  # A few variables to keep track of the data
+  #######
   mapByID = Hash.new      # For keeping track of the device map, indexed by radioID
   mapByName = Hash.new    # Indexing it by radioName
 
@@ -30,6 +33,7 @@ begin
 
   #################################################################################################
   # Read in the map.txt file in to a data structure
+  #######
   File.readlines("#{opts[:directory]}/map.txt").each do |line|
 
     # Read in the map data
@@ -52,6 +56,7 @@ begin
 
   #################################################################################################
   # Now, go through each of the data files and read the link data associated to the node
+  #######
   Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
     
     baselineRadio=nil   # Store the baseline radio for the capture file
