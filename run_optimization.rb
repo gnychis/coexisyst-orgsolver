@@ -31,6 +31,9 @@ begin
 
   linksByBaseline = Hash.new    # Monitored at a baseline, all of the links
 
+  uidToID = Array.new     # Keep track of unique ID (UID) for each ID
+  idToUID = Hash.new      # Go from ID to a UID
+
   #################################################################################################
   # Read in the map.txt file in to a data structure
   #######
@@ -94,6 +97,16 @@ begin
       linksByName[radioName].push( li ) if(not radioName.nil?)
 
     end
+  end
+
+  #################################################################################################
+  ## Now, we need a unique numeric ID for every single transmitter.  This is strictly for the
+  ## MIP optimization representation.  We need to keep track of these and we can have a lookup.
+  uid=1
+  linksByID.each_key do |id|
+    idToUID[id]=uid
+    uidToID[uid]=id
+    uid+=1
   end
 
 end
