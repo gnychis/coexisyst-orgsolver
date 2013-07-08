@@ -42,13 +42,14 @@ The basic structure is the following:
 The _**map.txt**_ file specifies all of the meta-data known about radios.  For example, the possible set of frequencies for each local radio.
 The data format for the file is multi-line, where each line defines a radio:
 
-    <radioID> <protoID> <radioName> <netID> <bandwidth> {<frequencies>}
+    <radioID> <protoID> <radioName> <netID> <bandwidth> <dAirtime> {<frequencies>}
 
   * **radioID**: An ID for the radio, e.g., a MAC address
   * **protoID**: The wireless protocol the radio uses
   * **radioName**: A human readable name if desired, e.g., ZigBeeRX1
   * **netID**: An ID for a network that it might belong to, e.g., a MAC address or name
   * **bandwidth**: The bandwidth of the radio (MHz)
+  * **dAirtime**: the desired airtime of the radio
   * **frequencies**:  The list of frequencies supported, like: {2462,2435}
 
 The **_capture<\#>.dat_** data file specifies the sensed radios from a capture.  Not all radios from this file need to have an entry in map.dat.  The only
