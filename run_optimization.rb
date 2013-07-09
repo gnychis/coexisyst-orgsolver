@@ -10,8 +10,8 @@ Trollop::die :directory, "must exist" if(opts[:directory].nil? || File.directory
 Trollop::die :directory, "must include map.txt" if(File.exist?("#{opts[:directory]}/map.txt")==false)
 Trollop::die :directory, "must include data in files labaled capture<#>.dat" if(Dir.glob("#{opts[:directory]}/capture*.dat").size<1)
 
-MapItem = Struct.new(:radioID, :protoID, :radioName, :netID, :frequencies)
-Link = Struct.new(:srcID, :dstID, :protoID, :freq, :rssi, :bandwidth, :airtime, :txLen, :backoff)
+MapItem = Struct.new(:radioID, :protocol, :radioName, :netID, :frequencies)
+Link = Struct.new(:srcID, :dstID, :protocol, :freq, :rssi, :bandwidth, :airtime, :txLen, :backoff)
 
 def error(err)
   puts err
@@ -41,7 +41,7 @@ begin
     ls = line.split
     f = line[line.index("{")+1,line.index("}")-line.index("{")-1].split(",").map{|i| i.to_i}
     mi = MapItem.new(ls[0],       # the radioID
-                     ls[1].to_i,  # the protocol ID
+                     ls[1],       # the protocol
                      ls[2],       # the radio name
                      ls[3], f)    # the set of frequencies
     
@@ -83,7 +83,7 @@ begin
       ls = line.split
       li = Link.new(ls[0],        # The source ID for the link
                     ls[1],        # The destination ID for the link
-                    ls[2].to_i,   # the protocol ID used for the link
+                    ls[2],        # the protocol used for the link
                     ls[3].to_i,   # The frequency used
                     ls[4].to_i,   # the RSSI from the transmitter to the baseline node
                     ls[5].to_i,   # The bandwidth used on the link
