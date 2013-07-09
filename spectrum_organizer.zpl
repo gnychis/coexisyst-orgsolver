@@ -33,7 +33,7 @@
 ##############
 #
 
-  set Protocols := { "802.11g", "802.11n", "ZigBee", "AnalogPhone" };
+  set Protocols := { "802.11agn", "802.11n", "ZigBee", "Analog"};
 
   include "network_frequencies.zpl";
 

@@ -42,10 +42,10 @@ The basic structure is the following:
 The _**map.txt**_ file specifies all of the meta-data known about radios.  For example, the possible set of frequencies for each local radio.
 The data format for the file is multi-line, where each line defines a radio:
 
-    <radioID> <protoID> <radioName> <netID> {<frequencies>}
+    <radioID> <protocol> <radioName> <netID> {<frequencies>}
 
   * **radioID**: An ID for the radio, e.g., a MAC address
-  * **protoID**: The wireless protocol the radio uses
+  * **protocol**: The wireless protocol the radio uses (see below)
   * **radioName**: A human readable name if desired, e.g., ZigBeeRX1
   * **netID**: An ID for a network that it might belong to, e.g., a MAC address or name
   * **frequencies**:  The list of frequencies supported, like: {2462,2435}
@@ -56,14 +56,14 @@ captured.  So, if the monitor captured this data near the Xbox, the Xbox is the 
 The link abstraction is important.
 
     <baselineRadio>
-    <srcID> <dstID> <protoID> <freq> <rssi> <bandwidth> <airtime> <txLen> <backoff>
-    <srcID> <dstID> <protoID> <freq> <rssi> <bandwidth> <airtime> <txLen> <backoff>
+    <srcID> <dstID> <protocol> <freq> <rssi> <bandwidth> <airtime> <txLen> <backoff>
+    <srcID> <dstID> <protocol> <freq> <rssi> <bandwidth> <airtime> <txLen> <backoff>
     ...
 
   * **baselineRadio**: a radioID or radioName for the baseline radio of the capture
   * **srcID**: An ID for the radio that is the source/transmitter on the link, e.g., a MAC address
   * **dstID**: An ID for the radio that is the receiver on the link, e.g., a MAC address
-  * **protoID**: The wireless protocol the radio uses (1-6)
+  * **protocol**: The wireless protocol the radio uses (see below) 
   * **freq**: the active frequency of the radio
   * **rssi**: the received signal strength of the radio at the monitor (dBm)
   * **bandwidth**: the observed bandwidth used by the radio
@@ -71,13 +71,13 @@ The link abstraction is important.
   * **txLen**: the average TX time in microseconds of a packet from the radio
   * **backoff**: does baselineRadio backoff to this radio? (0: unknown, 1: yes, 2: no)
 
-The **protoID** field is specified using some basic protocol types that the code supports.  These types are used for using the lookup tables and SINR data to determine if overlap
+The **protocol** field is specified using some basic protocol types that the code supports.  These types are used for using the lookup tables and SINR data to determine if overlap
 of the packets is harmful or not, in addition to whether the nodes sense each other.  These are numberic values, also used by _capture.dat_ and _map.dat_
-as _<protoID\>_.
+as _<protocol\>_.
 
-  * [1] **802.11b/g/n**: 802.11 devices that use the legacy preamble for carrier sense reasons
-  * [2] **802.11n Greenfield**: newer 802.11 devices that use newer preambles that are not supported by legacy devices
-  * [3] **ZigBee**: a standard 802.15.4 ZigBee radio
-  * [4] **Analog**: an analog device such as a cordless phone
-  * [5] **Bluetooth**: a standard Bluetooth radio
-  * [6] **Microwave**: a microwave that emits interference in 2.4GHz
+  * **802.11bgn**: 802.11 devices that use the legacy preamble for carrier sense reasons
+  * **802.11n**: newer 802.11 devices that use newer preambles that are not supported by legacy devices
+  * **ZigBee**: a standard 802.15.4 ZigBee radio
+  * **Analog**: an analog device such as a cordless phone
+  * **Bluetooth**: a standard Bluetooth radio
+  * **Microwave**: a microwave that emits interference in 2.4GHz
