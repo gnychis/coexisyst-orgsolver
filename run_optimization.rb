@@ -23,13 +23,11 @@ begin
   #################################################################################################
   # A few variables to keep track of the data
   #######
-  mapByID = Hash.new      # For keeping track of the device map, indexed by radioID
-  mapByName = Hash.new    # Indexing it by radioName
+  mapItemByID = Hash.new      # For keeping track of the device map, indexed by radioID
+  mapItemByName = Hash.new    # Indexing it by radioName
 
   linksByID = Hash.new    # Keep track the links that belong to specific node
   linksByName = Hash.new  # Keep track of the links by name
-
-  linksByBaseline = Hash.new    # Monitored at a baseline, all of the links
 
   uidToID = Array.new     # Keep track of unique ID (UID) for each ID
   idToUID = Hash.new      # Go from ID to a UID
@@ -49,12 +47,12 @@ begin
     
     # Make sure for some reason that two nodes in the map do not have the same ID or name.
     # These must both be unique for the code to work properly.
-    error("map radioID collision -- #{mi.inspect}") if(mapByID.has_key?(mi[:radioID]))
-    error("map radioName collision -- #{mi.inspect}") if(mapByName.has_key?(mi[:radioName]))
+    error("map radioID collision -- #{mi.inspect}") if(mapItemByID.has_key?(mi[:radioID]))
+    error("map radioName collision -- #{mi.inspect}") if(mapItemByName.has_key?(mi[:radioName]))
     
     # Map the data to the ID and name
-    mapByID[mi[:radioID]]=mi
-    mapByName[mi[:radioName]]=mi
+    mapItemByID[mi[:radioID]]=mi
+    mapItemByName[mi[:radioName]]=mi
   end
 
   #################################################################################################
@@ -62,15 +60,22 @@ begin
   #######
   Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
     
-    baselineRadio=nil   # Store the baseline radio for the capture file
+    baselineRadio=nil           # Store the baseline radio for the capture file
+    baselineRadioInfo=nil       # This should resolve to the map info
 
     File.readlines(capfile).each do |line|
 
+      # Read in the baselineRadio if this is the very first line
       if(baselineRadio.nil?)
-        baselineRadio = line.chomp       
-        linksByBaseline[baselineRadio]=Array.new if(not linksByBaseline.has_key?(baselineRadio))
-        puts mapByName.inspect
-        linksByID[mapByName[baselineRadio].radioID]=Array.new
+        baselineRadio = line.chomp.strip       
+
+        # Lookup the info
+        baselineRadioInfo = mapItemByName[baselineRadio]
+        baselineRadioInfo = mapItemByID[baselineRadio] if(baselineRadioInfo.nil?)
+
+        # Now, just create some empty Arrays for this radio also
+        linksByID[baselineRadioInfo.radioID]=Array.new if(linksByID[baselineRadioInfo.radioID].nil?)
+        linksByName[baselineRadioInfo.radioName]=Array.new if(linksByName[baselineRadioInfo.radioName].nil?)
         next
       end
 
@@ -86,15 +91,12 @@ begin
                     ls[7].to_i,   # The average transmission length in microseconds
                     ls[8].to_i)   # Whether the baseline node backs off to this link
 
-      # Keep track of all the links that were "seen" by the baseline node, this is its view
-      linksByBaseline[baselineRadio].push( li )
-
       # Keep track of all links by their srcID, as we consider links belonging to the transmitter
       linksByID[li[:srcID]]=Array.new if(not linksByID.has_key?(li[:srcID]))
       linksByID[li[:srcID]].push( li )
 
       # Keep track of all links by their name also, if one exists.  This is for convenience.
-      radioName = mapByID[li[:srcID]].radioName if(not mapByID[li[:srcID]].nil?)
+      radioName = mapItemByID[li[:srcID]].radioName if(not mapItemByID[li[:srcID]].nil?)
       linksByName[radioName]=Array.new if(not radioName.nil? and not linksByName.has_key?(radioName))
       linksByName[radioName].push( li ) if(not radioName.nil?)
 
@@ -118,7 +120,7 @@ begin
   of = File.new("radio_frequencies.zpl","w")
   of.puts "set FB[W] :="
   (1 .. uidToID.size-1).each do |uid|
-    puts "#{uid} --> #{uidToID[uid]}"
+    puts "#{uid.inspect} --> #{uidToID[uid].inspect}"
   end
   of.close
 
