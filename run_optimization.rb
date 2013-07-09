@@ -29,8 +29,11 @@ begin
   linksByID = Hash.new    # Keep track the links that belong to specific node
   linksByName = Hash.new  # Keep track of the links by name
 
-  uidToID = Array.new     # Keep track of unique ID (UID) for each ID
-  idToUID = Hash.new      # Go from ID to a UID
+  uridToRID = Array.new     # Keep track of unique ID (UID) for each ID
+  ridToURID = Hash.new      # Go from ID to a UID
+
+  rssiMapByID = Hash.new      # A map that looks like signal strength from A->B=5, rssiMap["b"]["a"]=5
+  rssiMapByName = Hash.new    # Same thing but by name instead
 
   #################################################################################################
   # Read in the map.txt file in to a data structure
@@ -76,6 +79,8 @@ begin
         # Now, just create some empty Arrays for this radio also
         linksByID[baselineRadioInfo.radioID]=Array.new if(linksByID[baselineRadioInfo.radioID].nil?)
         linksByName[baselineRadioInfo.radioName]=Array.new if(linksByName[baselineRadioInfo.radioName].nil?)
+        rssiMapByID[baselineRadioInfo.radioID]=Hash.new
+        rssiMapByName[baselineRadioInfo.radioName]=Hash.new
         next
       end
 
@@ -100,17 +105,21 @@ begin
       linksByName[radioName]=Array.new if(not radioName.nil? and not linksByName.has_key?(radioName))
       linksByName[radioName].push( li ) if(not radioName.nil?)
 
+      # Now store the RSSI in to our related map
+      rssiMapByID[baselineRadioInfo.radioID][li.srcID]=li.rssi
+      rssiMapByName[baselineRadioInfo.radioName][li.srcID]=li.rssi
+
     end
   end
 
   #################################################################################################
   ## Now, we need a unique numeric ID for every single transmitter.  This is strictly for the
   ## MIP optimization representation.  We need to keep track of these and we can have a lookup.
-  uid=1
-  linksByID.each_key do |id|
-    idToUID[id]=uid
-    uidToID[uid]=id
-    uid+=1
+  urid=1
+  linksByID.each_key do |rid|
+    ridToURID[rid]=urid
+    uridToRID[urid]=rid
+    urid+=1
   end
   
   #################################################################################################
@@ -119,15 +128,15 @@ begin
   ## the transmitter, it should only have 1 possible frequency: its current.
   of = File.new("radio_frequencies.zpl","w")
   of.puts "set FB[W] :="
-  (1 .. uidToID.size-1).each do |uid|
-    id=uidToID[uid]           # get the ID from the UID
-    mi=mapItemByID[id]        # Get the map item if it exists based on the ID
-    of.print "\t<#{uid}> {"   # Print out the header
+  (1 .. uridToRID.size-1).each do |urid|
+    rid=uridToRID[urid]           # get the ID from the UID
+    mi=mapItemByID[rid]        # Get the map item if it exists based on the ID
+    of.print "\t<#{urid}> {"   # Print out the header
 
     # If there is no map item associated, then the possible set of frequencies is just the
     # frequency it is operating on.  We take this from any of the active links it is involved in.
     if(mi.nil?)
-      of.print "#{linksByID[id][0].freq}e3}"
+      of.print "#{linksByID[rid][0].freq}e3}"
     else
       mi[:frequencies].each_index do |i|
         of.print "#{mi[:frequencies][i]}e3"
@@ -136,12 +145,15 @@ begin
       of.print "}"
     end
 
-    of.puts "," if(uid<uidToID.size-1)
-    of.puts ";" if(uid==uidToID.size-1)
-
+    of.puts "," if(urid<uridToRID.size-1)
+    of.puts ";" if(urid==uridToRID.size-1)
   end
   of.close
 
-
+  #################################################################################################
+  ## Now we go through and prepare the links and transfer them over to the optimization.  We first
+  ## need to condense the links so that there is only a single "link" for every transmitter and
+  ## receiver. 
+  puts rssiMapByID.inspect
 
 end
