@@ -32,8 +32,8 @@ begin
   uridToRID = Array.new     # Keep track of unique ID (UID) for each ID
   ridToURID = Hash.new      # Go from ID to a UID
 
-  rssiMapByID = Hash.new      # A map that looks like signal strength from A->B=5, rssiMap["b"]["a"]=5
-  rssiMapByName = Hash.new    # Same thing but by name instead
+  spatialRangeByID = Hash.new     # Keep track of all the radios that are within range of this node
+  spatialRangeByName = Hash.new   # Keep track of the same information, but associated with a name
 
   #################################################################################################
   # Read in the map.txt file in to a data structure
@@ -77,10 +77,11 @@ begin
         baselineRadioInfo = mapItemByID[baselineRadio] if(baselineRadioInfo.nil?)
 
         # Now, just create some empty Arrays for this radio also
-        linksByID[baselineRadioInfo.radioID]=Array.new if(linksByID[baselineRadioInfo.radioID].nil?)
-        linksByName[baselineRadioInfo.radioName]=Array.new if(linksByName[baselineRadioInfo.radioName].nil?)
-        rssiMapByID[baselineRadioInfo.radioID]=Hash.new
-        rssiMapByName[baselineRadioInfo.radioName]=Hash.new
+        linksByID[baselineRadioInfo.radioID]=Array.new      if(linksByID[baselineRadioInfo.radioID].nil?)
+        linksByName[baselineRadioInfo.radioName]=Array.new  if(linksByName[baselineRadioInfo.radioName].nil?)
+
+        spatialRangeByID[baselineRadioInfo.radioID]=Array.new       if(spatialRangeByID[baselineRadioInfo.radioID].nil?)    
+        spatialRangeByName[baselineRadioInfo.radioName]=Array.new   if(spatialRangeByName[baselineRadioInfo.radioName].nil?)
         next
       end
 
@@ -105,9 +106,9 @@ begin
       linksByName[radioName]=Array.new if(not radioName.nil? and not linksByName.has_key?(radioName))
       linksByName[radioName].push( li ) if(not radioName.nil?)
 
-      # Now store the RSSI in to our related map
-      rssiMapByID[baselineRadioInfo.radioID][li.srcID]=li.rssi
-      rssiMapByName[baselineRadioInfo.radioName][li.srcID]=li.rssi
+      # Now keep track of all the radios within range of this baseline radio
+      spatialRangeByID[baselineRadioInfo.radioID].push( li[:srcID] )
+      spatialRangeByName[baselineRadioInfo.radioName].push( li[:srcID] )
 
     end
   end
@@ -127,9 +128,9 @@ begin
   ## the possible set of frequencies that can be *configured*.  That means, if we cannot reconfigure
   ## the transmitter, it should only have 1 possible frequency: its current.
   of = File.new("radio_frequencies.zpl","w")
-  of.puts "set FB[W] :="
+  of.puts "set FB[R] :="
   (1 .. uridToRID.size-1).each do |urid|
-    rid=uridToRID[urid]           # get the ID from the UID
+    rid=uridToRID[urid]        # get the ID from the UID
     mi=mapItemByID[rid]        # Get the map item if it exists based on the ID
     of.print "\t<#{urid}> {"   # Print out the header
 
@@ -150,10 +151,35 @@ begin
   end
   of.close
 
+  puts spatialRangeByID.inspect
+  
+  #################################################################################################
+  ## Go through and output all of the radios within spatial range and not.  This is 'S' in the
+  ## optimization representation.
+  of = File.new("spatial_range.zpl", "w")
+  of.puts "set S[R] :="
+  toOut=spatialRangeByID.size
+  spatialRangeByID.each do |idBR,xmitters|  # idBR: id of the baseline radio
+    uridBR = ridToURID[idBR]
+    of.print "\t<#{uridBR}> {"   # Print out the header
+    xmitters.uniq!
+    xmitters.each_index do |xi|
+      idTR=xmitters[xi]
+      uridTR = ridToURID[idTR]
+      of.print "#{uridTR}"
+      of.print "," if(xi<xmitters.size-1)
+    end
+    of.puts "}," if(toOut>1)
+    of.puts "};" if(toOut==1)
+    toOut-=1
+  end
+  of.close
+
   #################################################################################################
   ## Now we go through and prepare the links and transfer them over to the optimization.  We first
   ## need to condense the links so that there is only a single "link" for every transmitter and
-  ## receiver. 
-  puts rssiMapByID.inspect
+  ## receiver.
+  
+  
 
 end
