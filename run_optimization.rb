@@ -120,7 +120,25 @@ begin
   of = File.new("radio_frequencies.zpl","w")
   of.puts "set FB[W] :="
   (1 .. uidToID.size-1).each do |uid|
-    puts "#{uid.inspect} --> #{uidToID[uid].inspect}"
+    id=uidToID[uid]           # get the ID from the UID
+    mi=mapItemByID[id]        # Get the map item if it exists based on the ID
+    of.print "\t<#{uid}> {"   # Print out the header
+
+    # If there is no map item associated, then the possible set of frequencies is just the
+    # frequency it is operating on.  We take this from any of the active links it is involved in.
+    if(mi.nil?)
+      of.print "#{linksByID[id][0].freq}e3}"
+    else
+      mi[:frequencies].each_index do |i|
+        of.print "#{mi[:frequencies][i]}e3"
+        of.print "," if(i<mi[:frequencies].size-1)
+      end
+      of.print "}"
+    end
+
+    of.puts "," if(uid<uidToID.size-1)
+    of.puts ";" if(uid==uidToID.size-1)
+
   end
   of.close
 
