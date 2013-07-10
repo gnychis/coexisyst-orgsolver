@@ -31,6 +31,12 @@ def getLinksByTransmitter(links,rid)
   return x
 end
 
+def getLinksFromViews(links, linkViews)
+  x = Array.new
+  linkViews.each {|lv| x.push(links[lv[:lID]])}
+  return x
+end
+
 def getLinksByRID(links,rid)
   x = Array.new
   links.each {|l| x.push(l) if(not l.nil? and (l.srcID==rid or l.dstID==rid))}
@@ -59,6 +65,8 @@ begin
 
   uridToRID = Array.new     # Keep track of unique ID (UID) for each ID
   ridToURID = Hash.new      # Go from ID to a UID
+
+  linksInRange = Hash.new   # All of the links in range of a radio, indexed by RID
   
   #################################################################################################
   # Read in the map.txt file in to a data structure
@@ -102,6 +110,8 @@ begin
         # Lookup the info
         baselineRadioInfo = mapItemByName[baselineRadio]
         baselineRadioInfo = mapItemByID[baselineRadio] if(baselineRadioInfo.nil?)
+
+        linksInRange[baselineRadioInfo.radioID] = Array.new
         next
       end
       
@@ -136,6 +146,10 @@ begin
 
       # Store the link if we haven't seen it before
       links.push(li) if(pushLink)
+
+      # But always push that the link is within range of the baseline radio, even if we've seen it
+      # before within range of another radio.
+      linksInRange[baselineRadioInfo.radioID].push(lv)
 
     end
   end
@@ -182,14 +196,15 @@ begin
 
   #################################################################################################
   ## Go through and output all of the radios within spatial range and not.  This is 'S' in the
-  ## optimization representation.
-  of = File.new("spatial_range.zpl", "w")
-  of.puts "set S[R] :="
-  toOut=spatialRangeByID.size
-  spatialRangeByID.each do |idBR,xmitters|  # idBR: id of the baseline radio
+  ## optimization representation.  For each radio that we have a "view" at, we go through and
+  ## mark the transmitters in range
+  of = File.new("spatial_range_radios.zpl", "w")
+  of.puts "set SRR[R] :="
+  toOut=linksInRange.size
+  linksInRange.each do |idBR,lvs|  # idBR: id of the baseline radio
     uridBR = ridToURID[idBR]
     of.print "\t<#{uridBR}> {"   # Print out the header
-    xmitters.uniq!
+    xmitters=getTransmitterIDs(getLinksFromViews(links,lvs))
     xmitters.each_index do |xi|
       idTR=xmitters[xi]
       uridTR = ridToURID[idTR]
@@ -206,7 +221,6 @@ begin
   ## Now we go through and prepare the links and transfer them over to the optimization.  We first
   ## need to condense the links so that there is only a single "link" for every transmitter and
   ## receiver.
-  #puts linkViews.inspect
   
   #################################################################################################
   ## Go through all of the radios and place them in to coordination or not
