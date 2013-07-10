@@ -32,6 +32,7 @@ def getLinksByTransmitter(links,rid)
 end
 
 def getLinksFromViews(links, linkViews)
+  return [] if(links.nil? or linkViews.nil? or linkViews.size==0 or links.size==0)
   x = Array.new
   linkViews.each {|lv| x.push(links[lv[:lID]])}
   return x
@@ -164,8 +165,11 @@ begin
     urid+=1
   end
 
-  puts ridToURID.inspect
-  
+  #################################################################################################
+  ## Output the set of radios from the entire optimization.  This includes all transmitters and
+  ## receivers.
+
+
   #################################################################################################
   ## Output the frequencies to the appropriate ZIMPL file.  This specifies, for each radio,
   ## the possible set of frequencies that can be *configured*.  That means, if we cannot reconfigure
@@ -200,10 +204,10 @@ begin
   ## mark the transmitters in range
   of = File.new("spatial_range_radios.zpl", "w")
   of.puts "set SRR[R] :="
-  toOut=linksInRange.size
-  linksInRange.each do |idBR,lvs|  # idBR: id of the baseline radio
-    uridBR = ridToURID[idBR]
-    of.print "\t<#{uridBR}> {"   # Print out the header
+  (1 .. uridToRID.size-1).each do |urid|
+    idBR=uridToRID[urid]
+    lvs = linksInRange[idBR]
+    of.print "\t<#{urid}> {"   # Print out the header
     xmitters=getTransmitterIDs(getLinksFromViews(links,lvs))
     xmitters.each_index do |xi|
       idTR=xmitters[xi]
@@ -211,9 +215,8 @@ begin
       of.print "#{uridTR}"
       of.print "," if(xi<xmitters.size-1)
     end
-    of.puts "}," if(toOut>1)
-    of.puts "};" if(toOut==1)
-    toOut-=1
+    of.puts "}," if(urid<uridToRID.size-1)
+    of.puts "};" if(urid==uridToRID.size-1)
   end
   of.close
 
@@ -221,6 +224,7 @@ begin
   ## Now we go through and prepare the links and transfer them over to the optimization.  We first
   ## need to condense the links so that there is only a single "link" for every transmitter and
   ## receiver.
+
   
   #################################################################################################
   ## Go through all of the radios and place them in to coordination or not
