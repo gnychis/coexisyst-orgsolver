@@ -26,6 +26,9 @@ begin
   #######
   mapItemByID = Hash.new      # For keeping track of the device map, indexed by radioID
   mapItemByName = Hash.new    # Indexing it by radioName
+  
+  linkIDs = Hash.new        # Get a link ID by source and destination
+  links = Array.new         # Store the links, exactly at the index of the linkID
 
   linkViewsByID = Hash.new    # Keep track the links that belong to specific node
   linkViewsByName = Hash.new  # Keep track of the links by name
@@ -35,9 +38,6 @@ begin
 
   spatialRangeByID = Hash.new     # Keep track of all the radios that are within range of this node
   spatialRangeByName = Hash.new   # Keep track of the same information, but associated with a name
-
-  linkIDs = Hash.new        # Get a link ID by source and destination
-  links = Array.new         # Store the links, exactly at the index of the linkID
 
   #################################################################################################
   # Read in the map.txt file in to a data structure
