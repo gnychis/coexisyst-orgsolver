@@ -11,7 +11,7 @@ Trollop::die :directory, "must include map.txt" if(File.exist?("#{opts[:director
 Trollop::die :directory, "must include data in files labaled capture<#>.dat" if(Dir.glob("#{opts[:directory]}/capture*.dat").size<1)
 
 MapItem = Struct.new(:radioID, :protocol, :radioName, :netID, :frequencies)
-Link = Struct.new(:srcID, :dstID, :protocol, :freq, :rssi, :bandwidth, :airtime, :txLen, :backoff)
+Link = Struct.new(:lID, :srcID, :dstID, :protocol, :freq, :rssi, :bandwidth, :airtime, :txLen, :backoff)
 
 def error(err)
   puts err
