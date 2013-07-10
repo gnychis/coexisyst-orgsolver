@@ -1,4 +1,4 @@
-param a := 3;
+param a := 9;
 param b := 4;
 param M := 100;
 var z;

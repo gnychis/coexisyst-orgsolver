@@ -35,6 +35,8 @@ begin
   spatialRangeByID = Hash.new     # Keep track of all the radios that are within range of this node
   spatialRangeByName = Hash.new   # Keep track of the same information, but associated with a name
 
+  linkIDs = Hash.new
+
   #################################################################################################
   # Read in the map.txt file in to a data structure
   #######
@@ -61,6 +63,7 @@ begin
   #################################################################################################
   # Now, go through each of the data files and read the link data associated to the node
   #######
+  lastLinkID=0
   Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
     
     baselineRadio=nil           # Store the baseline radio for the capture file
@@ -84,10 +87,23 @@ begin
         spatialRangeByName[baselineRadioInfo.radioName]=Array.new   if(spatialRangeByName[baselineRadioInfo.radioName].nil?)
         next
       end
+      
+      ls = line.split  # Go ahead and split the line
+
+      # Create a unique linkID for this link if it does not yet exist
+      lSrc = ls[0]
+      lDst = ls[1]
+      if(not linkIDs.has_key?([lSrc,lDst]))
+        lID = lastLinkID+1 
+        linkIDs[[lSrc,lDst]]=lID
+        lastLinkID+=1
+      else
+        lID = linkIDs[[lSrc,lDst]]
+      end
 
       # Read in the link data
-      ls = line.split
-      li = Link.new(ls[0],        # The source ID for the link
+      li = Link.new(lID,          # Put the link ID in which is unique
+                    ls[0],        # The source ID for the link
                     ls[1],        # The destination ID for the link
                     ls[2],        # the protocol used for the link
                     ls[3].to_i,   # The frequency used
@@ -179,7 +195,10 @@ begin
   ## Now we go through and prepare the links and transfer them over to the optimization.  We first
   ## need to condense the links so that there is only a single "link" for every transmitter and
   ## receiver.
+  puts linksByID.inspect
   
-  
+  #################################################################################################
+  ## Go through all of the radios and place them in to coordination or not
+
 
 end
