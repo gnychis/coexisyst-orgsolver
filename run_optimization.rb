@@ -19,6 +19,33 @@ def error(err)
   exit
 end
 
+def getTransmitterIDs(links)
+  x = Array.new
+  links.each {|l| x.push( l.srcID ) if(not l.nil?) }
+  return x.uniq
+end
+
+def getLinksByTransmitter(links,rid)
+  x = Array.new
+  links.each {|l| x.push(l) if(not l.nil? and l.srcID==rid)}
+  return x
+end
+
+def getLinksByRID(links,rid)
+  x = Array.new
+  links.each {|l| x.push(l) if(not l.nil? and (l.srcID==rid or l.dstID==rid))}
+  return x
+end
+
+def getRadiosFromLinks(links)
+  x = Array.new
+  links.each do |l|
+    x.push(l.srcID) if(not l.nil?)
+    x.push(l.dstID) if(not l.nil?)
+  end
+  return x.uniq
+end
+
 begin
   
   #################################################################################################
@@ -30,15 +57,9 @@ begin
   linkIDs = Hash.new        # Get a link ID by source and destination
   links = Array.new         # Store the links, exactly at the index of the linkID
 
-  linkViewsByID = Hash.new    # Keep track the links that belong to specific node
-  linkViewsByName = Hash.new  # Keep track of the links by name
-
   uridToRID = Array.new     # Keep track of unique ID (UID) for each ID
   ridToURID = Hash.new      # Go from ID to a UID
-
-  spatialRangeByID = Hash.new     # Keep track of all the radios that are within range of this node
-  spatialRangeByName = Hash.new   # Keep track of the same information, but associated with a name
-
+  
   #################################################################################################
   # Read in the map.txt file in to a data structure
   #######
@@ -81,13 +102,6 @@ begin
         # Lookup the info
         baselineRadioInfo = mapItemByName[baselineRadio]
         baselineRadioInfo = mapItemByID[baselineRadio] if(baselineRadioInfo.nil?)
-
-        # Now, just create some empty Arrays for this radio also
-        linkViewsByID[baselineRadioInfo.radioID]=Array.new      if(linkViewsByID[baselineRadioInfo.radioID].nil?)
-        linkViewsByName[baselineRadioInfo.radioName]=Array.new  if(linkViewsByName[baselineRadioInfo.radioName].nil?)
-
-        spatialRangeByID[baselineRadioInfo.radioID]=Array.new       if(spatialRangeByID[baselineRadioInfo.radioID].nil?)    
-        spatialRangeByName[baselineRadioInfo.radioName]=Array.new   if(spatialRangeByName[baselineRadioInfo.radioName].nil?)
         next
       end
       
@@ -123,19 +137,6 @@ begin
       # Store the link if we haven't seen it before
       links.push(li) if(pushLink)
 
-      # Keep track of all link views by their srcID, as we consider links belonging to the transmitter
-      linkViewsByID[li[:srcID]]=Array.new if(not linkViewsByID.has_key?(li[:srcID]))
-      linkViewsByID[li[:srcID]].push( lv )
-
-      # Keep track of all link views by their name also, if one exists.  This is for convenience.
-      radioName = mapItemByID[li[:srcID]].radioName if(not mapItemByID[li[:srcID]].nil?)
-      linkViewsByName[radioName]=Array.new if(not radioName.nil? and not linkViewsByName.has_key?(radioName))
-      linkViewsByName[radioName].push( lv ) if(not radioName.nil?)
-
-      # Now keep track of all the radios within range of this baseline radio
-      spatialRangeByID[baselineRadioInfo.radioID].push( li[:srcID] )
-      spatialRangeByName[baselineRadioInfo.radioName].push( li[:srcID] )
-
     end
   end
 
@@ -143,14 +144,16 @@ begin
   ## Now, we need a unique numeric ID for every single transmitter.  This is strictly for the
   ## MIP optimization representation.  We need to keep track of these and we can have a lookup.
   urid=1
-  linkViewsByID.each_key do |rid|
+  getRadiosFromLinks(links).each do |rid|
     ridToURID[rid]=urid
     uridToRID[urid]=rid
     urid+=1
   end
+
+  puts ridToURID.inspect
   
   #################################################################################################
-  ## Output the frequencies to the appropriate ZIMPL file.  This specifies, for each transmitter,
+  ## Output the frequencies to the appropriate ZIMPL file.  This specifies, for each radio,
   ## the possible set of frequencies that can be *configured*.  That means, if we cannot reconfigure
   ## the transmitter, it should only have 1 possible frequency: its current.
   of = File.new("radio_frequencies.zpl","w")
@@ -163,7 +166,7 @@ begin
     # If there is no map item associated, then the possible set of frequencies is just the
     # frequency it is operating on.  We take this from any of the active links it is involved in.
     if(mi.nil?)
-      of.print "#{linkViewsByID[rid][0].freq}e3}"
+      of.print "#{getLinksByRID(links,rid)[0].freq}e3}"
     else
       mi[:frequencies].each_index do |i|
         of.print "#{mi[:frequencies][i]}e3"
@@ -177,8 +180,6 @@ begin
   end
   of.close
 
-  puts spatialRangeByID.inspect
-  
   #################################################################################################
   ## Go through and output all of the radios within spatial range and not.  This is 'S' in the
   ## optimization representation.
@@ -205,7 +206,7 @@ begin
   ## Now we go through and prepare the links and transfer them over to the optimization.  We first
   ## need to condense the links so that there is only a single "link" for every transmitter and
   ## receiver.
-  #puts linkViewsByID.inspect
+  #puts linkViews.inspect
   
   #################################################################################################
   ## Go through all of the radios and place them in to coordination or not
