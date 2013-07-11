@@ -268,6 +268,8 @@ begin
     dataOF.puts "}," if(urid<uridToRID.size-1)
     dataOF.puts "};" if(urid==uridToRID.size-1)
   end
+
+  puts ridToURID.inspect
   
   #################################################################################################
   ## Go through all of the radios and place them in to coordination or not
