@@ -19,11 +19,13 @@ def error(err)
   exit
 end
 
-def coordinates(links, ridBR, ridOR)
-  linksBR=getLinksByTransmitter(links, ridBR)
-  linksOR=getLinksByTransmitter(links, ridOR)
-  return false if(linksBR.size==0 or linksOR.size==0)
-  puts "#{linksBR.inspect} #{linksOR.inspect}"
+def coordinates(links, linkProtocols, ridBR, ridOR)
+  linksBR=getLinksByRID(links, ridBR)
+  linksOR=getLinksByRID(links, ridOR)
+  lid1 = linksBR[0].lID
+  lid2 = linksOR[0].lID
+  return true if(linkProtocols[lid1]==linkProtocols[lid2])
+  return false
 end
 
 def getTransmitterIDs(links)
@@ -241,60 +243,81 @@ begin
   dataOF.puts "## Information related to spatial data, what is in range of what"
   dataOF.puts ""
   dataOF.puts "  # For each radio, the list of radios that are within spatial range of it"
-  dataOF.puts "  set SRR[R] :="
+  dataOF.puts "  set SR[R] :="
+  sr=Array.new; sr.push(nil)
   (1 .. uridToRID.size-1).each do |urid|
     idBR=uridToRID[urid]
     lvs = linksInRange[idBR]
     dataOF.print "\t<#{urid}> {"   # Print out the header
     xmitters=getTransmitterIDs(getLinksFromViews(links,lvs))
+    sr[urid]=Array.new
     xmitters.each_index do |xi|
       idTR=xmitters[xi]
       uridTR = ridToURID[idTR]
       dataOF.print "#{uridTR}"
       dataOF.print "," if(xi<xmitters.size-1)
+      sr[urid].push(uridTR)
     end
     dataOF.puts "}," if(urid<uridToRID.size-1)
     dataOF.puts "};" if(urid==uridToRID.size-1)
   end
   
-
   #################################################################################################
   ## Now, go through and output for every radio, the reception strength from each link
   dataOF.puts ""
-  dataOF.puts "  # For each radio, the list of radios that are within spatial range of it"
-  dataOF.puts "  set SRL[R] :="
+  dataOF.puts "  # For each radio, the list of links that are within spatial range of it"
+  dataOF.puts "  set SL[R] :="
+  sl=Array.new; sl.push(nil)
   (1 .. uridToRID.size-1).each do |urid|
     idBR=uridToRID[urid]
     lvs = linksInRange[idBR]
     dataOF.print "\t<#{urid}> {"   # Print out the header
     lks=getLinksFromViews(links,lvs)
+    sl[urid] = Array.new
     lks.each_index do |lk|
       dataOF.print "#{lks[lk].lID}"
       dataOF.print "," if(lk<lks.size-1)
+      sl[urid].push(lks[lk].lID)
     end
     dataOF.puts "}," if(urid<uridToRID.size-1)
     dataOF.puts "};" if(urid==uridToRID.size-1)
   end
 
-  puts ridToURID.inspect
-  
   #################################################################################################
   ## Go through all of the radios and place them in to coordination or not.
   dataOF.puts "\n\n############################################################"
   dataOF.puts "## Information about what coordinates with what"
   dataOF.puts ""
-  dataOF.puts "  set CR[R] :="
+  dataOF.puts "  set CRR[R] :="
   (1 .. uridToRID.size-1).each do |uridBR|
     ridBR=uridToRID[uridBR]
     dataOF.print "\t<#{uridBR}> {"   # Print out the header
-    (1 .. uridToRID.size-1).each do |uridOR|
+    coord=Array.new
+    sr[uridBR].each do |uridOR|
       ridOR=uridToRID[uridOR]
-      c=coordinates(links, ridBR, ridOR)
+      c=coordinates(links, linkProtocols, ridBR, ridOR)
+      coord.push(uridOR) if(c)
     end
+    dataOF.print "#{coord.inspect[1..-2]}"
     dataOF.puts "}," if(uridBR<uridToRID.size-1)
     dataOF.puts "};" if(uridBR==uridToRID.size-1)
   end
 
+  dataOF.puts ""
+  dataOF.puts "  set URR[R] :="
+  (1 .. uridToRID.size-1).each do |uridBR|
+    ridBR=uridToRID[uridBR]
+    dataOF.print "\t<#{uridBR}> {"   # Print out the header
+    ucoord=Array.new
+    sr[uridBR].each do |uridOR|
+      ridOR=uridToRID[uridOR]
+      c=coordinates(links, linkProtocols, ridBR, ridOR)
+      ucoord.push(uridOR) if(not c)
+    end
+    dataOF.print "#{ucoord.inspect[1..-2]}"
+    dataOF.puts "}," if(uridBR<uridToRID.size-1)
+    dataOF.puts "};" if(uridBR==uridToRID.size-1)
+  end
 
   dataOF.close
 end
