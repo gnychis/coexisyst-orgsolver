@@ -240,14 +240,17 @@ begin
 
 
   of = File.new("links.zpl", "w")
-  of.puts "set LIDs       := { #{linkIDs.inspect[1..-2]} };"
-  of.puts "set LinkAttr   := { #{Link.members.inspect[8..-2]} };"
+  of.puts "############################################################"
+  of.puts "## Information related to links"
   of.puts ""
-  of.puts "param links[LIDs * LinkAttr] :="
-  of.print "   |#{Link.members.inspect[8..-2]}|"
+  of.puts "  set LIDs       := { #{linkIDs.inspect[1..-2]} };"
+  of.puts "  set LinkAttr   := { #{Link.members.inspect[8..-2]} };"
+  of.puts ""
+  of.puts "  param links[LIDs * LinkAttr] :="
+  of.print "     |#{Link.members.inspect[8..-2]}|"
   links.each do |l|
     next if(l.nil?)
-    of.print "\n|#{l.lID}|\t#{ridToURID[l.srcID]},\t#{ridToURID[l.dstID]},\t#{l.freq},\t      #{l.bandwidth},\t#{l.airtime},    #{l.txLen} |"
+    of.print "\n  |#{l.lID}|\t#{ridToURID[l.srcID]},\t#{ridToURID[l.dstID]},\t#{l.freq},\t      #{l.bandwidth},\t#{l.airtime},    #{l.txLen} |"
     linkIDs.push(l.lID)
   end
   of.print ";\n"
