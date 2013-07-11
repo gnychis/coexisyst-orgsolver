@@ -173,6 +173,7 @@ begin
     urids.push(urid)
     urid+=1
   end
+  dataOF.puts "  # The set of radios in the optimization"
   dataOF.puts "  set R       := { #{urids.inspect[1..-2]} };"
   dataOF.puts "\n"
 
@@ -180,6 +181,7 @@ begin
   ## Output the frequencies to the appropriate ZIMPL file.  This specifies, for each radio,
   ## the possible set of frequencies that can be *configured*.  That means, if we cannot reconfigure
   ## the transmitter, it should only have 1 possible frequency: its current.
+  dataOF.puts "  # The frequencies available for each radio"
   dataOF.puts "  set FB[R] :="
   (1 .. uridToRID.size-1).each do |urid|
     rid=uridToRID[urid]        # get the ID from the UID
@@ -201,28 +203,28 @@ begin
     dataOF.puts "," if(urid<uridToRID.size-1)
     dataOF.puts ";" if(urid==uridToRID.size-1)
   end
+  dataOF.puts ""
 
   #################################################################################################
   ## Go through and output all of the radios within spatial range and not.  This is 'S' in the
   ## optimization representation.  For each radio that we have a "view" at, we go through and
   ## mark the transmitters in range
-  of = File.new("spatial_range_radios.zpl", "w")
-  of.puts "set SRR[R] :="
+  dataOF.puts "  # For each radio, the list of radios that are within spatial range of it"
+  dataOF.puts "  set SRR[R] :="
   (1 .. uridToRID.size-1).each do |urid|
     idBR=uridToRID[urid]
     lvs = linksInRange[idBR]
-    of.print "\t<#{urid}> {"   # Print out the header
+    dataOF.print "\t<#{urid}> {"   # Print out the header
     xmitters=getTransmitterIDs(getLinksFromViews(links,lvs))
     xmitters.each_index do |xi|
       idTR=xmitters[xi]
       uridTR = ridToURID[idTR]
-      of.print "#{uridTR}"
-      of.print "," if(xi<xmitters.size-1)
+      dataOF.print "#{uridTR}"
+      dataOF.print "," if(xi<xmitters.size-1)
     end
-    of.puts "}," if(urid<uridToRID.size-1)
-    of.puts "};" if(urid==uridToRID.size-1)
+    dataOF.puts "}," if(urid<uridToRID.size-1)
+    dataOF.puts "};" if(urid==uridToRID.size-1)
   end
-  of.close
 
   #################################################################################################
   ## Now we go through and prepare the links and transfer them over to the optimization.  We first
@@ -232,14 +234,16 @@ begin
   dataOF.puts "\n\n############################################################"
   dataOF.puts "## Information related to links"
   dataOF.puts ""
+  dataOF.puts "  # The set of links and the attributes for each link"
   dataOF.puts "  set LIDs       := { #{lids.inspect[1..-2]} };"
   dataOF.puts "  set LinkAttr   := { #{Link.members.inspect[8..-2]} };"
   dataOF.puts ""
-  dataOF.puts "  param links[LIDs * LinkAttr] :="
-  dataOF.print "         |#{Link.members.inspect[8..-2]}|"
+  dataOF.puts "  # The data for each link"
+  dataOF.puts "  param L[LIDs * LinkAttr] :="
+  dataOF.print "      |#{Link.members.inspect[8..-2]}|"
   links.each do |l|
     next if(l.nil?)
-    dataOF.print "\n      |#{l.lID}|\t#{ridToURID[l.srcID]},\t#{ridToURID[l.dstID]},\t#{l.freq},\t      #{l.bandwidth},\t#{l.airtime},    #{l.txLen} |"
+    dataOF.print "\n   |#{l.lID}|\t#{ridToURID[l.srcID]},\t#{ridToURID[l.dstID]},\t#{l.freq},\t      #{l.bandwidth},\t#{l.airtime},    #{l.txLen} |"
   end
   dataOF.print ";\n"
   
