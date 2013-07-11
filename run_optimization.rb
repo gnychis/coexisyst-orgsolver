@@ -162,6 +162,7 @@ begin
   getRadiosFromLinks(links).each do |rid|
     ridToURID[rid]=urid
     uridToRID[urid]=rid
+    puts "#{rid.inspect} ===> #{urid}"
     urid+=1
   end
 
@@ -224,6 +225,12 @@ begin
   ## Now we go through and prepare the links and transfer them over to the optimization.  We first
   ## need to condense the links so that there is only a single "link" for every transmitter and
   ## receiver.
+  of = File.new("links.dat", "w")
+  links.each do |l|
+    next if(l.nil?)
+    of.puts "#{l.lID} #{ridToURID[l.srcID]} #{ridToURID[l.dstID]} #{l.protocol}"
+  end
+  of.close
 
   
   #################################################################################################
