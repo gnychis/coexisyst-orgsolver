@@ -11,7 +11,7 @@ Trollop::die :directory, "must include map.txt" if(File.exist?("#{opts[:director
 Trollop::die :directory, "must include data in files labaled capture<#>.dat" if(Dir.glob("#{opts[:directory]}/capture*.dat").size<1)
 
 MapItem = Struct.new(:radioID, :protocol, :radioName, :netID, :frequencies)
-Link = Struct.new(:lID, :srcID, :dstID, :protocol, :freq, :bandwidth, :airtime, :txLen)
+Link = Struct.new(:lID, :srcID, :dstID, :freq, :bandwidth, :airtime, :txLen)
 LinkView = Struct.new(:lID, :rssi, :backoff)
 
 def error(err)
@@ -63,6 +63,7 @@ begin
   
   linkIDs = Hash.new        # Get a link ID by source and destination
   links = Array.new         # Store the links, exactly at the index of the linkID
+  linkProtocols = Array.new # Keep track of the protocols on each link
 
   uridToRID = Array.new     # Keep track of unique ID (UID) for each ID
   ridToURID = Hash.new      # Go from ID to a UID
@@ -97,6 +98,7 @@ begin
   #######
   lastLinkID=0
   links.push(nil)
+  linkProtocols.push(nil)
   Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
     
     baselineRadio=nil           # Store the baseline radio for the capture file
@@ -135,7 +137,6 @@ begin
       li = Link.new(lID,          # Put the link ID in which is unique
                     ls[0],        # The source ID for the link
                     ls[1],        # The destination ID for the link
-                    ls[2],        # the protocol used for the link
                     ls[3].to_i,   # The frequency used
                     ls[5].to_i,   # The bandwidth used on the link
                     ls[6].to_f,   # The airtime observed on the link from the source to destination
@@ -147,6 +148,7 @@ begin
 
       # Store the link if we haven't seen it before
       links.push(li) if(pushLink)
+      linkProtocols.push(ls[2]) if(pushLink)
 
       # But always push that the link is within range of the baseline radio, even if we've seen it
       # before within range of another radio.
@@ -159,12 +161,14 @@ begin
   ## Now, we need a unique numeric ID for every single transmitter.  This is strictly for the
   ## MIP optimization representation.  We need to keep track of these and we can have a lookup.
   urid=1
+  of = File.new("radios.dat","w")
   getRadiosFromLinks(links).each do |rid|
     ridToURID[rid]=urid
     uridToRID[urid]=rid
-    puts "#{rid.inspect} ===> #{urid}"
+    of.puts "#{urid}"
     urid+=1
   end
+  of.close
 
   #################################################################################################
   ## Output the set of radios from the entire optimization.  This includes all transmitters and
@@ -226,12 +230,32 @@ begin
   ## need to condense the links so that there is only a single "link" for every transmitter and
   ## receiver.
   of = File.new("links.dat", "w")
+  linkIDs=Array.new;
   links.each do |l|
     next if(l.nil?)
-    of.puts "#{l.lID} #{ridToURID[l.srcID]} #{ridToURID[l.dstID]} #{l.protocol}"
+    of.puts "#{l.lID} #{ridToURID[l.srcID]} #{ridToURID[l.dstID]} #{linkProtocols[l.lID]}"
+    linkIDs.push(l.lID)
   end
   of.close
 
+
+  of = File.new("links.zpl", "w")
+  of.puts "set LIDs       := { #{linkIDs.inspect[1..-2]} };"
+  of.puts "set LinkAttr   := { #{Link.members.inspect[8..-2]} };"
+  of.puts ""
+  of.puts "param links[LIDs * LinkAttr] :="
+  of.print "   |#{Link.members.inspect[8..-2]}|"
+  links.each do |l|
+    next if(l.nil?)
+    of.print "\n|#{l.lID}|\t#{ridToURID[l.srcID]},\t#{ridToURID[l.dstID]},\t#{l.freq},\t      #{l.bandwidth},\t#{l.airtime},    #{l.txLen} |"
+    linkIDs.push(l.lID)
+  end
+  of.print ";\n"
+  
+  of.close
+
+  #################################################################################################
+  ## Now, go through and output for every radio, the reception strength from each link
   
   #################################################################################################
   ## Go through all of the radios and place them in to coordination or not
