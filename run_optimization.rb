@@ -262,8 +262,6 @@ begin
     dataOF.puts "};" if(urid==uridToRID.size-1)
   end
   
-  #################################################################################################
-  ## Now, go through and output for every radio, the reception strength from each link
   dataOF.puts ""
   dataOF.puts "  # For each radio, the list of links that are within spatial range of it"
   dataOF.puts "  set SL[R] :="
