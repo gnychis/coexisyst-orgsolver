@@ -288,6 +288,7 @@ begin
   dataOF.puts "\n\n############################################################"
   dataOF.puts "## Information about what coordinates with what"
   dataOF.puts ""
+  dataOF.puts "  # for each radio, the radios it coordinates with in spatial range"
   dataOF.puts "  set CRR[R] :="
   (1 .. uridToRID.size-1).each do |uridBR|
     ridBR=uridToRID[uridBR]
@@ -304,6 +305,7 @@ begin
   end
 
   dataOF.puts ""
+  dataOF.puts "  # for each radio, the radios it does not coordinate with in spatial range"
   dataOF.puts "  set URR[R] :="
   (1 .. uridToRID.size-1).each do |uridBR|
     ridBR=uridToRID[uridBR]
@@ -318,6 +320,57 @@ begin
     dataOF.puts "}," if(uridBR<uridToRID.size-1)
     dataOF.puts "};" if(uridBR==uridToRID.size-1)
   end
+
+  dataOF.puts ""
+  dataOF.puts "  # for each radio, the links it coordinates with in spatial range"
+  dataOF.puts "  set CRL[R] :="
+  (1 .. uridToRID.size-1).each do |uridBR|
+    ridBR=uridToRID[uridBR]
+    dataOF.print "\t<#{uridBR}> {"   # Print out the header
+    coord=Array.new
+    sr[uridBR].each do |uridOR|
+      ridOR=uridToRID[uridOR]
+      c=coordinates(links, linkProtocols, ridBR, ridOR)
+      if(c)
+        lks=getLinksByTransmitter(links, ridOR)
+        lks.each {|l| coord.push(l.lID)}
+      end
+      #coord.push(uridOR) if(c)
+    end
+    dataOF.print "#{coord.inspect[1..-2]}"
+    dataOF.puts "}," if(uridBR<uridToRID.size-1)
+    dataOF.puts "};" if(uridBR==uridToRID.size-1)
+  end
+  
+  dataOF.puts ""
+  dataOF.puts "  # for each radio, the links it does not coordinate with in spatial range"
+  dataOF.puts "  set URL[R] :="
+  (1 .. uridToRID.size-1).each do |uridBR|
+    ridBR=uridToRID[uridBR]
+    dataOF.print "\t<#{uridBR}> {"   # Print out the header
+    coord=Array.new
+    sr[uridBR].each do |uridOR|
+      ridOR=uridToRID[uridOR]
+      c=coordinates(links, linkProtocols, ridBR, ridOR)
+      if(not c)
+        lks=getLinksByTransmitter(links, ridOR)
+        lks.each {|l| coord.push(l.lID)}
+      end
+      #coord.push(uridOR) if(c)
+    end
+    dataOF.print "#{coord.inspect[1..-2]}"
+    dataOF.puts "}," if(uridBR<uridToRID.size-1)
+    dataOF.puts "};" if(uridBR==uridToRID.size-1)
+  end
+
+  #dataOF.puts ""
+  #dataOF.puts "  # for each radio, the links it coordinates with in spatial range"
+  #dataOF.puts "  set CLL[R] :="
+  #(1 .. links.size-1).each do |lnkBR|
+  #  dataOF.print "\t<#{links[lnkBR].lID}> {"   # Print out the header
+  #  ridBR=links[lnkBR].srcID
+  #end
+  #links.each {|l| puts "#{l.lID} #{ridToURID[l.srcID]}" if(not l.nil?)}
 
   dataOF.close
 end
