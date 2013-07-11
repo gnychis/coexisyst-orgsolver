@@ -70,6 +70,8 @@ begin
 
   linksInRange = Hash.new   # All of the links in range of a radio, indexed by RID
   
+  dataOF = File.new("data.zpl", "w")
+  
   #################################################################################################
   # Read in the map.txt file in to a data structure
   #######
@@ -160,20 +162,19 @@ begin
   #################################################################################################
   ## Now, we need a unique numeric ID for every single transmitter.  This is strictly for the
   ## MIP optimization representation.  We need to keep track of these and we can have a lookup.
+  dataOF.puts "############################################################"
+  dataOF.puts "## Information related to links"
+  dataOF.puts ""
   urid=1
-  of = File.new("radios.dat","w")
+  urids=Array.new
   getRadiosFromLinks(links).each do |rid|
     ridToURID[rid]=urid
     uridToRID[urid]=rid
-    of.puts "#{urid}"
+    urids.push(urid)
     urid+=1
   end
-  of.close
-
-  #################################################################################################
-  ## Output the set of radios from the entire optimization.  This includes all transmitters and
-  ## receivers.
-
+  dataOF.puts "  set R       := { #{urids.inspect[1..-2]} };"
+  dataOF.puts "\n\n"
 
   #################################################################################################
   ## Output the frequencies to the appropriate ZIMPL file.  This specifies, for each radio,
@@ -229,33 +230,21 @@ begin
   ## Now we go through and prepare the links and transfer them over to the optimization.  We first
   ## need to condense the links so that there is only a single "link" for every transmitter and
   ## receiver.
-  of = File.new("links.dat", "w")
-  linkIDs=Array.new;
+  lids = Array.new; links.each {|l| lids.push(l.lID) if(not l.nil?)}
+  dataOF.puts "############################################################"
+  dataOF.puts "## Information related to links"
+  dataOF.puts ""
+  dataOF.puts "  set LIDs       := { #{lids.inspect[1..-2]} };"
+  dataOF.puts "  set LinkAttr   := { #{Link.members.inspect[8..-2]} };"
+  dataOF.puts ""
+  dataOF.puts "  param links[LIDs * LinkAttr] :="
+  dataOF.print "     |#{Link.members.inspect[8..-2]}|"
   links.each do |l|
     next if(l.nil?)
-    of.puts "#{l.lID} #{ridToURID[l.srcID]} #{ridToURID[l.dstID]} #{linkProtocols[l.lID]}"
-    linkIDs.push(l.lID)
+    dataOF.print "\n  |#{l.lID}|\t#{ridToURID[l.srcID]},\t#{ridToURID[l.dstID]},\t#{l.freq},\t      #{l.bandwidth},\t#{l.airtime},    #{l.txLen} |"
   end
-  of.close
-
-
-  of = File.new("links.zpl", "w")
-  of.puts "############################################################"
-  of.puts "## Information related to links"
-  of.puts ""
-  of.puts "  set LIDs       := { #{linkIDs.inspect[1..-2]} };"
-  of.puts "  set LinkAttr   := { #{Link.members.inspect[8..-2]} };"
-  of.puts ""
-  of.puts "  param links[LIDs * LinkAttr] :="
-  of.print "     |#{Link.members.inspect[8..-2]}|"
-  links.each do |l|
-    next if(l.nil?)
-    of.print "\n  |#{l.lID}|\t#{ridToURID[l.srcID]},\t#{ridToURID[l.dstID]},\t#{l.freq},\t      #{l.bandwidth},\t#{l.airtime},    #{l.txLen} |"
-    linkIDs.push(l.lID)
-  end
-  of.print ";\n"
+  dataOF.print ";\n"
   
-  of.close
 
   #################################################################################################
   ## Now, go through and output for every radio, the reception strength from each link
@@ -264,4 +253,5 @@ begin
   ## Go through all of the radios and place them in to coordination or not
 
 
+  dataOF.close
 end
