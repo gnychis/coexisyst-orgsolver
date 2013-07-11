@@ -174,35 +174,33 @@ begin
     urid+=1
   end
   dataOF.puts "  set R       := { #{urids.inspect[1..-2]} };"
-  dataOF.puts "\n\n"
+  dataOF.puts "\n"
 
   #################################################################################################
   ## Output the frequencies to the appropriate ZIMPL file.  This specifies, for each radio,
   ## the possible set of frequencies that can be *configured*.  That means, if we cannot reconfigure
   ## the transmitter, it should only have 1 possible frequency: its current.
-  of = File.new("radio_frequencies.zpl","w")
-  of.puts "set FB[R] :="
+  dataOF.puts "  set FB[R] :="
   (1 .. uridToRID.size-1).each do |urid|
     rid=uridToRID[urid]        # get the ID from the UID
     mi=mapItemByID[rid]        # Get the map item if it exists based on the ID
-    of.print "\t<#{urid}> {"   # Print out the header
+    dataOF.print "\t<#{urid}> {"   # Print out the header
 
     # If there is no map item associated, then the possible set of frequencies is just the
     # frequency it is operating on.  We take this from any of the active links it is involved in.
     if(mi.nil?)
-      of.print "#{getLinksByRID(links,rid)[0].freq}e3}"
+      dataOF.print "#{getLinksByRID(links,rid)[0].freq}e3}"
     else
       mi[:frequencies].each_index do |i|
-        of.print "#{mi[:frequencies][i]}e3"
-        of.print "," if(i<mi[:frequencies].size-1)
+        dataOF.print "#{mi[:frequencies][i]}e3"
+        dataOF.print "," if(i<mi[:frequencies].size-1)
       end
-      of.print "}"
+      dataOF.print "}"
     end
 
-    of.puts "," if(urid<uridToRID.size-1)
-    of.puts ";" if(urid==uridToRID.size-1)
+    dataOF.puts "," if(urid<uridToRID.size-1)
+    dataOF.puts ";" if(urid==uridToRID.size-1)
   end
-  of.close
 
   #################################################################################################
   ## Go through and output all of the radios within spatial range and not.  This is 'S' in the
@@ -231,17 +229,17 @@ begin
   ## need to condense the links so that there is only a single "link" for every transmitter and
   ## receiver.
   lids = Array.new; links.each {|l| lids.push(l.lID) if(not l.nil?)}
-  dataOF.puts "############################################################"
+  dataOF.puts "\n\n############################################################"
   dataOF.puts "## Information related to links"
   dataOF.puts ""
   dataOF.puts "  set LIDs       := { #{lids.inspect[1..-2]} };"
   dataOF.puts "  set LinkAttr   := { #{Link.members.inspect[8..-2]} };"
   dataOF.puts ""
   dataOF.puts "  param links[LIDs * LinkAttr] :="
-  dataOF.print "     |#{Link.members.inspect[8..-2]}|"
+  dataOF.print "         |#{Link.members.inspect[8..-2]}|"
   links.each do |l|
     next if(l.nil?)
-    dataOF.print "\n  |#{l.lID}|\t#{ridToURID[l.srcID]},\t#{ridToURID[l.dstID]},\t#{l.freq},\t      #{l.bandwidth},\t#{l.airtime},    #{l.txLen} |"
+    dataOF.print "\n      |#{l.lID}|\t#{ridToURID[l.srcID]},\t#{ridToURID[l.dstID]},\t#{l.freq},\t      #{l.bandwidth},\t#{l.airtime},    #{l.txLen} |"
   end
   dataOF.print ";\n"
   
