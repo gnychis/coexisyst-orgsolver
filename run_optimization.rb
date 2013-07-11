@@ -206,27 +206,6 @@ begin
   dataOF.puts ""
 
   #################################################################################################
-  ## Go through and output all of the radios within spatial range and not.  This is 'S' in the
-  ## optimization representation.  For each radio that we have a "view" at, we go through and
-  ## mark the transmitters in range
-  dataOF.puts "  # For each radio, the list of radios that are within spatial range of it"
-  dataOF.puts "  set SRR[R] :="
-  (1 .. uridToRID.size-1).each do |urid|
-    idBR=uridToRID[urid]
-    lvs = linksInRange[idBR]
-    dataOF.print "\t<#{urid}> {"   # Print out the header
-    xmitters=getTransmitterIDs(getLinksFromViews(links,lvs))
-    xmitters.each_index do |xi|
-      idTR=xmitters[xi]
-      uridTR = ridToURID[idTR]
-      dataOF.print "#{uridTR}"
-      dataOF.print "," if(xi<xmitters.size-1)
-    end
-    dataOF.puts "}," if(urid<uridToRID.size-1)
-    dataOF.puts "};" if(urid==uridToRID.size-1)
-  end
-
-  #################################################################################################
   ## Now we go through and prepare the links and transfer them over to the optimization.  We first
   ## need to condense the links so that there is only a single "link" for every transmitter and
   ## receiver.
@@ -246,10 +225,49 @@ begin
     dataOF.print "\n   |#{l.lID}|\t#{ridToURID[l.srcID]},\t#{ridToURID[l.dstID]},\t#{l.freq},\t      #{l.bandwidth},\t#{l.airtime},    #{l.txLen} |"
   end
   dataOF.print ";\n"
+
+  #################################################################################################
+  ## Go through and output all of the radios within spatial range and not.  This is 'S' in the
+  ## optimization representation.  For each radio that we have a "view" at, we go through and
+  ## mark the transmitters in range
+  dataOF.puts "\n\n############################################################"
+  dataOF.puts "## Information related to spatial data, what is in range of what"
+  dataOF.puts ""
+  dataOF.puts "  # For each radio, the list of radios that are within spatial range of it"
+  dataOF.puts "  set SRR[R] :="
+  (1 .. uridToRID.size-1).each do |urid|
+    idBR=uridToRID[urid]
+    lvs = linksInRange[idBR]
+    dataOF.print "\t<#{urid}> {"   # Print out the header
+    xmitters=getTransmitterIDs(getLinksFromViews(links,lvs))
+    xmitters.each_index do |xi|
+      idTR=xmitters[xi]
+      uridTR = ridToURID[idTR]
+      dataOF.print "#{uridTR}"
+      dataOF.print "," if(xi<xmitters.size-1)
+    end
+    dataOF.puts "}," if(urid<uridToRID.size-1)
+    dataOF.puts "};" if(urid==uridToRID.size-1)
+  end
   
 
   #################################################################################################
   ## Now, go through and output for every radio, the reception strength from each link
+  dataOF.puts ""
+  dataOF.puts "  # For each radio, the list of radios that are within spatial range of it"
+  dataOF.puts "  set SRL[R] :="
+  (1 .. uridToRID.size-1).each do |urid|
+    idBR=uridToRID[urid]
+    lvs = linksInRange[idBR]
+    dataOF.print "\t<#{urid}> {"   # Print out the header
+    lks=getLinksFromViews(links,lvs)
+    lks.each_index do |lk|
+      dataOF.print "#{lks[lk].lID}"
+      dataOF.print "," if(lk<lks.size-1)
+    end
+    dataOF.puts "}," if(urid<uridToRID.size-1)
+    dataOF.puts "};" if(urid==uridToRID.size-1)
+  end
   
   #################################################################################################
   ## Go through all of the radios and place them in to coordination or not
