@@ -11,12 +11,19 @@ Trollop::die :directory, "must include map.txt" if(File.exist?("#{opts[:director
 Trollop::die :directory, "must include data in files labaled capture<#>.dat" if(Dir.glob("#{opts[:directory]}/capture*.dat").size<1)
 
 MapItem = Struct.new(:radioID, :protocol, :radioName, :netID, :frequencies)
-Link = Struct.new(:lID, :srcID, :dstID, :freq, :bandwidth, :airtime, :txLen)
+Link = Struct.new(:lID, :srcID, :dstID, :freq, :bandwidth, :airtime, :txLen, :protocol)
 LinkView = Struct.new(:lID, :rssi, :backoff)
 
 def error(err)
   puts err
   exit
+end
+
+def coordinates(links, ridBR, ridOR)
+  linksBR=getLinksByTransmitter(links, ridBR)
+  linksOR=getLinksByTransmitter(links, ridOR)
+  return false if(linksBR.size==0 or linksOR.size==0)
+  puts "#{linksBR.inspect} #{linksOR.inspect}"
 end
 
 def getTransmitterIDs(links)
@@ -219,10 +226,10 @@ begin
   dataOF.puts ""
   dataOF.puts "  # The data for each link"
   dataOF.puts "  param L[LIDs * LinkAttr] :="
-  dataOF.print "      |#{Link.members.inspect[8..-2]}|"
+  dataOF.print "      |#{Link.members.inspect[8..-14]}|"
   links.each do |l|
     next if(l.nil?)
-    dataOF.print "\n   |#{l.lID}|\t#{ridToURID[l.srcID]},\t#{ridToURID[l.dstID]},\t#{l.freq},\t      #{l.bandwidth},\t#{l.airtime},    #{l.txLen} |"
+    dataOF.print "\n   |#{l.lID}|\t    #{ridToURID[l.srcID]},\t      #{ridToURID[l.dstID]},  #{l.freq},\t\t  #{l.bandwidth},\t    #{l.airtime},   #{l.txLen} |"
   end
   dataOF.print ";\n"
 
@@ -272,7 +279,21 @@ begin
   puts ridToURID.inspect
   
   #################################################################################################
-  ## Go through all of the radios and place them in to coordination or not
+  ## Go through all of the radios and place them in to coordination or not.
+  dataOF.puts "\n\n############################################################"
+  dataOF.puts "## Information about what coordinates with what"
+  dataOF.puts ""
+  dataOF.puts "  set CR[R] :="
+  (1 .. uridToRID.size-1).each do |uridBR|
+    ridBR=uridToRID[uridBR]
+    dataOF.print "\t<#{uridBR}> {"   # Print out the header
+    (1 .. uridToRID.size-1).each do |uridOR|
+      ridOR=uridToRID[uridOR]
+      c=coordinates(links, ridBR, ridOR)
+    end
+    dataOF.puts "}," if(uridBR<uridToRID.size-1)
+    dataOF.puts "};" if(uridBR==uridToRID.size-1)
+  end
 
 
   dataOF.close
