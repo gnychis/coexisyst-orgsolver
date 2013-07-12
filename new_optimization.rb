@@ -22,6 +22,15 @@ class Hypergraph
   @@hyperEdges=Array.new     
   @@linkEdges=Array.new
 
+  def newLinkEdge(link)
+    @@linkEdges.push(link) if(not getLinkEdge(link.srcID, link.dstID))
+  end
+
+  def getLinkEdge(srcID, dstID)
+    @@linkEdges.each {|l| return l if(l.srcID==srcID and l.dstID==dstID)}
+    return nil
+  end
+
   def getHyperedge(edgeID)
     @@hyperEdges.each {|h| return h if(h.id==edgeID)}
     return nil
@@ -43,6 +52,11 @@ class Hypergraph
 
   def createHyperedge(networkID)
     @@hyperEdges.push(Hyperedge.new(networkID,Array.new))
+  end
+
+  def getRadioByName(radioName)
+    @@radios.each {|r| return r if((not r.radioName.nil?) && r.radioName==radioName) }
+    return nil
   end
 
   def getRadio(radioID)
@@ -92,9 +106,6 @@ end
 #################################################################################################
 # Now, go through each of the data files and read the link data associated to the node
 #######
-lastLinkID=0
-links.push(nil)
-linkProtocols.push(nil)
 Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
   
   baselineRadio=nil           # Store the baseline radio for the capture file
@@ -104,13 +115,9 @@ Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
 
     # Read in the baselineRadio if this is the very first line
     if(baselineRadio.nil?)
-      baselineRadio = line.chomp.strip       
-
-      # Lookup the info
-      baselineRadioInfo = mapItemByName[baselineRadio]
-      baselineRadioInfo = mapItemByID[baselineRadio] if(baselineRadioInfo.nil?)
-
-      linksInRange[baselineRadioInfo.radioID] = Array.new
+      baselineRadioID = line.chomp.strip       
+      baselineRadio = hgraph.getRadioByName(baselineRadioID)   # Try to get it by name first
+      baselineRadio = hgraph.getRadio(baselineRadioID) if(baselineRadio.nil?)  # Then, try to get it by ID
       next
     end
     
@@ -119,6 +126,9 @@ Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
     # Create a unique linkID for this link if it does not yet exist
     lSrc = ls[0]
     lDst = ls[1]
+    next
+
+
     if(not linkIDs.has_key?([lSrc,lDst]))
       lID = lastLinkID+1 
       linkIDs[[lSrc,lDst]]=lID
