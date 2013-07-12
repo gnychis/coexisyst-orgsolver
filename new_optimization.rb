@@ -11,9 +11,8 @@ Trollop::die :directory, "must include map.txt" if(File.exist?("#{opts[:director
 Trollop::die :directory, "must include data in files labaled capture<#>.dat" if(Dir.glob("#{opts[:directory]}/capture*.dat").size<1)
 
 Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies)
-SpatialEdge = Struct.new(:to, :from)
-LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :airtime, :txLen, :protocol)
-RadioView = Struct.new(:rssi, :backoff)
+SpatialEdge = Struct.new(:to, :from, :rssi, :backoff)
+LinkEdge = Struct.new(:srcID, :dstID, :protocol, :freq, :bandwidth, :airtime, :txLen)
 Hyperedge = Struct.new(:id, :radios)
 
 class Hypergraph
@@ -21,9 +20,18 @@ class Hypergraph
   @@radios=Array.new
   @@hyperEdges=Array.new     
   @@linkEdges=Array.new
+  
+  def newSpatialEdge(edge)
+    @@spatialEdges.push(edge) if(getSpatialEdge(edge.from, edge.to).nil?)
+  end
+
+  def getSpatialEdge(from, to)
+    @@spatialEdges.each {|l| return l if(l.from==from and l.to==to)}
+    return nil
+  end
 
   def newLinkEdge(link)
-    @@linkEdges.push(link) if(not getLinkEdge(link.srcID, link.dstID))
+    @@linkEdges.push(link) if(getLinkEdge(link.srcID, link.dstID).nil?)
   end
 
   def getLinkEdge(srcID, dstID)
@@ -51,7 +59,7 @@ class Hypergraph
   end
 
   def createHyperedge(networkID)
-    @@hyperEdges.push(Hyperedge.new(networkID,Array.new))
+    @@hyperEdges.push(Hyperedge.new(networkID,Array.new)) if(getHyperedge(networkID).nil?)
   end
 
   def getRadioByName(radioName)
@@ -64,8 +72,8 @@ class Hypergraph
     return nil
   end
 
-  def storeRadio(radio)
-    @@radios.push(radio)
+  def newRadio(radio)
+    @@radios.push(radio) if(getRadio(radio.radioID).nil?)
   end
 
 end
@@ -89,7 +97,7 @@ File.readlines("#{opts[:directory]}/map.txt").each do |line|
 
 
   # Store the radio if we do not yet have it in our graph
-  hgraph.storeRadio(r) if(hgraph.getRadio(r.radioID).nil?)
+  hgraph.newRadio(r) if(hgraph.getRadio(r.radioID).nil?)
 
   # Store the hyperedge if we don't yet have the network in our graph
   if(hgraph.getHyperedge(r.networkID).nil?)
@@ -126,39 +134,38 @@ Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
     # Create a unique linkID for this link if it does not yet exist
     lSrc = ls[0]
     lDst = ls[1]
-    next
-
-
-    if(not linkIDs.has_key?([lSrc,lDst]))
-      lID = lastLinkID+1 
-      linkIDs[[lSrc,lDst]]=lID
-      lastLinkID+=1
-      pushLink=true
-    else
-      lID = linkIDs[[lSrc,lDst]]
-      pushLink=false
+    if(hgraph.getLinkEdge(lSrc, lDst).nil?)
+      hgraph.newLinkEdge( LinkEdge.new( 
+                          ls[0],        # The source ID for the link
+                          ls[1],        # The destination ID for the link
+                          ls[2],        # The protocol in use on the link
+                          ls[3].to_i,   # The frequency used
+                          ls[5].to_i,   # The bandwidth used on the link
+                          ls[6].to_f,   # The airtime observed on the link from the source to destination
+                          ls[7].to_i))  # The average transmission length in microseconds
+    end
+    
+    # Create radio instances for both the source and destination if they do not exist
+    [lSrc,lDst].each do |radioID|
+      if(hgraph.getRadio(radioID).nil?)
+        hgraph.newRadio( Radio.new(
+                          radioID,
+                          ls[2],
+                          nil,
+                          nil,
+                          [ls[3].to_i]))
+      end
     end
 
-    # Read in the link data
-    li = Link.new(lID,          # Put the link ID in which is unique
-                  ls[0],        # The source ID for the link
-                  ls[1],        # The destination ID for the link
-                  ls[3].to_i,   # The frequency used
-                  ls[5].to_i,   # The bandwidth used on the link
-                  ls[6].to_f,   # The airtime observed on the link from the source to destination
-                  ls[7].to_i)   # The average transmission length in microseconds
-                  
-    lv = LinkView.new(lID,      # The link ID seen by this view
-                  ls[4].to_i,   # the RSSI from the transmitter to the baseline node
-                  ls[8].to_i)   # Whether the baseline node backs off to this link
-
-    # Store the link if we haven't seen it before
-    links.push(li) if(pushLink)
-    linkProtocols.push(ls[2]) if(pushLink)
-
-    # But always push that the link is within range of the baseline radio, even if we've seen it
-    # before within range of another radio.
-    linksInRange[baselineRadioInfo.radioID].push(lv)
+    # Now create a spatial edge from the link source to the baseline radio
+    if(hgraph.getSpatialEdge(lSrc, baselineRadio.radioID).nil?)
+      hgraph.newSpatialEdge( SpatialEdge.new(
+                             lSrc,                      # From
+                             baselineRadio.radioID,     # To
+                             ls[4].to_i,                # RSSI
+                             ls[8].to_i                 # Backoff
+                             ))
+    end
 
   end
 end
