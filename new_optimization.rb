@@ -21,6 +21,10 @@ class Hypergraph
   @@hyperEdges=Array.new     
   @@linkEdges=Array.new
 
+  def getRadios()
+    return @@radios
+  end
+
   def printLinkEdges()
     @@linkEdges.each {|l| puts l.inspect}
   end
@@ -185,4 +189,22 @@ Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
   end
 end
 
-hgraph.printLinkEdges
+
+dataOF = File.new("data.zpl", "w")
+
+#################################################################################################
+## Now, we need a unique numeric ID for every single transmitter.  This is strictly for the
+## MIP optimization representation.  We need to keep track of these and we can have a lookup.
+dataOF.puts "############################################################"
+dataOF.puts "## Information related to links and radios"
+dataOF.puts ""
+dataOF.puts "  # The set of radios in the optimization"
+dataOF.puts "  set R       := { #{(1..hgraph.getRadios.size).to_a.inspect[1..-2]} };"
+dataOF.puts "\n"
+dataOF.puts "  # The frequencies available for each radio"
+dataOF.puts "  set FB[R] :="
+hgraph.getRadios.each_index do |r|
+  dataOF.print "\t<#{r+1}> { #{hgraph.getRadios[r].frequencies.inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(r<hgraph.getRadios.size-1)
+  dataOF.puts ";" if(r==hgraph.getRadios.size-1)
+end
