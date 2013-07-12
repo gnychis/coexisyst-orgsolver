@@ -12,7 +12,7 @@ Trollop::die :directory, "must include data in files labaled capture<#>.dat" if(
 
 Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies)
 SpatialEdge = Struct.new(:to, :from, :rssi, :backoff)
-LinkEdge = Struct.new(:srcID, :dstID, :protocol, :freq, :bandwidth, :airtime, :txLen)
+LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :airtime, :txLen, :protocol)
 Hyperedge = Struct.new(:id, :radios)
 
 class Hypergraph
@@ -167,11 +167,11 @@ Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
       hgraph.newLinkEdge( LinkEdge.new( 
                           ls[0],        # The source ID for the link
                           ls[1],        # The destination ID for the link
-                          ls[2],        # The protocol in use on the link
                           ls[3].to_i,   # The frequency used
                           ls[5].to_i,   # The bandwidth used on the link
                           ls[6].to_f,   # The airtime observed on the link from the source to destination
-                          ls[7].to_i))  # The average transmission length in microseconds
+                          ls[7].to_i,  # The average transmission length in microseconds
+                          ls[2]))       # The protocol in use on the link
     end
     
     # Create radio instances for both the source and destination if they do not exist
@@ -231,10 +231,10 @@ dataOF.puts "  set LinkAttr   := { #{LinkEdge.members.inspect[1..-2]} };"
 dataOF.puts ""
 dataOF.puts "  # The data for each link"
 dataOF.puts "  param L[LIDs * LinkAttr] :="
-dataOF.print "      |#{LinkEdge.members.inspect[1..-2]}|"
+dataOF.print "      |#{LinkEdge.members.inspect[1..-14]} |"
 hgraph.getLinkEdges.each_index do |l|
   le = hgraph.getLinkEdges[l]
-  dataOF.print "\n   |#{l+1}|\t    #{hgraph.getRadioIndex(le.srcID)+1},\t      #{hgraph.getRadioIndex(le.dstID)+1},  #{le.freq},\t\t  #{le.bandwidth},\t    #{le.airtime},   #{le.txLen} |"
+  dataOF.print "\n   |#{l+1}|\t    #{hgraph.getRadioIndex(le.srcID)+1},\t      #{hgraph.getRadioIndex(le.dstID)+1},  #{le.freq},\t\t  #{le.bandwidth},\t    #{le.airtime},   #{le.txLen}  |"
 end
 dataOF.print ";\n"
 
