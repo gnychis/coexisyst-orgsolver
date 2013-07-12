@@ -78,14 +78,77 @@ File.readlines("#{opts[:directory]}/map.txt").each do |line|
   hgraph.storeRadio(r) if(hgraph.getRadio(r.radioID).nil?)
 
   # Store the hyperedge if we don't yet have the network in our graph
-  h = hgraph.getHyperedge(r.networkID)
+  if(hgraph.getHyperedge(r.networkID).nil?)
+    hgraph.createHyperedge(r.networkID)
+    hgraph.addToHyperedge(r.networkID, r)
+  else
+    hgraph.addToHyperedge(r.networkID, r)
+  end
   
-  # Make sure for some reason that two nodes in the map do not have the same ID or name.
-  # These must both be unique for the code to work properly.
-  #error("map radioID collision -- #{mi.inspect}") if(mapItemByID.has_key?(mi[:radioID]))
-  #error("map radioName collision -- #{mi.inspect}") if(mapItemByName.has_key?(mi[:radioName]))
-  #
-  ## Map the data to the ID and name
-  #mapItemByID[mi[:radioID]]=mi
-  #mapItemByName[mi[:radioName]]=mi
+  ## FIXME: try to check for duplicate radio IDs and names
+end
+
+
+#################################################################################################
+# Now, go through each of the data files and read the link data associated to the node
+#######
+lastLinkID=0
+links.push(nil)
+linkProtocols.push(nil)
+Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
+  
+  baselineRadio=nil           # Store the baseline radio for the capture file
+  baselineRadioInfo=nil       # This should resolve to the map info
+
+  File.readlines(capfile).each do |line|
+
+    # Read in the baselineRadio if this is the very first line
+    if(baselineRadio.nil?)
+      baselineRadio = line.chomp.strip       
+
+      # Lookup the info
+      baselineRadioInfo = mapItemByName[baselineRadio]
+      baselineRadioInfo = mapItemByID[baselineRadio] if(baselineRadioInfo.nil?)
+
+      linksInRange[baselineRadioInfo.radioID] = Array.new
+      next
+    end
+    
+    ls = line.split  # Go ahead and split the line
+
+    # Create a unique linkID for this link if it does not yet exist
+    lSrc = ls[0]
+    lDst = ls[1]
+    if(not linkIDs.has_key?([lSrc,lDst]))
+      lID = lastLinkID+1 
+      linkIDs[[lSrc,lDst]]=lID
+      lastLinkID+=1
+      pushLink=true
+    else
+      lID = linkIDs[[lSrc,lDst]]
+      pushLink=false
+    end
+
+    # Read in the link data
+    li = Link.new(lID,          # Put the link ID in which is unique
+                  ls[0],        # The source ID for the link
+                  ls[1],        # The destination ID for the link
+                  ls[3].to_i,   # The frequency used
+                  ls[5].to_i,   # The bandwidth used on the link
+                  ls[6].to_f,   # The airtime observed on the link from the source to destination
+                  ls[7].to_i)   # The average transmission length in microseconds
+                  
+    lv = LinkView.new(lID,      # The link ID seen by this view
+                  ls[4].to_i,   # the RSSI from the transmitter to the baseline node
+                  ls[8].to_i)   # Whether the baseline node backs off to this link
+
+    # Store the link if we haven't seen it before
+    links.push(li) if(pushLink)
+    linkProtocols.push(ls[2]) if(pushLink)
+
+    # But always push that the link is within range of the baseline radio, even if we've seen it
+    # before within range of another radio.
+    linksInRange[baselineRadioInfo.radioID].push(lv)
+
+  end
 end
