@@ -91,6 +91,11 @@ class Hypergraph
     return nil
   end
 
+  def getRadioIndex(radioID)
+    @@radios.each_index {|i| return i if(@@radios[i].radioID==radioID)}
+    return nil
+  end
+
   def getRadio(radioID)
     @@radios.each {|r| return r if(r.radioID==radioID)}
     return nil
@@ -200,7 +205,7 @@ dataOF = File.new("data.zpl", "w")
 ## Now, we need a unique numeric ID for every single transmitter.  This is strictly for the
 ## MIP optimization representation.  We need to keep track of these and we can have a lookup.
 dataOF.puts "############################################################"
-dataOF.puts "## Information related to links and radios"
+dataOF.puts "## Information related to radios"
 dataOF.puts ""
 dataOF.puts "  # The set of radios in the optimization"
 dataOF.puts "  set R       := { #{(1..hgraph.getRadios.size).to_a.inspect[1..-2]} };"
@@ -222,7 +227,16 @@ dataOF.puts "## Information related to links"
 dataOF.puts ""
 dataOF.puts "  # The set of links and the attributes for each link"
 dataOF.puts "  set LIDs       := { #{(1..hgraph.getLinkEdges.size).to_a.inspect[1..-2]} };"
-#dataOF.puts "  set LinkAttr   := { #{Link.members.inspect[8..-2]} };"
-#dataOF.puts ""
-#dataOF.puts "  # The data for each link"
-#dataOF.puts "  param L[LIDs * LinkAttr] :="
+dataOF.puts "  set LinkAttr   := { #{LinkEdge.members.inspect[1..-2]} };"
+dataOF.puts ""
+dataOF.puts "  # The data for each link"
+dataOF.puts "  param L[LIDs * LinkAttr] :="
+dataOF.print "      |#{LinkEdge.members.inspect[1..-2]}|"
+hgraph.getLinkEdges.each_index do |l|
+  le = hgraph.getLinkEdges[l]
+  dataOF.print "\n   |#{l+1}|\t    #{hgraph.getRadioIndex(le.srcID)+1},\t      #{hgraph.getRadioIndex(le.dstID)+1},  #{le.freq},\t\t  #{le.bandwidth},\t    #{le.airtime},   #{le.txLen} |"
+end
+dataOF.print ";\n"
+
+hgraph.printRadios
+hgraph.printLinkEdges
