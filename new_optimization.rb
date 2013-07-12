@@ -21,6 +21,10 @@ class Hypergraph
   @@hyperEdges=Array.new     
   @@linkEdges=Array.new
 
+  def getLinkEdges()
+    return @@linkEdges
+  end
+
   def getRadios()
     return @@radios
   end
@@ -208,3 +212,17 @@ hgraph.getRadios.each_index do |r|
   dataOF.puts "," if(r<hgraph.getRadios.size-1)
   dataOF.puts ";" if(r==hgraph.getRadios.size-1)
 end
+
+#################################################################################################
+## Now we go through and prepare the links and transfer them over to the optimization.  We first
+## need to condense the links so that there is only a single "link" for every transmitter and
+## receiver.
+dataOF.puts "\n\n############################################################"
+dataOF.puts "## Information related to links"
+dataOF.puts ""
+dataOF.puts "  # The set of links and the attributes for each link"
+dataOF.puts "  set LIDs       := { #{(1..hgraph.getLinkEdges.size).to_a.inspect[1..-2]} };"
+#dataOF.puts "  set LinkAttr   := { #{Link.members.inspect[8..-2]} };"
+#dataOF.puts ""
+#dataOF.puts "  # The data for each link"
+#dataOF.puts "  param L[LIDs * LinkAttr] :="
