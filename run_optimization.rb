@@ -283,6 +283,8 @@ begin
 
   #################################################################################################
   ## Go through all of the radios and place them in to coordination or not.
+  ## There are two key sets here:
+  ##   1.  CRR:  For each radio, the set of radios that are within range 
   dataOF.puts "\n\n############################################################"
   dataOF.puts "## Information about what coordinates with what"
   dataOF.puts ""
@@ -321,6 +323,26 @@ begin
     dataOF.print "#{coord.inspect[1..-2]}"
     dataOF.puts "}," if(uridBR<uridToRID.size-1)
     dataOF.puts "};" if(uridBR==uridToRID.size-1)
+  end
+
+  #################################################################################################
+  ## Go through and create the conflict set by going through all pairs of links
+  links.each do |link1|
+    next if(link1.nil?)
+
+    links.each do |link2|   # Check if link2 is a conflict of link1
+      next if(link2.nil?)
+      next if(link1.lID == link2.lID)  # Skip if the same link
+
+      # If the two transmitters coordinate with each other, this cannot be a conflict
+
+
+      #######################################################################
+      # Conflict type 1:  
+      
+
+    end
+
   end
 
   dataOF.close
