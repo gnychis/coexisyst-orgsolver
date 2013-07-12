@@ -20,6 +20,22 @@ class Hypergraph
   @@radios=Array.new
   @@hyperEdges=Array.new     
   @@linkEdges=Array.new
+
+  def printLinkEdges()
+    @@linkEdges.each {|l| puts l.inspect}
+  end
+
+  def printHyperedges()
+    @@hyperEdges.each {|h| puts h.inspect}
+  end
+
+  def printSpatialEdges()
+    @@spatialEdges.each {|s| puts s.inspect } # "#{s.to} --> #{s.from} #{s.rssi} #{s.backoff}" }
+  end
+
+  def printRadios()
+    @@radios.each {|r| puts r.inspect }
+  end
   
   def newSpatialEdge(edge)
     @@spatialEdges.push(edge) if(getSpatialEdge(edge.from, edge.to).nil?)
@@ -166,6 +182,7 @@ Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
                              ls[8].to_i                 # Backoff
                              ))
     end
-
   end
 end
+
+hgraph.printLinkEdges
