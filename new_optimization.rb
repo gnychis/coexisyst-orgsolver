@@ -11,7 +11,7 @@ Trollop::die :directory, "must include map.txt" if(File.exist?("#{opts[:director
 Trollop::die :directory, "must include data in files labaled capture<#>.dat" if(Dir.glob("#{opts[:directory]}/capture*.dat").size<1)
 
 Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies)
-SpatialEdge = Struct.new(:to, :from, :rssi, :backoff)
+SpatialEdge = Struct.new(:from, :to, :rssi, :backoff)
 LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :airtime, :txLen, :protocol)
 Hyperedge = Struct.new(:id, :radios)
 
@@ -38,7 +38,7 @@ class Hypergraph
   end
 
   def printSpatialEdges()
-    @@spatialEdges.each {|s| puts s.inspect } # "#{s.to} --> #{s.from} #{s.rssi} #{s.backoff}" }
+    @@spatialEdges.each {|s| puts s.inspect } 
   end
 
   def printRadios()
@@ -56,6 +56,12 @@ class Hypergraph
 
   def newLinkEdge(link)
     @@linkEdges.push(link) if(getLinkEdge(link.srcID, link.dstID).nil?)
+  end
+
+  def getLinkEdgesByTX(srcID)
+    x = Array.new
+    @@linkEdges.each {|l| x.push(l) if(l.srcID==srcID)}
+    return x
   end
 
   def getLinkEdge(srcID, dstID)
@@ -187,7 +193,7 @@ Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
     end
 
     # Now create a spatial edge from the link source to the baseline radio
-    if(hgraph.getSpatialEdge(lSrc, baselineRadio.radioID).nil?)
+    if(hgraph.getSpatialEdge(lSrc, baselineRadio.radioID).nil? and lSrc!=baselineRadio.radioID)
       hgraph.newSpatialEdge( SpatialEdge.new(
                              lSrc,                      # From
                              baselineRadio.radioID,     # To
@@ -243,38 +249,67 @@ dataOF.print ";\n"
 ## Output the hyperlinks in the graph
 
 #################################################################################################
+## Outputting the coordinating set of links.  
+dataOF.puts "\n\n############################################################"
+dataOF.puts "## Information related to coordination between links"
+dataOF.puts ""
+allLinks = hgraph.getLinkEdges
+coordByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| coordByRadio.push(Array.new)}
+coordByLink=Array.new;  (1..hgraph.getLinkEdges.size).each {|i| coordByLink.push(Array.new)}
+allLinks.each_index do |bli|
+  baseLink = allLinks[bli]
+  radioIndex = hgraph.getRadioIndex(baseLink.srcID)
+
+  allLinks.each_index do |oli|
+    oppLink = allLinks[oli]
+    outgoingSE = hgraph.getSpatialEdge(baseLink.srcID, oppLink.srcID)
+    incomingSE = hgraph.getSpatialEdge(oppLink.srcID, baseLink.srcID)
+
+    # Skip if the links are the same or if both links have same transmitter
+    next if(oppLink == baseLink)
+    next if(oppLink.srcID==baseLink.srcID)
+
+    next if(outgoingSE.nil? or incomingSE.nil?)
+
+    if(outgoingSE.backoff==1 and incomingSE.backoff==1)
+      coordByRadio[radioIndex].push(oli+1) if(not coordByRadio[radioIndex].include?(oli+1))
+      coordByLink[bli].push(oli+1) if(not coordByLink[bli].include?(oli+1))
+    end
+  end
+end
+dataOF.puts "  # For all radios, the set of links that the radio coordinates with"
+dataOF.puts "  set CR[R] :="
+coordByRadio.each_index do |r|
+  dataOF.print "\t<#{r+1}> { #{coordByRadio[r].inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(r<coordByRadio.size-1)
+  dataOF.puts ";" if(r==coordByRadio.size-1)
+end
+
+#dataOF.puts "\n  # For all links, the set of links that the radio coordinates with"
+#dataOF.puts "  set CL[R] :="
+#coordByLink.each_index do |l|
+#  dataOF.print "\t<#{l+1}> { #{coordByLink[l].inspect[1..-2]} }"   # Print out the header
+#  dataOF.puts "," if(l<coordByLink.size-1)
+#  dataOF.puts ";" if(l==coordByLink.size-1)
+#end
+
+#################################################################################################
 ## Go through and check against sets of conflicts between a pair of links.
 ## The interaction that we care about is as follows:
 ##    1.  That the receiver is within spatial range of the opposing transmitter.  If it's not,
 ##        there is no possible conflict.
 ##    2.  The interaction between the two transmitters.  Do they defer to each other or not?
-IRRELEVANT=0
-NOT_EXIST=1
-EXISTS_IND_1=2
-EXISTS_IND_0=3
-EXISTS_IND_IRR=4
-ConflictDesc = Struct.new(:name, :BT_OT, :OT_BT, :OT_BR)
-conflictDescriptors = Array.new
+##
+## For each link, go through and mark each of the other links as coordinating or conflicting, 
+## and whether the conflict is symmetric or asymmetric
+allLinks = hgraph.getLinkEdges
+allLinks.each_index do |bli|
+  baseLink = allLinks[bli]
 
-conflictDescriptors.push( ConflictDesc.new("PHY_CONFLICT_HIDDEN",
-                                            NOT_EXIST,
-                                            NOT_EXIST,
-                                            EXISTS_IND_IRR))
-
-conflictDescriptors.push( ConflictDesc.new("PHY_CONFLICT_ASYM",
-                                            NOT_EXIST,
-                                            EXISTS_IND_1,
-                                            EXISTS_IND_IRR))
-
-conflictDescriptors.push( ConflictDesc.new("MAC_CONFLICT_VCS",
-                                            EXISTS_IND_0,
-                                            NOT_EXIST,
-                                            EXISTS_IND_IRR))
-
-conflictDescriptors.push( ConflictDesc.new("MAC_CONFLICT_VCS_ASYM",
-                                            EXISTS_IND_0,
-                                            EXISTS_IND_1,
-                                            EXISTS_IND_IRR))
-
-
-
+  allLinks.each_index do |oli|
+    oppLink = allLinks[oli]
+    
+    if(hgraph.getSpatialEdge(oppLink.srcID,baseLink.dstID))  # If receiver in range of opposing...
+    end
+  end
+end
