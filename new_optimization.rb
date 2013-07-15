@@ -332,4 +332,14 @@ allLinks.each_index do |bli|
     end
   end
 end
+symByRadio.uniq!
+asym1ByRadio.uniq!
+asym2ByRadio.uniq!
 
+dataOF.puts "  # For all radios, the set of links that the radio is in a completely blind situation"
+dataOF.puts "  set US[R] :="
+coordByRadio.each_index do |r|
+  dataOF.print "\t<#{r+1}> { #{coordByRadio[r].inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(r<coordByRadio.size-1)
+  dataOF.puts ";" if(r==coordByRadio.size-1)
+end
