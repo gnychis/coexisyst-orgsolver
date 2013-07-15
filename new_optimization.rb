@@ -284,6 +284,8 @@ coordByRadio.each_index do |r|
   dataOF.puts "," if(r<coordByRadio.size-1)
   dataOF.puts ";" if(r==coordByRadio.size-1)
 end
+#hgraph.printRadios
+#puts hgraph.getRadios.size
 
 #dataOF.puts "\n  # For all links, the set of links that the radio coordinates with"
 #dataOF.puts "  set CL[R] :="
@@ -303,13 +305,31 @@ end
 ## For each link, go through and mark each of the other links as coordinating or conflicting, 
 ## and whether the conflict is symmetric or asymmetric
 allLinks = hgraph.getLinkEdges
+symByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| symByRadio.push(Array.new)}
+asym1ByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| asym1ByRadio.push(Array.new)}
+asym2ByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| asym2ByRadio.push(Array.new)}
 allLinks.each_index do |bli|
   baseLink = allLinks[bli]
+  radioIndex = hgraph.getRadioIndex(baseLink.srcID)
 
   allLinks.each_index do |oli|
     oppLink = allLinks[oli]
+    outgoingSE = hgraph.getSpatialEdge(baseLink.srcID, oppLink.srcID)
+    incomingSE = hgraph.getSpatialEdge(oppLink.srcID, baseLink.srcID)
+    
+    # Skip if the links are the same or if both links have same transmitter
+    next if(oppLink == baseLink)
+    next if(oppLink.srcID==baseLink.srcID)
     
     if(hgraph.getSpatialEdge(oppLink.srcID,baseLink.dstID))  # If receiver in range of opposing...
+      outgoingCoord=false; incomingCoord=false
+      outgoingCoord=true if((not outgoingSE.nil?) and outgoingSE.backoff==1)
+      incomingCoord=true if((not incomingSE.nil?) and incomingSE.backoff==1)
+      break if(outgoingCoord && incomingCoord)
+      symByRadio[radioIndex].push(oli+1) if(outgoingCoord==false && incomingCoord==false)
+      asym1ByRadio[radioIndex].push(oli+1) if(incomingCoord==true)
+      asym2ByRadio[radioIndex].push(oli+1) if(outgoingCoord==true)
     end
   end
 end
+
