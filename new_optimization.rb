@@ -238,5 +238,43 @@ hgraph.getLinkEdges.each_index do |l|
 end
 dataOF.print ";\n"
 
-hgraph.printRadios
-hgraph.printLinkEdges
+
+#################################################################################################
+## Output the hyperlinks in the graph
+
+#################################################################################################
+## Go through and check against sets of conflicts between a pair of links.
+## The interaction that we care about is as follows:
+##    1.  That the receiver is within spatial range of the opposing transmitter.  If it's not,
+##        there is no possible conflict.
+##    2.  The interaction between the two transmitters.  Do they defer to each other or not?
+IRRELEVANT=0
+NOT_EXIST=1
+EXISTS_IND_1=2
+EXISTS_IND_0=3
+EXISTS_IND_IRR=4
+ConflictDesc = Struct.new(:name, :BT_OT, :OT_BT, :OT_BR)
+conflictDescriptors = Array.new
+
+conflictDescriptors.push( ConflictDesc.new("PHY_CONFLICT_HIDDEN",
+                                            NOT_EXIST,
+                                            NOT_EXIST,
+                                            EXISTS_IND_IRR))
+
+conflictDescriptors.push( ConflictDesc.new("PHY_CONFLICT_ASYM",
+                                            NOT_EXIST,
+                                            EXISTS_IND_1,
+                                            EXISTS_IND_IRR))
+
+conflictDescriptors.push( ConflictDesc.new("MAC_CONFLICT_VCS",
+                                            EXISTS_IND_0,
+                                            NOT_EXIST,
+                                            EXISTS_IND_IRR))
+
+conflictDescriptors.push( ConflictDesc.new("MAC_CONFLICT_VCS_ASYM",
+                                            EXISTS_IND_0,
+                                            EXISTS_IND_1,
+                                            EXISTS_IND_IRR))
+
+
+
