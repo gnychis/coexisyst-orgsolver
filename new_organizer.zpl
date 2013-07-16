@@ -48,3 +48,53 @@
         else
           0
         end;
+
+############################################################################################################################################
+# VARIABLES
+##############
+#
+
+  var af[TF] binary;          # A binary representation of which radios picks which frequency
+  var o[R*R] binary;          # Do the radios, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
+  var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
+  var a[R] real;              # Airtime is a real number for each radios between 0 and 1.
+  var residual[R] real;       # The residual airtime sensed for each radio.
+ 
+  # ***************************************************************************************************
+  # Variables related to finding the min between rfs (the max between residual and fairshare) and
+  # the desired airtime, because you can't get more than what you ask for!
+  # ... I call this 'eat' : expected airtime
+  var eat[R];
+  var eat_min_y[R] binary;
+  param eat_min_M := 100;
+  
+  # ***************************************************************************************************
+  # Variables that are related to calculating the airtime sensed by each radio.
+  # There are two main variables here:
+  #   * ats:       the sum of the airtime sensed by all radios
+  #   * ats_act:   min(sum,1) so that it doesn't exceed 1
+  var ats[R];
+  var ats_act[R];
+  var ats_min_lhv[R];
+  param ats_min_rhv := 1;
+  var ats_min_y[R] binary;
+  param ats_min_M := 100;
+  
+  # ***************************************************************************************************
+  # Variables that are related to calculating the loss rate for each network which is a product.
+  # This computes the product in the most linear-way possible.
+  var lossrate[R] real >= 0 <= 1; 
+  var sr_vals[R*R] real;    # For each radio, calculate loss rate due to each radio
+  var sr_vars[R*R] real;    # For the calculation of loss rate using a product
+
+  # ***************************************************************************************************
+  # For calculating the rough estimated of an expected "fair share" (fs) of airtime due to radios that
+  # the radio coordinates with.
+  var fs[R];
+  var nsharing[R];
+  
+  # ***************************************************************************************************
+  # Calculation of the max(residual,fairshare)
+  var rfs_max[R];
+  var rfs_max_y[R] binary;
+  param rfs_max_M := 100;
