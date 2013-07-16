@@ -98,3 +98,17 @@
   var rfs_max[R];
   var rfs_max_y[R] binary;
   param rfs_max_M := 100;
+
+
+############################################################################################################################################
+# CONSTRAINTS
+################
+#
+  subto valid_freq:                     # The frequency selected by each network must be one in its list
+    forall <i,f> in TF with IS_AVAIL_FREQ(i,f)==0 : af[i,f] == 0;
+  
+  subto active_freq:                    # Every network must have one center frequency considered active.
+    forall <i> in R : sum <f> in F : af[i,f] == 1; 
+  
+  subto airtime_is_positive:            # Ensure that the airtime of all networks is positive, it cannot be a negative value.
+    forall <i> in R : a[i] >= 0;
