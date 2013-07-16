@@ -155,11 +155,12 @@
   subto nrsharing_eq:
     forall <i> in L : forall <r> in LCR[i] : nrsharing[i] == sum <l> in RL[r] : o[i,l];
 
-  subto nsharing_eq:                    # The number of networks sharing a frequency with each other
-    forall <i> in L : nsharing[i] == sum <c> in LC[i] with c!=i : o[i,c];
+#  # This is 
+#  subto nsharing_eq:                    # The number of networks sharing a frequency with each other
+#    forall <i> in L : nsharing[i] == sum <c> in LC[i] with c!=i : o[i,c];
 
   subto fs_eq:                          # Expected fs[i] equal to 1/nsharing, just written without division
-    forall <i> in L : fs[i] * (nsharing[i]+1) == 1;
+    forall <i> in L : fs[i] * (nrsharing[i]+1) == 1;
 
   # ***************************************************************************************************
   # Related to calculating the lossrate variable
