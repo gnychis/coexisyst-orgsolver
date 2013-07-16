@@ -92,6 +92,7 @@
   # the radio coordinates with.
   var fs[L];
   var nsharing[L];
+  var nrsharing[L];
   
   # ***************************************************************************************************
   # Calculation of the max(residual,fairshare)

@@ -386,6 +386,35 @@ coordByLink.each_index do |l|
   dataOF.puts ";" if(l==coordByLink.size-1)
 end
 
+dataOF.puts "\n  # For all links, the set of radios that the link coordinates with"
+dataOF.puts "  param LCR[L*R] :="
+dataOF.print "      | #{(1..hgraph.getLinkEdges.size).to_a.inspect[1..-2]} |"
+lcr=Array.new
+coordByLink.each_index do |l|
+  r=Array.new
+  coordByLink[l].each {|lnk| r.push(hgraph.getLinkEdges[lnk-1].srcID)}
+  r.uniq!
+  k=Array.new
+  puts r.inspect
+  hgraph.getRadios.each do |rdo|
+    puts rdo.radioID
+    if(r.include?(rdo.radioID))
+      puts "#{l} includes #{rdo.radioID}"
+      k.push(1)
+    else
+      k.push(0)
+    end
+  end
+  lcr[l]=k
+end
+puts lcr.inspect
+hgraph.getLinkEdges.each_index do |l|
+  le = hgraph.getLinkEdges[l]
+  dataOF.print "\n   |#{l+1}|\t #{lcr[l].inspect[1..-2]} |"
+  dataOF.puts ";" if(l==hgraph.getLinkEdges.size-1)
+end
+dataOF.puts "\n"
+
 dataOF.puts "\n  # For all links, the set of links that the radio is in a completely blind situation"
 dataOF.puts "  set LU[L] :="
 symByLink.each_index do |l|
