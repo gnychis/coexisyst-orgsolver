@@ -63,6 +63,12 @@ class Hypergraph
     @@linkEdges.each {|l| x.push(l) if(l.srcID==srcID)}
     return x
   end
+  
+  def getLinkEdgesByID(id)
+    x = Array.new
+    @@linkEdges.each {|l| x.push(l) if(l.srcID==id or l.dstID==id)}
+    return x
+  end
 
   def getLinkEdge(srcID, dstID)
     @@linkEdges.each {|l| return l if(l.srcID==srcID and l.dstID==dstID)}
@@ -94,6 +100,11 @@ class Hypergraph
 
   def getRadioByName(radioName)
     @@radios.each {|r| return r if((not r.radioName.nil?) && r.radioName==radioName) }
+    return nil
+  end
+
+  def getLinkEdgeIndex(link)
+    @@linkEdges.each_index {|i| return i if(@@linkEdges[i]==link)}
     return nil
   end
 
@@ -395,11 +406,8 @@ coordByLink.each_index do |l|
   coordByLink[l].each {|lnk| r.push(hgraph.getLinkEdges[lnk-1].srcID)}
   r.uniq!
   k=Array.new
-  puts r.inspect
   hgraph.getRadios.each do |rdo|
-    puts rdo.radioID
     if(r.include?(rdo.radioID))
-      puts "#{l} includes #{rdo.radioID}"
       k.push(1)
     else
       k.push(0)
@@ -407,7 +415,6 @@ coordByLink.each_index do |l|
   end
   lcr[l]=k
 end
-puts lcr.inspect
 hgraph.getLinkEdges.each_index do |l|
   le = hgraph.getLinkEdges[l]
   dataOF.print "\n   |#{l+1}|\t #{lcr[l].inspect[1..-2]} |"
@@ -438,3 +445,17 @@ asym2ByLink.each_index do |l|
   dataOF.puts "," if(l<asym2ByLink.size-1)
   dataOF.puts ";" if(l==asym2ByLink.size-1)
 end
+
+dataOF.puts "\n\n############################################################"
+dataOF.puts "## Random helper sets and variables"
+dataOF.puts ""
+dataOF.puts "  # For each radio, give one link that it \"belongs to\""
+a=Array.new
+hgraph.getRadios.each do |r|
+  e = hgraph.getLinkEdgesByTX(r.radioID)
+  e2 = hgraph.getLinkEdgesByID(r.radioID)
+  a.push(hgraph.getLinkEdgeIndex(e[0])+1) if(e.size>0)
+  a.push(hgraph.getLinkEdgeIndex(e2[0])+1) if(e2.size>0 and e.size==0)
+  puts "*************** ERRRRR" if(e.size==0 and e2.size==0)
+end
+dataOF.puts "  set RL   := { #{a.inspect[1..-2]} };"

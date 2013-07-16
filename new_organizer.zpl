@@ -152,6 +152,7 @@
 
   # ***************************************************************************************************
   # Related to calculating the fairshare of airtime for each network
+
   subto nsharing_eq:                    # The number of networks sharing a frequency with each other
     forall <i> in L : nsharing[i] == sum <c> in LC[i] with c!=i : o[i,c];
 
