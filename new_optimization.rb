@@ -290,7 +290,7 @@ allLinks.each_index do |bli|
   end
 end
 dataOF.puts "  # For all radios, the set of links that the radio coordinates with"
-dataOF.puts "  set C[R] :="
+dataOF.puts "  set RC[R] :="
 coordByRadio.each_index do |r|
   dataOF.print "\t<#{r+1}> { #{coordByRadio[r].inspect[1..-2]} }"   # Print out the header
   dataOF.puts "," if(r<coordByRadio.size-1)
@@ -298,14 +298,6 @@ coordByRadio.each_index do |r|
 end
 #hgraph.printRadios
 #puts hgraph.getRadios.size
-
-#dataOF.puts "\n  # For all links, the set of links that the radio coordinates with"
-#dataOF.puts "  set CL[R] :="
-#coordByLink.each_index do |l|
-#  dataOF.print "\t<#{l+1}> { #{coordByLink[l].inspect[1..-2]} }"   # Print out the header
-#  dataOF.puts "," if(l<coordByLink.size-1)
-#  dataOF.puts ";" if(l==coordByLink.size-1)
-#end
 
 #################################################################################################
 ## Go through and check against sets of conflicts between a pair of links.
@@ -318,8 +310,11 @@ end
 ## and whether the conflict is symmetric or asymmetric
 allLinks = hgraph.getLinkEdges
 symByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| symByRadio.push(Array.new)}
+symByLink=Array.new;  (1..hgraph.getLinkEdges.size).each {|l| symByLink.push(Array.new)}
 asym1ByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| asym1ByRadio.push(Array.new)}
+asym1ByLink=Array.new; (1..hgraph.getLinkEdges.size).each {|l| asym1ByLink.push(Array.new)}
 asym2ByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| asym2ByRadio.push(Array.new)}
+asym2ByLink=Array.new; (1..hgraph.getLinkEdges.size).each {|i|asym2ByLink.push(Array.new)}
 allLinks.each_index do |bli|
   baseLink = allLinks[bli]
   radioIndex = hgraph.getRadioIndex(baseLink.srcID)
@@ -338,18 +333,27 @@ allLinks.each_index do |bli|
       outgoingCoord=true if((not outgoingSE.nil?) and outgoingSE.backoff==1)
       incomingCoord=true if((not incomingSE.nil?) and incomingSE.backoff==1)
       break if(outgoingCoord && incomingCoord)
-      symByRadio[radioIndex].push(oli+1) if(outgoingCoord==false && incomingCoord==false)
-      asym1ByRadio[radioIndex].push(oli+1) if(incomingCoord==true)  # Baseline coordinates with opposing
-      asym2ByRadio[radioIndex].push(oli+1) if(outgoingCoord==true)  # Opposing coordinates with baseline
+      if(outgoingCoord==false && incomingCoord==false)
+        symByRadio[radioIndex].push(oli+1) 
+        symByLink[bli].push(oli+1)
+      end
+
+      if(incomingCoord==true)  # Baseline coordinates with opposing
+        asym1ByRadio[radioIndex].push(oli+1)  
+        asym1ByLink[bli].push(oli+1)
+      end
+      if(outgoingCoord==true)  # Opposing coordinates with baseline
+        asym2ByRadio[radioIndex].push(oli+1)     
+        asym2ByLink[bli].push(oli+1)
+      end
     end
   end
 end
-symByRadio.each {|r| r.uniq!}
-asym1ByRadio.each {|r| r.uniq!}
-asym2ByRadio.each {|r| r.uniq!}
+symByRadio.each {|r| r.uniq!}; asym1ByRadio.each {|r| r.uniq!}; asym2ByRadio.each {|r| r.uniq!}
+symByLink.each {|r| r.uniq!};  asym1ByLink.each {|r| r.uniq!}; asym2ByLink.each {|r| r.uniq!}
 
 dataOF.puts "\n  # For all radios, the set of links that the radio is in a completely blind situation"
-dataOF.puts "  set U[R] :="
+dataOF.puts "  set RU[R] :="
 symByRadio.each_index do |r|
   dataOF.print "\t<#{r+1}> { #{symByRadio[r].inspect[1..-2]} }"   # Print out the header
   dataOF.puts "," if(r<symByRadio.size-1)
@@ -357,7 +361,7 @@ symByRadio.each_index do |r|
 end
 
 dataOF.puts "\n  # For all radios, the set of links that are asymmetric, where the opposing link does not coordinate"
-dataOF.puts "  set UO[R] :="
+dataOF.puts "  set RUO[R] :="
 asym1ByRadio.each_index do |r|
   dataOF.print "\t<#{r+1}> { #{asym1ByRadio[r].inspect[1..-2]} }"   # Print out the header
   dataOF.puts "," if(r<asym1ByRadio.size-1)
@@ -365,9 +369,43 @@ asym1ByRadio.each_index do |r|
 end
 
 dataOF.puts "\n  # For all radios, the set of links that are asymmetric, where the baseline link does not coordinate"
-dataOF.puts "  set UB[R] :="
+dataOF.puts "  set RUB[R] :="
 asym2ByRadio.each_index do |r|
   dataOF.print "\t<#{r+1}> { #{asym2ByRadio[r].inspect[1..-2]} }"   # Print out the header
   dataOF.puts "," if(r<asym2ByRadio.size-1)
   dataOF.puts ";" if(r==asym2ByRadio.size-1)
+end
+
+
+dataOF.puts "\n## Similar data, but with a link-based focus"
+dataOF.puts "\n  # For all links, the set of links that the radio coordinates with"
+dataOF.puts "  set LC[L] :="
+coordByLink.each_index do |l|
+  dataOF.print "\t<#{l+1}> { #{coordByLink[l].inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(l<coordByLink.size-1)
+  dataOF.puts ";" if(l==coordByLink.size-1)
+end
+
+dataOF.puts "\n  # For all links, the set of links that the radio is in a completely blind situation"
+dataOF.puts "  set LU[L] :="
+symByLink.each_index do |l|
+  dataOF.print "\t<#{l+1}> { #{symByLink[l].inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(l<symByLink.size-1)
+  dataOF.puts ";" if(l==symByLink.size-1)
+end
+
+dataOF.puts "\n  # For all radios, the set of links that are asymmetric, where the opposing link does not coordinate"
+dataOF.puts "  set LUO[L] :="
+asym1ByLink.each_index do |l|
+  dataOF.print "\t<#{l+1}> { #{asym1ByLink[l].inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(l<asym1ByLink.size-1)
+  dataOF.puts ";" if(l==asym1ByLink.size-1)
+end
+
+dataOF.puts "\n  # For all radios, the set of links that are asymmetric, where the baseline link does not coordinate"
+dataOF.puts "  set LUB[L] :="
+asym2ByLink.each_index do |l|
+  dataOF.print "\t<#{l+1}> { #{asym2ByLink[l].inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(l<asym2ByLink.size-1)
+  dataOF.puts ";" if(l==asym2ByLink.size-1)
 end
