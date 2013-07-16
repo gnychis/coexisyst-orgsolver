@@ -398,7 +398,29 @@ coordByLink.each_index do |l|
 end
 
 dataOF.puts "\n  # For all links, the set of radios that the link coordinates with"
-dataOF.puts "  param LCR[L*R] :="
+dataOF.puts "  set LCR[L] :="
+lcr=Array.new
+coordByLink.each_index do |l|
+  r=Array.new
+  coordByLink[l].each {|lnk| r.push(hgraph.getLinkEdges[lnk-1].srcID)}
+  r.uniq!
+  k=Array.new
+  hgraph.getRadios.each do |rdo|
+    if(r.include?(rdo.radioID))
+      k.push(hgraph.getRadioIndex(rdo.radioID)+1)
+    end
+  end
+  lcr[l]=k
+end
+hgraph.getLinkEdges.each_index do |l|
+  dataOF.print "\t<#{l+1}> { #{lcr[l].inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(l<hgraph.getLinkEdges.size-1)
+  dataOF.puts ";" if(l==hgraph.getLinkEdges.size-1)
+end
+dataOF.puts "\n"
+
+dataOF.puts "\n  # For all links, the set of radios that the link coordinates with (table)"
+dataOF.puts "  param PLCR[L*R] :="
 dataOF.print "      | #{(1..hgraph.getLinkEdges.size).to_a.inspect[1..-2]} |"
 lcr=Array.new
 coordByLink.each_index do |l|
@@ -418,6 +440,30 @@ end
 hgraph.getLinkEdges.each_index do |l|
   le = hgraph.getLinkEdges[l]
   dataOF.print "\n   |#{l+1}|\t #{lcr[l].inspect[1..-2]} |"
+  dataOF.puts ";" if(l==hgraph.getLinkEdges.size-1)
+end
+dataOF.puts "\n"
+
+dataOF.puts "\n  # For all links, the set of radios that the link coordinates with by binary indicator"
+dataOF.puts "  set LCRI[L] :="
+lcr=Array.new
+coordByLink.each_index do |l|
+  r=Array.new
+  coordByLink[l].each {|lnk| r.push(hgraph.getLinkEdges[lnk-1].srcID)}
+  r.uniq!
+  k=Array.new
+  hgraph.getRadios.each do |rdo|
+    if(r.include?(rdo.radioID))
+      k.push(1)
+    else
+      k.push(0)
+    end
+  end
+  lcr[l]=k
+end
+hgraph.getLinkEdges.each_index do |l|
+  dataOF.print "\t<#{l+1}> { #{lcr[l].inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(l<hgraph.getLinkEdges.size-1)
   dataOF.puts ";" if(l==hgraph.getLinkEdges.size-1)
 end
 dataOF.puts "\n"
