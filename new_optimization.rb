@@ -504,4 +504,10 @@ hgraph.getRadios.each do |r|
   a.push(hgraph.getLinkEdgeIndex(e2[0])+1) if(e2.size>0 and e.size==0)
   puts "*************** ERRRRR" if(e.size==0 and e2.size==0)
 end
-dataOF.puts "  set RL   := { #{a.inspect[1..-2]} };"
+dataOF.puts "  set RL[R]   := "
+hgraph.getLinkEdges.each_index do |l|
+  dataOF.print "\t<#{l+1}> { #{a[l]} }"   # Print out the header
+  dataOF.puts "," if(l<hgraph.getLinkEdges.size-1)
+  dataOF.puts ";" if(l==hgraph.getLinkEdges.size-1)
+end
+dataOF.puts "\n"
