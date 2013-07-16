@@ -12,7 +12,7 @@ Trollop::die :directory, "must include data in files labaled capture<#>.dat" if(
 
 Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies)
 SpatialEdge = Struct.new(:from, :to, :rssi, :backoff)
-LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :airtime, :txLen, :protocol)
+LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :airtime, :dAirtime, :txLen, :protocol)
 Hyperedge = Struct.new(:id, :radios)
 
 class Hypergraph
@@ -176,7 +176,8 @@ Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
                           ls[3].to_i,   # The frequency used
                           ls[5].to_i,   # The bandwidth used on the link
                           ls[6].to_f,   # The airtime observed on the link from the source to destination
-                          ls[7].to_i,  # The average transmission length in microseconds
+                          ls[6].to_f*1.15,   # FIXME: desired airtime is just the current airtime
+                          ls[7].to_i,   # The average transmission length in microseconds
                           ls[2]))       # The protocol in use on the link
     end
     
@@ -232,15 +233,26 @@ dataOF.puts "\n\n############################################################"
 dataOF.puts "## Information related to links"
 dataOF.puts ""
 dataOF.puts "  # The set of links and the attributes for each link"
-dataOF.puts "  set LIDs       := { #{(1..hgraph.getLinkEdges.size).to_a.inspect[1..-2]} };"
+dataOF.puts "  set L          := { #{(1..hgraph.getLinkEdges.size).to_a.inspect[1..-2]} };"
 dataOF.puts "  set LinkAttr   := { #{LinkEdge.members.inspect[1..-2]} };"
+dataOF.puts "\n"
+dataOF.puts "  # The frequencies available for each link"
+dataOF.puts "  set FL[L] :="
+hgraph.getLinkEdges.each_index do |l|
+  le = hgraph.getLinkEdges[l]
+  tr = hgraph.getRadio(le.srcID)
+  dataOF.print "\t<#{l+1}> { #{tr.frequencies.inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(l<hgraph.getLinkEdges.size-1)
+  dataOF.puts ";" if(l==hgraph.getLinkEdges.size-1)
+end
+
 dataOF.puts ""
 dataOF.puts "  # The data for each link"
-dataOF.puts "  param L[LIDs * LinkAttr] :="
+dataOF.puts "  param LDATA[L * LinkAttr] :="
 dataOF.print "      |#{LinkEdge.members.inspect[1..-14]} |"
 hgraph.getLinkEdges.each_index do |l|
   le = hgraph.getLinkEdges[l]
-  dataOF.print "\n   |#{l+1}|\t    #{hgraph.getRadioIndex(le.srcID)+1},\t      #{hgraph.getRadioIndex(le.dstID)+1},  #{le.freq},\t\t  #{le.bandwidth},\t    #{le.airtime},   #{le.txLen}  |"
+  dataOF.print "\n   |#{l+1}|\t    #{hgraph.getRadioIndex(le.srcID)+1},\t      #{hgraph.getRadioIndex(le.dstID)+1},  #{le.freq},\t\t  #{le.bandwidth},\t  #{le.dAirtime}, \t#{le.airtime},   #{le.txLen}  |"
 end
 dataOF.print ";\n"
 

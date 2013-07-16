@@ -112,3 +112,5 @@
   
   subto airtime_is_positive:            # Ensure that the airtime of all networks is positive, it cannot be a negative value.
     forall <i> in R : a[i] >= 0;
+
+do forall <f> in F do print f;
