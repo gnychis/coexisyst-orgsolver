@@ -70,6 +70,10 @@ class Hypergraph
     return x
   end
 
+  def getLinkEdgeByIndex(idx)
+    return @@linkEdges[idx]
+  end
+
   def getLinkEdge(srcID, dstID)
     @@linkEdges.each {|l| return l if(l.srcID==srcID and l.dstID==dstID)}
     return nil
@@ -338,8 +342,19 @@ coordByRadio.each_index do |r|
   dataOF.puts "," if(r<coordByRadio.size-1)
   dataOF.puts ";" if(r==coordByRadio.size-1)
 end
-#hgraph.printRadios
-#puts hgraph.getRadios.size
+
+dataOF.puts "\n  # For all radios, the set of radios that the radio coordinates with"
+dataOF.puts "  set RCR[R] :="
+coordByRadio.each_index do |r|
+  radios=Array.new
+  coordByRadio[r].each do |lnk_idx| 
+    lnk = hgraph.getLinkEdgeByIndex(lnk_idx-1)
+    radios.push(hgraph.getRadioIndex(lnk.srcID)+1)
+  end
+  dataOF.print "\t<#{r+1}> { #{radios.inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(r<coordByRadio.size-1)
+  dataOF.puts ";" if(r==coordByRadio.size-1)
+end
 
 #################################################################################################
 ## Go through and check against sets of conflicts between a pair of links.

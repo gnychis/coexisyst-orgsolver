@@ -91,7 +91,6 @@
   # For calculating the rough estimated of an expected "fair share" (fs) of airtime due to radios that
   # the radio coordinates with.
   var fs[L];
-  var fsr[R];
   var nsharing[L];
   
   # ***************************************************************************************************
@@ -152,18 +151,11 @@
 
   # ***************************************************************************************************
   # Related to calculating the fairshare of airtime for each network
-  subto nsharing_eq:
-    forall <r> in R : 
-
-  subto nrsharing_eq:
-    forall <i> in L : forall <r> in LCR[i] : nrsharing[i] == sum <l> in ROL[r] : o[i,l];
-
-#  # This is 
-#  subto nsharing_eq:                    # The number of networks sharing a frequency with each other
-#    forall <i> in L : nsharing[i] == sum <c> in LC[i] with c!=i : o[i,c];
+  subto nsharing_eq:                    # The number of networks sharing a frequency with each other
+    forall <r> in R : nsharing[r] == sum <l> in ROL[r] : o[r,l];
 
   subto fs_eq:                          # Expected fs[i] equal to 1/nsharing, just written without division
-    forall <i> in L : fs[i] * (nrsharing[i]+1) == 1;
+    forall <i> in R : fs[i] * (nsharing[i]+1) == 1;
 
   # ***************************************************************************************************
   # Related to calculating the lossrate variable
