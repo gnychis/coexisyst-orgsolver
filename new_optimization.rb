@@ -187,7 +187,7 @@ Dir.glob("#{opts[:directory]}/capture*.dat").each do |capfile|
                           ls[3].to_i,   # The frequency used
                           ls[5].to_i,   # The bandwidth used on the link
                           ls[6].to_f,   # The airtime observed on the link from the source to destination
-                          ls[6].to_f*1.15,   # FIXME: desired airtime is just the current airtime
+                          ls[6].to_f*1.3,   # FIXME: desired airtime is just the current airtime
                           ls[7].to_i,   # The average transmission length in microseconds
                           ls[2]))       # The protocol in use on the link
     end
@@ -226,7 +226,8 @@ dataOF.puts "############################################################"
 dataOF.puts "## Information related to radios"
 dataOF.puts ""
 dataOF.puts "  # The set of radios in the optimization"
-dataOF.puts "  set R       := { #{(1..hgraph.getRadios.size).to_a.inspect[1..-2]} };"
+dataOF.puts "  set R            := { #{(1..hgraph.getRadios.size).to_a.inspect[1..-2]} };"
+dataOF.puts "  set RadioAttr    := { \"numLinks\", \"dAirtime\" };"
 dataOF.puts "\n"
 dataOF.puts "  # The frequencies available for each radio"
 dataOF.puts "  set FB[R] :="
@@ -235,6 +236,36 @@ hgraph.getRadios.each_index do |r|
   dataOF.puts "," if(r<hgraph.getRadios.size-1)
   dataOF.puts ";" if(r==hgraph.getRadios.size-1)
 end
+
+dataOF.puts "\n  # For each radio, the links that belong to the radio"
+dataOF.puts "  set RL[R] :="
+hgraph.getRadios.each_index do |r|
+  links=Array.new
+  hgraph.getLinkEdgesByTX(hgraph.getRadios[r].radioID).each {|le| links.push( hgraph.getLinkEdgeIndex(le)+1) }
+  dataOF.print "\t<#{r+1}> { #{links.inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(r<hgraph.getRadios.size-1)
+  dataOF.puts ";" if(r==hgraph.getRadios.size-1)
+end
+
+dataOF.puts "\n  # For each radio, the attributes"
+dataOF.puts "  param RDATA[R * RadioAttr] :="
+dataOF.puts "      | \"numLinks\", \"dAirtime\" |"
+hgraph.getRadios.each_index do |r|
+  links=Array.new
+  hgraph.getLinkEdgesByTX(hgraph.getRadios[r].radioID).each {|le| links.push(le) }
+  da = 0; links.each {|l| da+=l.dAirtime}
+  dataOF.print "     |#{r+1}| \t#{links.size}, \t#{da} |"   # Print out the header
+  dataOF.print "\n" if(r<hgraph.getRadios.size-1)
+  dataOF.puts ";" if(r==hgraph.getRadios.size-1)
+end
+
+#hgraph.getRadios.each_index do |r|
+#  links=Array.new
+#  hgraph.getLinkEdgesByTX(hgraph.getRadios[r].radioID).each {|le| links.push( hgraph.getLinkEdgeIndex(le)+1) }
+#  dataOF.print "\t<#{r+1}> { #{links.inspect[1..-2]} }"   # Print out the header
+#  dataOF.puts "," if(r<hgraph.getRadios.size-1)
+#  dataOF.puts ";" if(r==hgraph.getRadios.size-1)
+#end
 
 #################################################################################################
 ## Now we go through and prepare the links and transfer them over to the optimization.  We first
@@ -504,7 +535,7 @@ hgraph.getRadios.each do |r|
   a.push(hgraph.getLinkEdgeIndex(e2[0])+1) if(e2.size>0 and e.size==0)
   puts "*************** ERRRRR" if(e.size==0 and e2.size==0)
 end
-dataOF.puts "  set RL[R]   := "
+dataOF.puts "  set ROL[R]   := "
 hgraph.getLinkEdges.each_index do |l|
   dataOF.print "\t<#{l+1}> { #{a[l]} }"   # Print out the header
   dataOF.puts "," if(l<hgraph.getLinkEdges.size-1)

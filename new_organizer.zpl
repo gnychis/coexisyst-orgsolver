@@ -91,8 +91,8 @@
   # For calculating the rough estimated of an expected "fair share" (fs) of airtime due to radios that
   # the radio coordinates with.
   var fs[L];
+  var fsr[R];
   var nsharing[L];
-  var nrsharing[L];
   
   # ***************************************************************************************************
   # Calculation of the max(residual,fairshare)
@@ -152,8 +152,11 @@
 
   # ***************************************************************************************************
   # Related to calculating the fairshare of airtime for each network
+  subto nsharing_eq:
+    forall <r> in R : 
+
   subto nrsharing_eq:
-    forall <i> in L : forall <r> in LCR[i] : nrsharing[i] == sum <l> in RL[r] : o[i,l];
+    forall <i> in L : forall <r> in LCR[i] : nrsharing[i] == sum <l> in ROL[r] : o[i,l];
 
 #  # This is 
 #  subto nsharing_eq:                    # The number of networks sharing a frequency with each other
