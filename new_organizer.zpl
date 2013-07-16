@@ -117,7 +117,7 @@
     forall <i> in L : a[i] <= LDATA[i,"dAirtime"];
 
   subto airtime_eq_residual:            # The airtime is equal to the max of residual and fairshare, minus loss
-    forall <i> in L : a[i] == eat[i] * (1 - lossrate[i]);
+    forall <i> in L : a[i] == eat[i]; #* (1 - lossrate[i]);
 
   # ***************************************************************************************************
   # The top most function is that you get the max of residual and airtime, but then you must take the
@@ -148,6 +148,14 @@
 
   subto rfs_max_c2:                     # A possible constraint...
     forall <i> in L : -rfs_max[i] + rfs_max_M*(1-rfs_max_y[i]) >= -fs[i];
+
+  # ***************************************************************************************************
+  # Related to calculating the fairshare of airtime for each network
+  subto nsharing_eq:                    # The number of networks sharing a frequency with each other
+    forall <i> in L : nsharing[i] == sum <c> in LC[i] with c!=i : o[i,c];
+
+  subto fs_eq:                          # Expected fs[i] equal to 1/nsharing, just written without division
+    forall <i> in L : fs[i] * (nsharing[i]+1) == 1;
 
   # ***************************************************************************************************
   # Related to calculating the lossrate variable
@@ -189,6 +197,23 @@
   
   subto residual_eq:                    # The residual is equal to 1 minus the airtime sensed
     forall <i> in L : residual[i] == 1 - ats_act[i];
+  
+  # ***************************************************************************************************
+  # Related to substitution for  O_ifrf ^ f_i ^ f_r
+  subto af_overlap:                     # Whether the active frequencies for two networks overlap
+    forall <i> in L : forall <r> in L with i != r : o[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr];
+  
+  subto q_c1:                           # Must be less than whether or not the frequencies overlap
+    forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= O(fi,LDATA[i,"bandwidth"],fr,LDATA[r,"bandwidth"]);
+
+  subto q_c2:                           # Must be less than whether or not i is using frequency fi
+    forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= af[i,fi];
+
+  subto q_c3:                           # Must be less than whether or not r is using frequency fr
+    forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= af[r,fr];
+
+  subto q_c4:                           # Must be greater than the sum of the them
+    forall <i,r,fi,fr> in QD: q[i,r,fi,fr] >= O(fi,LDATA[i,"bandwidth"],fr,LDATA[r,"bandwidth"]) + af[i,fi] + af[r,fr] - 2;
 
 ############################################################################################################################################
 # INPUT CHECK

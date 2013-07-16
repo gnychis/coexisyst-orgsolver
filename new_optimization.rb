@@ -252,7 +252,7 @@ dataOF.puts "  param LDATA[L * LinkAttr] :="
 dataOF.print "      |#{LinkEdge.members.inspect[1..-14]} |"
 hgraph.getLinkEdges.each_index do |l|
   le = hgraph.getLinkEdges[l]
-  dataOF.print "\n   |#{l+1}|\t    #{hgraph.getRadioIndex(le.srcID)+1},\t      #{hgraph.getRadioIndex(le.dstID)+1},  #{le.freq},\t\t  #{le.bandwidth},\t  #{le.airtime}, \t      #{le.dAirtime},   #{le.txLen}  |"
+  dataOF.print "\n   |#{l+1}|\t    #{hgraph.getRadioIndex(le.srcID)+1},\t      #{hgraph.getRadioIndex(le.dstID)+1},  #{le.freq},\t\t  #{le.bandwidth},\t  #{le.airtime}, \t      0.9,   #{le.txLen}  |"
 end
 dataOF.print ";\n"
 
