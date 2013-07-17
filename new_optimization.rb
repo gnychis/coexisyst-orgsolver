@@ -15,6 +15,43 @@ SpatialEdge = Struct.new(:from, :to, :rssi, :backoff)
 LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :airtime, :dAirtime, :txLen, :protocol)
 Hyperedge = Struct.new(:id, :radios)
 
+class Optimization
+  attr_accessor :data
+
+  def initialize
+    @data = Hash.new
+  end
+
+  def translateVar(var,comment)
+    s=String.new
+    s += "  # #{comment}\n" if(not comment.nil?)
+
+    if(data[var].kind_of?(Array) and (not data[var][0].kind_of?(Array)))
+      s += "  set #{var}  := { #{data[var].inspect[1..-2]} };"
+    end
+
+    if(data[var].kind_of?(Array) and data[var][0].kind_of?(Array))
+
+      s += "  set #{var}  := \n"
+
+      data[var].each_index do |i|
+        s += "\t<#{i+1}> { #{data[var][i].inspect[1..-2]} }"   # Print out the header
+        s += ",\n" if(i <  data[var].size-1)
+        s += ";" if(i == data[var].size-1)
+      end
+
+      #dataOF.puts "  set FR[R] :="
+      #hgraph.getRadios.each_index do |r|
+      #end
+
+    end
+
+    s += "\n\n"
+    return s
+  end
+end
+opt = Optimization.new
+
 class Hypergraph
   @@spatialEdges=Array.new
   @@radios=Array.new
@@ -227,23 +264,25 @@ end
 
 dataOF = File.new("data.zpl", "w")
 
+# Get the optimization going
+opt.data["R"]=Array.new
+
 #################################################################################################
 ## Now, we need a unique numeric ID for every single transmitter.  This is strictly for the
 ## MIP optimization representation.  We need to keep track of these and we can have a lookup.
 dataOF.puts "############################################################"
 dataOF.puts "## Information related to radios"
 dataOF.puts ""
-dataOF.puts "  # The set of radios in the optimization"
-dataOF.puts "  set R            := { #{(1..hgraph.getRadios.size).to_a.inspect[1..-2]} };"
-dataOF.puts "  set RadioAttr    := { \"numLinks\", \"dAirtime\", \"bandwidth\" };"
-dataOF.puts "\n"
-dataOF.puts "  # The frequencies available for each radio"
-dataOF.puts "  set FR[R] :="
-hgraph.getRadios.each_index do |r|
-  dataOF.print "\t<#{r+1}> { #{hgraph.getRadios[r].frequencies.inspect[1..-2]} }"   # Print out the header
-  dataOF.puts "," if(r<hgraph.getRadios.size-1)
-  dataOF.puts ";" if(r==hgraph.getRadios.size-1)
-end
+
+hgraph.getRadios.each_index {|r| opt.data["R"].push(r+1)}
+dataOF.puts opt.translateVar("R", "The set of radios in the optimization")
+
+opt.data["RadioAttr"]=["numLinks", "dAirtime", "bandwidth"]
+dataOF.puts opt.translateVar("RadioAttr", nil)
+
+opt.data["FR[R]"]=Array.new
+hgraph.getRadios.each {|r| opt.data["FR[R]"].push(r.frequencies)}
+dataOF.puts opt.translateVar("FR[R]", "The frequencies available for each radio")
 
 dataOF.puts "\n  # For each radio, the links that belong to the radio"
 dataOF.puts "  set RL[R] :="
