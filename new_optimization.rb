@@ -40,10 +40,6 @@ class Optimization
         s += ";" if(i == data[var].size-1)
       end
 
-      #dataOF.puts "  set FR[R] :="
-      #hgraph.getRadios.each_index do |r|
-      #end
-
     end
 
     s += "\n\n"
@@ -97,6 +93,30 @@ class Hypergraph
 
   def newLinkEdge(link)
     @@linkEdges.push(link) if(getLinkEdge(link.srcID, link.dstID).nil?)
+  end
+
+  def getSpatialEdgesTo(radioID)
+    s=Array.new
+    @@spatialEdges.each do |se|
+      s.push(se) if(se.to==radioID)
+    end
+    return s
+  end
+
+  def getSpatialEdgesToIndices(edges)
+    x = Array.new
+    edges.each do |l|
+      @@spatialEdges.each_index {|i| x.push(i) if(@@spatialEdges[i]==l)}
+    end
+    return x
+  end
+
+  def getLinkEdgesToIndices(links)
+    x = Array.new
+    links.each do |l|
+      @@linkEdges.each_index {|i| x.push(i) if(@@linkEdges[i]==l)}
+    end
+    return x
   end
 
   def getLinkEdgesByTX(srcID)
@@ -284,15 +304,9 @@ opt.data["FR[R]"]=Array.new
 hgraph.getRadios.each {|r| opt.data["FR[R]"].push(r.frequencies)}
 dataOF.puts opt.translateVar("FR[R]", "The frequencies available for each radio")
 
-dataOF.puts "\n  # For each radio, the links that belong to the radio"
-dataOF.puts "  set RL[R] :="
-hgraph.getRadios.each_index do |r|
-  links=Array.new
-  hgraph.getLinkEdgesByTX(hgraph.getRadios[r].radioID).each {|le| links.push( hgraph.getLinkEdgeIndex(le)+1) }
-  dataOF.print "\t<#{r+1}> { #{links.inspect[1..-2]} }"   # Print out the header
-  dataOF.puts "," if(r<hgraph.getRadios.size-1)
-  dataOF.puts ";" if(r==hgraph.getRadios.size-1)
-end
+opt.data["RL[R]"]=Array.new
+hgraph.getRadios.each {|r| opt.data["RL[R]"].push( hgraph.getLinkEdgesToIndices(hgraph.getLinkEdgesByTX(r.radioID)).map {|i| i+1} ) }
+dataOF.puts opt.translateVar("RL[R]", "For each radio, the links that belong to the radio")
 
 dataOF.puts "\n  # For each radio, the attributes"
 dataOF.puts "  param RDATA[R * RadioAttr] :="
@@ -307,30 +321,19 @@ hgraph.getRadios.each_index do |r|
   dataOF.print "\n" if(r<hgraph.getRadios.size-1)
   dataOF.puts ";" if(r==hgraph.getRadios.size-1)
 end
+dataOF.puts "\n"
 
-dataOF.puts "\n  # For each radio, the set of radios that are within spatial range (i.e., r senses them)"
-dataOF.puts "  set S[R] :="
-hgraph.getRadios.each_index do |r|
-  s=Array.new
-  hgraph.getSpatialEdges.each do |se|
-    s.push(hgraph.getRadioIndex(se.from)+1) if(se.to==hgraph.getRadios[r].radioID)
-  end
-  dataOF.print "\t<#{r+1}> { #{s.inspect[1..-2]} }"   # Print out the header
-  dataOF.puts "," if(r<hgraph.getRadios.size-1)
-  dataOF.puts ";" if(r==hgraph.getRadios.size-1)
-end
+opt.data["S[R]"]=Array.new
+hgraph.getRadios.each {|r| opt.data["S[R]"].push( hgraph.getSpatialEdgesTo(r.radioID).map {|se| hgraph.getRadioIndex(se.from)+1} )}
+dataOF.puts opt.translateVar("S[R]", "For each radio, the set of radios that are within spatial range (i.e., r senses them)")
 
-dataOF.puts "\n  # For each radio, the set of radios that are within spatial range that 'r' senses"
-dataOF.puts "  set C[R] :="
-hgraph.getRadios.each_index do |r|
-  s=Array.new
-  hgraph.getSpatialEdges.each do |se|
-    s.push(hgraph.getRadioIndex(se.from)+1) if(se.to==hgraph.getRadios[r].radioID and se.backoff==1)
-  end
-  dataOF.print "\t<#{r+1}> { #{s.inspect[1..-2]} }"   # Print out the header
-  dataOF.puts "," if(r<hgraph.getRadios.size-1)
-  dataOF.puts ";" if(r==hgraph.getRadios.size-1)
-end
+opt.data["C[R]"]=Array.new
+hgraph.getRadios.each {|r| 
+  ses=Array.new
+  hgraph.getSpatialEdgesTo(r.radioID).each {|se| ses.push(se) if(se.backoff==1)}
+  opt.data["C[R]"].push( ses.map {|se| hgraph.getRadioIndex(se.from)+1} )
+  }
+dataOF.puts opt.translateVar("C[R]", "For each radio, the set of radios that are within spatial range (i.e., r senses them) and they coordinate")
 
 #################################################################################################
 ## Now we go through and prepare the links and transfer them over to the optimization.  We first
