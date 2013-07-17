@@ -60,6 +60,7 @@
   var GoodAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
   var Residual[R] real;       # The residual airtime sensed for each radio.
   var LinkAirtime[L] real;    # The airtime for each link given the radio's airtime
+  var LinkDecrease[R] real;
  
   # ***************************************************************************************************
   # Variables related to finding the min between rfs (the max between residual and fairshare) and
@@ -138,7 +139,8 @@
   # ***************************************************************************************************
   # Calculating the airtime for each link
   subto linkairtime_eq:
-    forall <r> in R : forall <l> in RL[r] : if(RDATA[r,"dAirtime"]>0) LinkAirtime[l] == LDATA[l,"dAirtime"] * ( 1 - ((RDATA[r,"dAirtime"] - RadioAirtime[r]) / RDATA[r,"dAirtime"]));
+    forall <r> in R with RDATA[r,"dAirtime"]>0 do
+      forall <l> in RL[r] : LinkAirtime[l] == LDATA[l,"dAirtime"] * ( 1 - ((RDATA[r,"dAirtime"] - RadioAirtime[r]) / RDATA[r,"dAirtime"]));
 
   # ***************************************************************************************************
   # Related to calculating the fairshare of airtime for each network
@@ -239,4 +241,4 @@
 ################
 #
   maximize min_prop_airtime: 
-    sum <r> in R : GoodAirtime[r] / RDATA[r,"dAirtime"]; 
+    sum <r> in R with RDATA[r,"dAirtime"]>0 : GoodAirtime[r] / RDATA[r,"dAirtime"]; 
