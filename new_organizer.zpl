@@ -57,16 +57,15 @@
   var af[TF] binary;          # A binary representation of which radios picks which frequency
   var o[R*R] binary;          # Do the radios, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
   var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
-  var Airtime[R] real;              # Airtime is a real number for each radios between 0 and 1.
+  var GoodAirtime[R] real;              # Airtime is a real number for each radios between 0 and 1.
   var Residual[R] real;       # The residual airtime sensed for each radio.
  
   # ***************************************************************************************************
   # Variables related to finding the min between rfs (the max between residual and fairshare) and
   # the desired airtime, because you can't get more than what you ask for!
-  # ... I call this 'eat' : expected airtime
-  var eat[R];
-  var eat_min_y[R] binary;
-  param eat_min_M := 100;
+  var Airtime[R];
+  var airtime_min_y[R] binary;
+  param airtime_min_M := 100;
   
   # ***************************************************************************************************
   # Variables that are related to calculating the airtime sensed by each radio.
@@ -111,29 +110,29 @@
     forall <r> in R : sum <f> in F : af[r,f] == 1; 
   
   subto airtime_is_positive:            # Ensure that the airtime of all networks is positive, it cannot be a negative value.
-    forall <r> in R : Airtime[r] >= 0;
+    forall <r> in R : GoodAirtime[r] >= 0;
   
   subto airtime_lte_desired:            # The actual airtime for each network cannot exceed the desired airtime of the network.
-    forall <r> in R : Airtime[r] <= RDATA[r,"dAirtime"];
+    forall <r> in R : GoodAirtime[r] <= RDATA[r,"dAirtime"];
 
   subto airtime_eq_residual:            # The airtime is equal to the max of residual and fairshare, minus loss
-    forall <r> in R : Airtime[r] == eat[r]; #* (1 - lossrate[i]);
+    forall <r> in R : GoodAirtime[r] == Airtime[r]; #* (1 - lossrate[i]);
 
   # ***************************************************************************************************
   # The top most function is that you get the max of residual and airtime, but then you must take the
   # min of the desired airtime with the result of that function.  That way you never have more than
   # you ask for.
-  subto eat_lte_rfs:                    # eat has to be less than max(residual,fairshare)
-    forall <r> in R : eat[r] <= rfs_max[r];
+  subto airtime_lte_rfs:                    # airtime has to be less than max(residual,fairshare)
+    forall <r> in R : Airtime[r] <= rfs_max[r];
 
-  subto eat_lte_D:                      # eat has to be less than your desired airtime
-    forall <r> in R : eat[r] <= RDATA[r,"dAirtime"];
+  subto airtime_lte_D:                      # airtime has to be less than your desired airtime
+    forall <r> in R : Airtime[r] <= RDATA[r,"dAirtime"];
 
-  subto eat_c1:                         # A possible constraint given the min substitution
-    forall <r> in R : -eat[r] <= -rfs_max[r] + eat_min_M*eat_min_y[r];
+  subto airtime_c1:                         # A possible constraint given the min substitution
+    forall <r> in R : -Airtime[r] <= -rfs_max[r] + airtime_min_M*airtime_min_y[r];
 
-  subto eat_c2:                         # A possible constraint ...
-    forall <r> in R : -eat[r] <= -RDATA[r,"dAirtime"] + eat_min_M*(1-eat_min_y[r]);
+  subto airtime_c2:                         # A possible constraint ...
+    forall <r> in R : -Airtime[r] <= -RDATA[r,"dAirtime"] + airtime_min_M*(1-airtime_min_y[r]);
 
   # ***************************************************************************************************
   # Related to calculating the fairshare of airtime for each network
@@ -178,7 +177,7 @@
   # Related to substitution for the min() in the airtime sensed so that the "actual" sensed is <= 1.
   # The residual airtime ends up being 1 minus this value
   subto ats_eq:                         # The airtime each network senses is equal to...
-    forall <r> in R : ats[r] == sum <c> in LC[r] : (RDATA[r,"dAirtime"] * o[r,c]);
+    forall <r> in R : ats[r] == sum <c> in C[r] : (RDATA[c,"dAirtime"] * o[r,c]);
 
   subto ats_min_lhv_eq:                 # The left hand value of the min for airtime sensed is airtime sensed
     forall <i> in L : ats_min_lhv[i] == ats[i];
@@ -234,4 +233,4 @@
 ################
 #
   maximize min_prop_airtime: 
-    sum <r> in R : Airtime[r] / RDATA[r,"dAirtime"]; 
+    sum <r> in R : GoodAirtime[r] / RDATA[r,"dAirtime"]; 

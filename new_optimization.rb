@@ -21,6 +21,10 @@ class Hypergraph
   @@hyperEdges=Array.new     
   @@linkEdges=Array.new
 
+  def getSpatialEdges()
+    return @@spatialEdges
+  end
+
   def getLinkEdges()
     return @@linkEdges
   end
@@ -265,13 +269,29 @@ hgraph.getRadios.each_index do |r|
   dataOF.puts ";" if(r==hgraph.getRadios.size-1)
 end
 
-#hgraph.getRadios.each_index do |r|
-#  links=Array.new
-#  hgraph.getLinkEdgesByTX(hgraph.getRadios[r].radioID).each {|le| links.push( hgraph.getLinkEdgeIndex(le)+1) }
-#  dataOF.print "\t<#{r+1}> { #{links.inspect[1..-2]} }"   # Print out the header
-#  dataOF.puts "," if(r<hgraph.getRadios.size-1)
-#  dataOF.puts ";" if(r==hgraph.getRadios.size-1)
-#end
+dataOF.puts "\n  # For each radio, the set of radios that are within spatial range (i.e., r senses them)"
+dataOF.puts "  set S[R] :="
+hgraph.getRadios.each_index do |r|
+  s=Array.new
+  hgraph.getSpatialEdges.each do |se|
+    s.push(hgraph.getRadioIndex(se.from)+1) if(se.to==hgraph.getRadios[r].radioID)
+  end
+  dataOF.print "\t<#{r+1}> { #{s.inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(r<hgraph.getRadios.size-1)
+  dataOF.puts ";" if(r==hgraph.getRadios.size-1)
+end
+
+dataOF.puts "\n  # For each radio, the set of radios that are within spatial range that 'r' senses"
+dataOF.puts "  set C[R] :="
+hgraph.getRadios.each_index do |r|
+  s=Array.new
+  hgraph.getSpatialEdges.each do |se|
+    s.push(hgraph.getRadioIndex(se.from)+1) if(se.to==hgraph.getRadios[r].radioID and se.backoff==1)
+  end
+  dataOF.print "\t<#{r+1}> { #{s.inspect[1..-2]} }"   # Print out the header
+  dataOF.puts "," if(r<hgraph.getRadios.size-1)
+  dataOF.puts ";" if(r==hgraph.getRadios.size-1)
+end
 
 #################################################################################################
 ## Now we go through and prepare the links and transfer them over to the optimization.  We first
