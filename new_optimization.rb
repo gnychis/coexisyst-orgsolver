@@ -231,7 +231,7 @@ dataOF.puts "## Information related to radios"
 dataOF.puts ""
 dataOF.puts "  # The set of radios in the optimization"
 dataOF.puts "  set R            := { #{(1..hgraph.getRadios.size).to_a.inspect[1..-2]} };"
-dataOF.puts "  set RadioAttr    := { \"numLinks\", \"dAirtime\" };"
+dataOF.puts "  set RadioAttr    := { \"numLinks\", \"dAirtime\", \"bandwidth\" };"
 dataOF.puts "\n"
 dataOF.puts "  # The frequencies available for each radio"
 dataOF.puts "  set FR[R] :="
@@ -253,12 +253,14 @@ end
 
 dataOF.puts "\n  # For each radio, the attributes"
 dataOF.puts "  param RDATA[R * RadioAttr] :="
-dataOF.puts "      | \"numLinks\", \"dAirtime\" |"
+dataOF.puts "      | \"numLinks\", \"dAirtime\", \"bandwidth\" |"
 hgraph.getRadios.each_index do |r|
   links=Array.new
   hgraph.getLinkEdgesByTX(hgraph.getRadios[r].radioID).each {|le| links.push(le) }
   da = 0; links.each {|l| da+=l.dAirtime}
-  dataOF.print "     |#{r+1}| \t#{links.size}, \t#{da} |"   # Print out the header
+  anylink=Array.new
+  hgraph.getLinkEdgesByID(hgraph.getRadios[r].radioID).each {|le| anylink.push(le)}
+  dataOF.print "     |#{r+1}| \t#{links.size}, \t#{da}, \t\t#{anylink[0].bandwidth} |"   # Print out the header
   dataOF.print "\n" if(r<hgraph.getRadios.size-1)
   dataOF.puts ";" if(r==hgraph.getRadios.size-1)
 end

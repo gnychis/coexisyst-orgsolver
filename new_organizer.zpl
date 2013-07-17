@@ -57,8 +57,8 @@
   var af[TF] binary;          # A binary representation of which radios picks which frequency
   var o[R*R] binary;          # Do the radios, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
   var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
-  var a[R] real;              # Airtime is a real number for each radios between 0 and 1.
-  var residual[R] real;       # The residual airtime sensed for each radio.
+  var Airtime[R] real;              # Airtime is a real number for each radios between 0 and 1.
+  var Residual[R] real;       # The residual airtime sensed for each radio.
  
   # ***************************************************************************************************
   # Variables related to finding the min between rfs (the max between residual and fairshare) and
@@ -90,7 +90,7 @@
   # ***************************************************************************************************
   # For calculating the rough estimated of an expected "fair share" (fs) of airtime due to radios that
   # the radio coordinates with.
-  var fs[R];
+  var FairShare[R];
   var nsharing[R];
   
   # ***************************************************************************************************
@@ -111,13 +111,13 @@
     forall <r> in R : sum <f> in F : af[r,f] == 1; 
   
   subto airtime_is_positive:            # Ensure that the airtime of all networks is positive, it cannot be a negative value.
-    forall <r> in R : a[r] >= 0;
+    forall <r> in R : Airtime[r] >= 0;
   
   subto airtime_lte_desired:            # The actual airtime for each network cannot exceed the desired airtime of the network.
-    forall <r> in R : a[r] <= RDATA[r,"dAirtime"];
+    forall <r> in R : Airtime[r] <= RDATA[r,"dAirtime"];
 
   subto airtime_eq_residual:            # The airtime is equal to the max of residual and fairshare, minus loss
-    forall <r> in R : a[r] == eat[r]; #* (1 - lossrate[i]);
+    forall <r> in R : Airtime[r] == eat[r]; #* (1 - lossrate[i]);
 
   # ***************************************************************************************************
   # The top most function is that you get the max of residual and airtime, but then you must take the
@@ -140,22 +140,22 @@
   subto nsharing_eq:                    # The number of networks sharing a frequency with each other
     forall <r> in R : nsharing[r] == sum <l> in ROL[r] : o[r,l];
 
-  subto fs_eq:                          # Expected fs[i] equal to 1/nsharing, just written without division
-    forall <r> in R : fs[r] * (nsharing[r]+1) == 1;
+  subto fs_eq:                          # Expected FairShare[i] equal to 1/nsharing, just written without division
+    forall <r> in R : FairShare[r] * (nsharing[r]+1) == 1;
 
   # ***************************************************************************************************
   # Calculating the max of residual airtime and the fairshare, giving the maximum of them
   subto rfs_max_gt_residual:            # rfs_max has to be greater than the residual
-    forall <r> in R : rfs_max[r] >= residual[r];
+    forall <r> in R : rfs_max[r] >= Residual[r];
 
   subto rfs_max_gt_fs:                  # rfs_max has to be greater than the fair share
-    forall <r> in R : rfs_max[r] >= fs[r];
+    forall <r> in R : rfs_max[r] >= FairShare[r];
 
   subto rfs_max_c1:                     # A possible constraint given the max LP sub
-    forall <r> in R : -rfs_max[r] + rfs_max_M*rfs_max_y[r] >= -residual[r];
+    forall <r> in R : -rfs_max[r] + rfs_max_M*rfs_max_y[r] >= -Residual[r];
 
   subto rfs_max_c2:                     # A possible constraint...
-    forall <r> in R : -rfs_max[r] + rfs_max_M*(1-rfs_max_y[r]) >= -fs[r];
+    forall <r> in R : -rfs_max[r] + rfs_max_M*(1-rfs_max_y[r]) >= -FairShare[r];
 
   # ***************************************************************************************************
   # Related to calculating the lossrate variable
@@ -196,15 +196,15 @@
     forall <i> in L : -ats_act[i] <= -ats_min_rhv + ats_min_M*(1-ats_min_y[i]);
   
   subto residual_eq:                    # The residual is equal to 1 minus the airtime sensed
-    forall <i> in L : residual[i] == 1 - ats_act[i];
+    forall <i> in L : Residual[i] == 1 - ats_act[i];
   
   # ***************************************************************************************************
   # Related to substitution for  O_ifrf ^ f_i ^ f_r
   subto af_overlap:                     # Whether the active frequencies for two networks overlap
-    forall <i> in L : forall <r> in L with i != r : o[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr];
+    forall <i> in R : forall <r> in R with i != r : o[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr];
   
   subto q_c1:                           # Must be less than whether or not the frequencies overlap
-    forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= O(fi,LDATA[i,"bandwidth"],fr,LDATA[r,"bandwidth"]);
+    forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= O(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]);
 
   subto q_c2:                           # Must be less than whether or not i is using frequency fi
     forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= af[i,fi];
@@ -213,7 +213,7 @@
     forall <i,r,fi,fr> in QD : q[i,r,fi,fr] <= af[r,fr];
 
   subto q_c4:                           # Must be greater than the sum of the them
-    forall <i,r,fi,fr> in QD: q[i,r,fi,fr] >= O(fi,LDATA[i,"bandwidth"],fr,LDATA[r,"bandwidth"]) + af[i,fi] + af[r,fr] - 2;
+    forall <i,r,fi,fr> in QD: q[i,r,fi,fr] >= O(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]) + af[i,fi] + af[r,fr] - 2;
 
 ############################################################################################################################################
 # INPUT CHECK
@@ -223,13 +223,15 @@
 
   # This is a check to make sure that the specified desired airtimes are legit.
   do forall <i> in L do check LDATA[i,"dAirtime"] >= 0 and LDATA[i,"dAirtime"] <= 1;
+  do forall <i> in R do check RDATA[i,"dAirtime"] >= 0 and RDATA[i,"dAirtime"] <= 1;
 
   # Ensure that bandwidth is positive
-  do forall <i> in L do check LDATA[i,"bandwidth"] > 0;
+  do forall <i> in L do check RDATA[i,"bandwidth"] > 0;
+  do forall <i> in R do check RDATA[i,"bandwidth"] > 0;
 
 ############################################################################################################################################
 # OBJECTIVE FUNCTION
 ################
 #
   maximize min_prop_airtime: 
-    sum <i> in L : a[i] / LDATA[i,"dAirtime"]; 
+    sum <r> in R : Airtime[r] / RDATA[r,"dAirtime"]; 
