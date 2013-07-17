@@ -57,13 +57,14 @@
   var af[TF] binary;          # A binary representation of which radios picks which frequency
   var o[R*R] binary;          # Do the radios, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
   var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
-  var GoodAirtime[R] real;              # Airtime is a real number for each radios between 0 and 1.
+  var GoodAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
   var Residual[R] real;       # The residual airtime sensed for each radio.
+  var LinkAirtime[L] real;    # The airtime for each link given the radio's airtime
  
   # ***************************************************************************************************
   # Variables related to finding the min between rfs (the max between residual and fairshare) and
   # the desired airtime, because you can't get more than what you ask for!
-  var Airtime[R];
+  var RadioAirtime[R];
   var airtime_min_y[R] binary;
   param airtime_min_M := 100;
   
@@ -116,23 +117,28 @@
     forall <r> in R : GoodAirtime[r] <= RDATA[r,"dAirtime"];
 
   subto airtime_eq_residual:            # The airtime is equal to the max of residual and fairshare, minus loss
-    forall <r> in R : GoodAirtime[r] == Airtime[r]; #* (1 - lossrate[i]);
+    forall <r> in R : GoodAirtime[r] == RadioAirtime[r]; #* (1 - lossrate[i]);
 
   # ***************************************************************************************************
   # The top most function is that you get the max of residual and airtime, but then you must take the
   # min of the desired airtime with the result of that function.  That way you never have more than
   # you ask for.
   subto airtime_lte_rfs:                    # airtime has to be less than max(residual,fairshare)
-    forall <r> in R : Airtime[r] <= rfs_max[r];
+    forall <r> in R : RadioAirtime[r] <= rfs_max[r];
 
   subto airtime_lte_D:                      # airtime has to be less than your desired airtime
-    forall <r> in R : Airtime[r] <= RDATA[r,"dAirtime"];
+    forall <r> in R : RadioAirtime[r] <= RDATA[r,"dAirtime"];
 
   subto airtime_c1:                         # A possible constraint given the min substitution
-    forall <r> in R : -Airtime[r] <= -rfs_max[r] + airtime_min_M*airtime_min_y[r];
+    forall <r> in R : -RadioAirtime[r] <= -rfs_max[r] + airtime_min_M*airtime_min_y[r];
 
   subto airtime_c2:                         # A possible constraint ...
-    forall <r> in R : -Airtime[r] <= -RDATA[r,"dAirtime"] + airtime_min_M*(1-airtime_min_y[r]);
+    forall <r> in R : -RadioAirtime[r] <= -RDATA[r,"dAirtime"] + airtime_min_M*(1-airtime_min_y[r]);
+  
+  # ***************************************************************************************************
+  # Calculating the airtime for each link
+  subto linkairtime_eq:
+    forall <r> in R : forall <l> in RL[r] : LinkAirtime[l] == LDATA[l,"dAirtime"] * ( 1 - ((RDATA[r,"dAirtime"] - RadioAirtime[r]) / RDATA[r,"dAirtime"]));
 
   # ***************************************************************************************************
   # Related to calculating the fairshare of airtime for each network
