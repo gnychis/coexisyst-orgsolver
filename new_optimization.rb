@@ -35,7 +35,7 @@ class Optimization
       s += "  set #{var}  := \n"
 
       data[var].each_index do |i|
-        s += "\t<#{i+1}> { #{data[var][i].inspect[1..-2]} }"   # Print out the header
+        s += "    <#{i+1}> { #{data[var][i].inspect[1..-2]} }"   # Print out the header
         s += ",\n" if(i <  data[var].size-1)
         s += ";" if(i == data[var].size-1)
       end
@@ -284,9 +284,6 @@ end
 
 dataOF = File.new("data.zpl", "w")
 
-# Get the optimization going
-opt.data["R"]=Array.new
-
 #################################################################################################
 ## Now, we need a unique numeric ID for every single transmitter.  This is strictly for the
 ## MIP optimization representation.  We need to keep track of these and we can have a lookup.
@@ -294,6 +291,7 @@ dataOF.puts "############################################################"
 dataOF.puts "## Information related to radios"
 dataOF.puts ""
 
+opt.data["R"]=Array.new
 hgraph.getRadios.each_index {|r| opt.data["R"].push(r+1)}
 dataOF.puts opt.translateVar("R", "The set of radios in the optimization")
 
@@ -342,38 +340,26 @@ dataOF.puts opt.translateVar("C[R]", "For each radio, the set of radios that are
 dataOF.puts "\n\n############################################################"
 dataOF.puts "## Information related to links"
 dataOF.puts ""
-dataOF.puts "  # The set of links and the attributes for each link"
-dataOF.puts "  set L          := { #{(1..hgraph.getLinkEdges.size).to_a.inspect[1..-2]} };"
-dataOF.puts "  set LinkAttr   := { #{LinkEdge.members.inspect[1..-2]} };"
-dataOF.puts "\n"
-dataOF.puts "  # The frequencies available for each link"
-dataOF.puts "  set FL[L] :="
-hgraph.getLinkEdges.each_index do |l|
-  le = hgraph.getLinkEdges[l]
-  tr = hgraph.getRadio(le.srcID)
-  dataOF.print "\t<#{l+1}> { #{tr.frequencies.inspect[1..-2]} }"   # Print out the header
-  dataOF.puts "," if(l<hgraph.getLinkEdges.size-1)
-  dataOF.puts ";" if(l==hgraph.getLinkEdges.size-1)
-end
 
-dataOF.puts ""
+opt.data["L"]=Array.new
+hgraph.getLinkEdges.each_index {|l| opt.data["L"].push(l+1)}
+dataOF.puts opt.translateVar("L", "The set of links in the optimization")
+
+opt.data["LinkAttr"]=LinkEdge.members[0..LinkEdge.members.size-2]
+dataOF.puts opt.translateVar("LinkAttr", "The set of attributes for each link")
+
+opt.data["FL[L]"]=Array.new
+hgraph.getLinkEdges.each {|le| opt.data["FL[L]"].push(hgraph.getRadio(le.srcID).frequencies)}
+dataOF.puts opt.translateVar("FL[L]", "The frequencies available for each link")
+
 dataOF.puts "  # The data for each link"
 dataOF.puts "  param LDATA[L * LinkAttr] :="
-dataOF.print "      |#{LinkEdge.members.inspect[1..-14]} |"
+dataOF.print "      |#{opt.data["LinkAttr"].inspect[1..-2]} |"
 hgraph.getLinkEdges.each_index do |l|
   le = hgraph.getLinkEdges[l]
   dataOF.print "\n   |#{l+1}|\t    #{hgraph.getRadioIndex(le.srcID)+1},\t      #{hgraph.getRadioIndex(le.dstID)+1},  #{le.freq},\t\t  #{le.bandwidth},\t  #{le.airtime}, \t      0.9,   #{le.txLen}  |"
 end
 dataOF.print ";\n"
-
-
-#################################################################################################
-## Output the hyperlinks in the graph
-
-#################################################################################################
-## Outputting the coordinating set of links.  
-dataOF.puts "\n\n############################################################"
-dataOF.puts "## Output related to spatial overlap"
 
 #################################################################################################
 ## Outputting the coordinating set of links.  
