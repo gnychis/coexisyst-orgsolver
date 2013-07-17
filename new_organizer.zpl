@@ -138,7 +138,7 @@
   # ***************************************************************************************************
   # Calculating the airtime for each link
   subto linkairtime_eq:
-    forall <r> in R : forall <l> in RL[r] : LinkAirtime[l] == LDATA[l,"dAirtime"] * ( 1 - ((RDATA[r,"dAirtime"] - RadioAirtime[r]) / RDATA[r,"dAirtime"]));
+    forall <r> in R : forall <l> in RL[r] : if(RDATA[r,"dAirtime"]>0) LinkAirtime[l] == LDATA[l,"dAirtime"] * ( 1 - ((RDATA[r,"dAirtime"] - RadioAirtime[r]) / RDATA[r,"dAirtime"]));
 
   # ***************************************************************************************************
   # Related to calculating the fairshare of airtime for each network
