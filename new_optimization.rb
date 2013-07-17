@@ -234,7 +234,7 @@ dataOF.puts "  set R            := { #{(1..hgraph.getRadios.size).to_a.inspect[1
 dataOF.puts "  set RadioAttr    := { \"numLinks\", \"dAirtime\" };"
 dataOF.puts "\n"
 dataOF.puts "  # The frequencies available for each radio"
-dataOF.puts "  set FB[R] :="
+dataOF.puts "  set FR[R] :="
 hgraph.getRadios.each_index do |r|
   dataOF.print "\t<#{r+1}> { #{hgraph.getRadios[r].frequencies.inspect[1..-2]} }"   # Print out the header
   dataOF.puts "," if(r<hgraph.getRadios.size-1)
@@ -305,6 +305,11 @@ dataOF.print ";\n"
 
 #################################################################################################
 ## Output the hyperlinks in the graph
+
+#################################################################################################
+## Outputting the coordinating set of links.  
+dataOF.puts "\n\n############################################################"
+dataOF.puts "## Output related to spatial overlap"
 
 #################################################################################################
 ## Outputting the coordinating set of links.  
