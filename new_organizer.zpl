@@ -42,7 +42,7 @@
       end;
 
   defnumb IS_AVAIL_FREQ(i, freq) := 
-      if( card( { freq } inter FL[i] ) == 1)
+      if( card( { freq } inter FR[i] ) == 1)
         then
           1
         else
