@@ -333,6 +333,17 @@ hgraph.getRadios.each {|r|
   }
 dataOF.puts opt.translateVar("C[R]", "For each radio, the set of radios that are within spatial range (i.e., r senses them) and they coordinate")
 
+networks=Hash.new
+hgraph.getRadios.each {|r| 
+  networks[r.networkID]=Array.new if(not networks.has_key?(r.networkID))
+  networks[r.networkID].push( hgraph.getRadioIndex(r.radioID)+1 )
+}
+networks.delete(nil)
+opt.data["H"]=(1..networks.size).to_a
+opt.data["HE[H]"]=networks.values
+dataOF.puts opt.translateVar("H", "The set of hyperedges")
+dataOF.puts opt.translateVar("HE[H]", "For each hyperedge, the set of networks that belong to it")
+
 #################################################################################################
 ## Now we go through and prepare the links and transfer them over to the optimization.  We first
 ## need to condense the links so that there is only a single "link" for every transmitter and
@@ -410,6 +421,7 @@ coordByRadio.each_index do |r|
   dataOF.puts "," if(r<coordByRadio.size-1)
   dataOF.puts ";" if(r==coordByRadio.size-1)
 end
+
 
 #################################################################################################
 ## Go through and check against sets of conflicts between a pair of links.

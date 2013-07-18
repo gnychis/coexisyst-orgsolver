@@ -120,6 +120,9 @@
   subto airtime_eq_residual:            # The airtime is equal to the max of residual and fairshare, minus loss
     forall <r> in R : GoodAirtime[r] == RadioAirtime[r]; #* (1 - lossrate[i]);
 
+#  subto samefreq_in_hyperedge:
+#    forall <h> in H : forall <r> in HE[h] : forall <j> in HE[h] : forall <f> in FR[r] : af[r,f] == af[j,f];
+
   # ***************************************************************************************************
   # The top most function is that you get the max of residual and airtime, but then you must take the
   # min of the desired airtime with the result of that function.  That way you never have more than
