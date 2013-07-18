@@ -84,7 +84,8 @@
   # ***************************************************************************************************
   # Variables that are related to calculating the loss rate for each network which is a product.
   # This computes the product in the most linear-way possible.
-  var lossrate[R] real >= 0 <= 1; 
+  var RadioLossRate[R] real >= 0 <= 1; 
+  var LinkLossRate[L] real >= 0 <= 1;
   var sr_vals[R*R] real;    # For each radio, calculate loss rate due to each radio
   var sr_vars[R*R] real;    # For the calculation of loss rate using a product
 
@@ -118,7 +119,7 @@
     forall <r> in R : GoodAirtime[r] <= RDATA[r,"dAirtime"];
 
   subto airtime_eq_residual:            # The airtime is equal to the max of residual and fairshare, minus loss
-    forall <r> in R : GoodAirtime[r] == RadioAirtime[r]; #* (1 - lossrate[i]);
+    forall <r> in R : GoodAirtime[r] == RadioAirtime[r] * (1 - RadioLossRate[r]);
 
   subto samefreq_in_hyperedge:
     forall <h> in H : forall <r> in HE[h] : forall <j> in HE[h] : forall <f> in FR[r] : af[r,f] == af[j,f];
@@ -166,11 +167,20 @@
 
   subto rfs_max_c2:                     # A possible constraint...
     forall <r> in R : -rfs_max[r] + rfs_max_M*(1-rfs_max_y[r]) >= -FairShare[r];
+  
+  # ***************************************************************************************************
+  # Calculating the lossrate for each radio, which will be based on the performance and fraction of
+  # airtime each of the links uses
+  subto radiolossrate_eq:
+    forall <r> in R : RadioLossRate[r] == sum <l> in RL[r] : 0.5; #LinkLossRate[l] * (LinkAirtime[l] / RadioAirtime[r]);
 
   # ***************************************************************************************************
-  # Related to calculating the lossrate variable
+  # Related to calculating the lossrate variable for each of the links
+  subto linklossrate_eq:
+    forall <l> in L : LinkLossRate[l] == 0;
+
 #  subto lossrate_eq:                    # Lossrate is the last variable in the series of multiplications (variables)
-#    forall <i> in L : lossrate[i] == 1 - sr_vars[i,card(L)];
+#    forall <i> in L : RadioLossRate[i] == 1 - sr_vars[i,card(L)];
 #  
 #  subto sr_vars_eq_inC:                 # Success rate for every network in C is considered to be 1
 #    forall <i> in L : forall <c> in LC[i]  : sr_vals[i,c] == 1;
