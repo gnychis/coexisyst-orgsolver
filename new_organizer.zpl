@@ -60,6 +60,7 @@
   var GoodAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
   var Residual[R] real;       # The residual airtime sensed for each radio.
   var LinkAirtime[L] real;    # The airtime for each link given the radio's airtime
+  var LinkAirtimeFrac[L] real;
   var LinkDecrease[R] real;
  
   # ***************************************************************************************************
@@ -171,16 +172,19 @@
   # ***************************************************************************************************
   # Calculating the lossrate for each radio, which will be based on the performance and fraction of
   # airtime each of the links uses
-  subto radiolossrate_eq:
-    forall <r> in R : RadioLossRate[r] == sum <l> in RL[r] : 0.5; #LinkLossRate[l] * (LinkAirtime[l] / RadioAirtime[r]);
+  subto radiolossrate_eq:               # The total radio loss rate based on each of its link's loss rate
+    forall <r> in R : RadioLossRate[r] == sum <l> in RL[r] : LinkLossRate[l] * LinkAirtimeFrac[l]; 
+
+  subto linkairtimefrac_eq:             # The fraction of the radio's airtime that each link uses
+    forall <r> in R : forall <l> in RL[r] : LinkAirtimeFrac[l] * RadioAirtime[r] == LinkAirtime[l];
 
   # ***************************************************************************************************
   # Related to calculating the lossrate variable for each of the links
   subto linklossrate_eq:
-    forall <l> in L : LinkLossRate[l] == 0;
+    forall <l> in L : LinkLossRate[l] == 0.5;
 
 #  subto lossrate_eq:                    # Lossrate is the last variable in the series of multiplications (variables)
-#    forall <i> in L : RadioLossRate[i] == 1 - sr_vars[i,card(L)];
+#    forall <i> in L : LinkLossRate[i] == 1 - sr_vars[i,card(L)];
 #  
 #  subto sr_vars_eq_inC:                 # Success rate for every network in C is considered to be 1
 #    forall <i> in L : forall <c> in LC[i]  : sr_vals[i,c] == 1;
