@@ -333,6 +333,10 @@ hgraph.getRadios.each {|r|
   }
 dataOF.puts opt.translateVar("C[R]", "For each radio, the set of radios that are within spatial range (i.e., r senses them) and they coordinate")
 
+opt.data["ROL[R]"]=Array.new
+hgraph.getRadios.each {|r| opt.data["ROL[R]"].push([hgraph.getLinkEdgeIndex(hgraph.getLinkEdgesByID(r.radioID)[0])+1]) }
+dataOF.puts opt.translateVar("ROL[R]", "For each radio, give one link that the radio participates in, TX or RX")
+
 networks=Hash.new
 hgraph.getRadios.each {|r| 
   networks[r.networkID]=Array.new if(not networks.has_key?(r.networkID))
@@ -401,26 +405,27 @@ allLinks.each_index do |bli|
     end
   end
 end
-dataOF.puts "  # For all radios, the set of links that the radio coordinates with"
-dataOF.puts "  set RC[R] :="
-coordByRadio.each_index do |r|
-  dataOF.print "\t<#{r+1}> { #{coordByRadio[r].inspect[1..-2]} }"   # Print out the header
-  dataOF.puts "," if(r<coordByRadio.size-1)
-  dataOF.puts ";" if(r==coordByRadio.size-1)
-end
 
-dataOF.puts "\n  # For all radios, the set of radios that the radio coordinates with"
-dataOF.puts "  set RCR[R] :="
-coordByRadio.each_index do |r|
-  radios=Array.new
-  coordByRadio[r].each do |lnk_idx| 
-    lnk = hgraph.getLinkEdgeByIndex(lnk_idx-1)
-    radios.push(hgraph.getRadioIndex(lnk.srcID)+1)
-  end
-  dataOF.print "\t<#{r+1}> { #{radios.inspect[1..-2]} }"   # Print out the header
-  dataOF.puts "," if(r<coordByRadio.size-1)
-  dataOF.puts ";" if(r==coordByRadio.size-1)
-end
+#dataOF.puts "  # For all radios, the set of links that the radio coordinates with"
+#dataOF.puts "  set RC[R] :="
+#coordByRadio.each_index do |r|
+#  dataOF.print "\t<#{r+1}> { #{coordByRadio[r].inspect[1..-2]} }"   # Print out the header
+#  dataOF.puts "," if(r<coordByRadio.size-1)
+#  dataOF.puts ";" if(r==coordByRadio.size-1)
+#end
+#
+#dataOF.puts "\n  # For all radios, the set of radios that the radio coordinates with"
+#dataOF.puts "  set RCR[R] :="
+#coordByRadio.each_index do |r|
+#  radios=Array.new
+#  coordByRadio[r].each do |lnk_idx| 
+#    lnk = hgraph.getLinkEdgeByIndex(lnk_idx-1)
+#    radios.push(hgraph.getRadioIndex(lnk.srcID)+1)
+#  end
+#  dataOF.print "\t<#{r+1}> { #{radios.inspect[1..-2]} }"   # Print out the header
+#  dataOF.puts "," if(r<coordByRadio.size-1)
+#  dataOF.puts ";" if(r==coordByRadio.size-1)
+#end
 
 
 #################################################################################################
@@ -476,61 +481,61 @@ end
 symByRadio.each {|r| r.uniq!}; asym1ByRadio.each {|r| r.uniq!}; asym2ByRadio.each {|r| r.uniq!}
 symByLink.each {|r| r.uniq!};  asym1ByLink.each {|r| r.uniq!}; asym2ByLink.each {|r| r.uniq!}
 
-dataOF.puts "\n  # For all radios, the set of links that the radio is in a completely blind situation"
-dataOF.puts "  set RU[R] :="
-symByRadio.each_index do |r|
-  dataOF.print "\t<#{r+1}> { #{symByRadio[r].inspect[1..-2]} }"   # Print out the header
-  dataOF.puts "," if(r<symByRadio.size-1)
-  dataOF.puts ";" if(r==symByRadio.size-1)
-end
+#dataOF.puts "\n  # For all radios, the set of links that the radio is in a completely blind situation"
+#dataOF.puts "  set RU[R] :="
+#symByRadio.each_index do |r|
+#  dataOF.print "\t<#{r+1}> { #{symByRadio[r].inspect[1..-2]} }"   # Print out the header
+#  dataOF.puts "," if(r<symByRadio.size-1)
+#  dataOF.puts ";" if(r==symByRadio.size-1)
+#end
+#
+#dataOF.puts "\n  # For all radios, the set of links that are asymmetric, where the opposing link does not coordinate"
+#dataOF.puts "  set RUO[R] :="
+#asym1ByRadio.each_index do |r|
+#  dataOF.print "\t<#{r+1}> { #{asym1ByRadio[r].inspect[1..-2]} }"   # Print out the header
+#  dataOF.puts "," if(r<asym1ByRadio.size-1)
+#  dataOF.puts ";" if(r==asym1ByRadio.size-1)
+#end
+#
+#dataOF.puts "\n  # For all radios, the set of links that are asymmetric, where the baseline link does not coordinate"
+#dataOF.puts "  set RUB[R] :="
+#asym2ByRadio.each_index do |r|
+#  dataOF.print "\t<#{r+1}> { #{asym2ByRadio[r].inspect[1..-2]} }"   # Print out the header
+#  dataOF.puts "," if(r<asym2ByRadio.size-1)
+#  dataOF.puts ";" if(r==asym2ByRadio.size-1)
+#end
+#
+#
+#dataOF.puts "\n## Similar data, but with a link-based focus"
+#dataOF.puts "\n  # For all links, the set of links that the radio coordinates with"
+#dataOF.puts "  set LC[L] :="
+#coordByLink.each_index do |l|
+#  dataOF.print "\t<#{l+1}> { #{coordByLink[l].inspect[1..-2]} }"   # Print out the header
+#  dataOF.puts "," if(l<coordByLink.size-1)
+#  dataOF.puts ";" if(l==coordByLink.size-1)
+#end
 
-dataOF.puts "\n  # For all radios, the set of links that are asymmetric, where the opposing link does not coordinate"
-dataOF.puts "  set RUO[R] :="
-asym1ByRadio.each_index do |r|
-  dataOF.print "\t<#{r+1}> { #{asym1ByRadio[r].inspect[1..-2]} }"   # Print out the header
-  dataOF.puts "," if(r<asym1ByRadio.size-1)
-  dataOF.puts ";" if(r==asym1ByRadio.size-1)
-end
-
-dataOF.puts "\n  # For all radios, the set of links that are asymmetric, where the baseline link does not coordinate"
-dataOF.puts "  set RUB[R] :="
-asym2ByRadio.each_index do |r|
-  dataOF.print "\t<#{r+1}> { #{asym2ByRadio[r].inspect[1..-2]} }"   # Print out the header
-  dataOF.puts "," if(r<asym2ByRadio.size-1)
-  dataOF.puts ";" if(r==asym2ByRadio.size-1)
-end
-
-
-dataOF.puts "\n## Similar data, but with a link-based focus"
-dataOF.puts "\n  # For all links, the set of links that the radio coordinates with"
-dataOF.puts "  set LC[L] :="
-coordByLink.each_index do |l|
-  dataOF.print "\t<#{l+1}> { #{coordByLink[l].inspect[1..-2]} }"   # Print out the header
-  dataOF.puts "," if(l<coordByLink.size-1)
-  dataOF.puts ";" if(l==coordByLink.size-1)
-end
-
-dataOF.puts "\n  # For all links, the set of radios that the link coordinates with"
-dataOF.puts "  set LCR[L] :="
-lcr=Array.new
-coordByLink.each_index do |l|
-  r=Array.new
-  coordByLink[l].each {|lnk| r.push(hgraph.getLinkEdges[lnk-1].srcID)}
-  r.uniq!
-  k=Array.new
-  hgraph.getRadios.each do |rdo|
-    if(r.include?(rdo.radioID))
-      k.push(hgraph.getRadioIndex(rdo.radioID)+1)
-    end
-  end
-  lcr[l]=k
-end
-hgraph.getLinkEdges.each_index do |l|
-  dataOF.print "\t<#{l+1}> { #{lcr[l].inspect[1..-2]} }"   # Print out the header
-  dataOF.puts "," if(l<hgraph.getLinkEdges.size-1)
-  dataOF.puts ";" if(l==hgraph.getLinkEdges.size-1)
-end
-dataOF.puts "\n"
+#dataOF.puts "\n  # For all links, the set of radios that the link coordinates with"
+#dataOF.puts "  set LCR[L] :="
+#lcr=Array.new
+#coordByLink.each_index do |l|
+#  r=Array.new
+#  coordByLink[l].each {|lnk| r.push(hgraph.getLinkEdges[lnk-1].srcID)}
+#  r.uniq!
+#  k=Array.new
+#  hgraph.getRadios.each do |rdo|
+#    if(r.include?(rdo.radioID))
+#      k.push(hgraph.getRadioIndex(rdo.radioID)+1)
+#    end
+#  end
+#  lcr[l]=k
+#end
+#hgraph.getLinkEdges.each_index do |l|
+#  dataOF.print "\t<#{l+1}> { #{lcr[l].inspect[1..-2]} }"   # Print out the header
+#  dataOF.puts "," if(l<hgraph.getLinkEdges.size-1)
+#  dataOF.puts ";" if(l==hgraph.getLinkEdges.size-1)
+#end
+#dataOF.puts "\n"
 
 #dataOF.puts "\n  # For all links, the set of radios that the link coordinates with (table)"
 #dataOF.puts "  param PLCR[L*R] :="
@@ -604,23 +609,3 @@ asym2ByLink.each_index do |l|
   dataOF.puts "," if(l<asym2ByLink.size-1)
   dataOF.puts ";" if(l==asym2ByLink.size-1)
 end
-
-dataOF.puts "\n\n############################################################"
-dataOF.puts "## Random helper sets and variables"
-dataOF.puts ""
-dataOF.puts "  # For each radio, give one link that it \"belongs to\""
-a=Array.new
-hgraph.getRadios.each do |r|
-  e = hgraph.getLinkEdgesByTX(r.radioID)
-  e2 = hgraph.getLinkEdgesByID(r.radioID)
-  a.push(hgraph.getLinkEdgeIndex(e[0])+1) if(e.size>0)
-  a.push(hgraph.getLinkEdgeIndex(e2[0])+1) if(e2.size>0 and e.size==0)
-  puts "*************** ERRRRR" if(e.size==0 and e2.size==0)
-end
-dataOF.puts "  set ROL[R]   := "
-hgraph.getLinkEdges.each_index do |l|
-  dataOF.print "\t<#{l+1}> { #{a[l]} }"   # Print out the header
-  dataOF.puts "," if(l<hgraph.getLinkEdges.size-1)
-  dataOF.puts ";" if(l==hgraph.getLinkEdges.size-1)
-end
-dataOF.puts "\n"
