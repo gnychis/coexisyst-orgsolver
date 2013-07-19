@@ -87,8 +87,8 @@
   # This computes the product in the most linear-way possible.
   var RadioLossRate[R] real >= 0 <= 1; 
   var LinkLossRate[L] real >= 0 <= 1;
-  var sr_vals[R*R] real;    # For each radio, calculate loss rate due to each radio
-  var sr_vars[R*R] real;    # For the calculation of loss rate using a product
+  var sr_vals[L*L] real;    # For each radio, calculate loss rate due to each radio
+  var sr_vars[L*L] real;    # For the calculation of loss rate using a product
 
   # ***************************************************************************************************
   # For calculating the rough estimated of an expected "fair share" (fs) of airtime due to radios that
@@ -181,13 +181,24 @@
   # ***************************************************************************************************
   # Related to calculating the lossrate variable for each of the links
   subto lossrate_eq:                    # Lossrate is the last variable in the series of multiplications (variables)
-    forall <i> in L : LinkLossRate[i] == 1 - sr_vars[i,card(L)];
+    forall <l> in L : LinkLossRate[l] == 1 - sr_vars[l,card(L)];
   
-  subto lossrate_prod_vals_eq:          # Loss rate on network i due to network u
-    forall <l> in L : forall <j> in L : sr_vals[l,j] == exp(-0.25 * VW[l,j])  * o[l,j];
+  subto lossrate_prod_vals_eq:          # Loss rate on link l due to link j
+    forall <l> in L : forall <j> in U[l] do 
+      if(1==card({j} inter LU[l])) then 
+          sr_vals[l,j] == exp( -0.25 * (LDATA[l,"txLen"] + LDATA[j,"txLen"])) * o[l,j]
+      else
+        if(1==card({j} inter LUO[l])) then
+          sr_vals[l,j] == exp( -0.25 * LDATA[l,"txLen"]) * o[l,j]
+        else
+          if(1==card({j} inter LUB[l])) then
+            sr_vals[l,j] == exp( -0.25 * LDATA[j,"txLen"]) * o[l,j]
+          end
+        end
+      end;
 
   subto lossrate_prod_vars_eq_init:     # Initialize the first multiplication in the chain
-    forall <i> in L : sr_vars[i,1] == sr_vals[i,1];
+    forall <l> in L : sr_vars[l,1] == sr_vals[l,1];
 
   subto lossrate_prod_vars_eq:          # Loss rate variables which is a chain of multiplications
     forall <i> in L : forall <j> in L with j!=1 : sr_vars[i,j] == sr_vars[i,j-1] * sr_vals[i,j];
