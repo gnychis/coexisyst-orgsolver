@@ -180,8 +180,10 @@
 
   # ***************************************************************************************************
   # Related to calculating the lossrate variable for each of the links
-  subto linklossrate_eq:
-    forall <l> in L : LinkLossRate[l] == 0;
+#  subto linklossrate_eq:
+#    forall <l> in L : LinkLossRate[l] == sum <u> in U[l] : LinkAirtime[l];
+
+
 #    forall <l> in L : forall <u> in U[l] : 
 #        LinkLossRate[l] == if(u==2) then 1 else 1 end;
 
