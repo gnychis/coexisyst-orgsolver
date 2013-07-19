@@ -1,3 +1,3 @@
 1 802.11agn wifi1 greece4life {2412}
-2 802.11agn wifi2 greece4life {2412}
-3 802.11agn wifi3 greece4life {2412}
+2 802.11agn wifi2 greece4life2 {2412,2437}
+3 802.11agn wifi3 greece4life3 {2437}
