@@ -389,57 +389,115 @@ dataOF.puts "\n\n############################################################"
 dataOF.puts "## Information related to coordination between links"
 dataOF.puts ""
 
+# Calculate the vulnerability windows
 allLinks = hgraph.getLinkEdges
-symByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| symByRadio.push(Array.new)}
-symByLink=Array.new;  (1..hgraph.getLinkEdges.size).each {|l| symByLink.push(Array.new)}
-asym1ByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| asym1ByRadio.push(Array.new)}
-asym1ByLink=Array.new; (1..hgraph.getLinkEdges.size).each {|l| asym1ByLink.push(Array.new)}
-asym2ByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| asym2ByRadio.push(Array.new)}
-asym2ByLink=Array.new; (1..hgraph.getLinkEdges.size).each {|i|asym2ByLink.push(Array.new)}
-allLinks.each_index do |bli|
-  baseLink = allLinks[bli]
-  radioIndex = hgraph.getRadioIndex(baseLink.srcID)
+opt.data["VW[L]"]=Array.new
+allLinks.each do |baseLink|
+  a=Array.new
+  allLinks.each do |oppLink|
+    
+    # If the two links are the same, they have no impact on each other
+    if(baseLink==oppLink)
+      a.push(0) 
+      next
+    end
 
-  allLinks.each_index do |oli|
-    oppLink = allLinks[oli]
+    # Two links with the same transmitter cannot have any impact on each other
+    if(baseLink.srcID == oppLink.srcID)
+      a.push(0)
+      next
+    end
+
     outgoingSE = hgraph.getSpatialEdge(baseLink.srcID, oppLink.srcID)
     incomingSE = hgraph.getSpatialEdge(oppLink.srcID, baseLink.srcID)
-    
-    # Skip if the links are the same or if both links have same transmitter
-    next if(oppLink == baseLink)
-    next if(oppLink.srcID==baseLink.srcID)
-    
-    if(hgraph.getSpatialEdge(oppLink.srcID,baseLink.dstID))  # If receiver in range of opposing...
+
+    # The receiver is within range of the opposing link
+    if(hgraph.getSpatialEdge(oppLink.srcID,baseLink.dstID))
       outgoingCoord=false; incomingCoord=false
       outgoingCoord=true if((not outgoingSE.nil?) and outgoingSE.backoff==1)
       incomingCoord=true if((not incomingSE.nil?) and incomingSE.backoff==1)
-      break if(outgoingCoord && incomingCoord)
+      
+      # They coordinate so there is no impact
+      if(outgoingCoord && incomingCoord)
+        a.push(0)
+        next
+      end
+      
+      # Both do not coordinate, so the vulnerability window is both tx len
       if(outgoingCoord==false && incomingCoord==false)
-        symByRadio[radioIndex].push(oli+1) 
-        symByLink[bli].push(oli+1)
+        a.push(baseLink.txLen + oppLink.txLen)
+        next
       end
 
-      if(incomingCoord==true)  # Baseline coordinates with opposing
-        asym1ByRadio[radioIndex].push(oli+1)  
-        asym1ByLink[bli].push(oli+1)
+      if(outgoingCoord==true && incomingCoord==false)
+        a.push(oppLink.txLen)
+        next
       end
-      if(outgoingCoord==true)  # Opposing coordinates with baseline
-        asym2ByRadio[radioIndex].push(oli+1)     
-        asym2ByLink[bli].push(oli+1)
+
+      if(outgoingCoord==false && incomingCoord==true)
+        a.push(baseLink.txLen)
+        next
       end
+      
     end
+    
+    a.push(0)
   end
+  opt.data["VW[L]"].push(a)
 end
-symByRadio.each {|r| r.uniq!}; asym1ByRadio.each {|r| r.uniq!}; asym2ByRadio.each {|r| r.uniq!}
-symByLink.each {|r| r.uniq!};  asym1ByLink.each {|r| r.uniq!}; asym2ByLink.each {|r| r.uniq!}
+dataOF.puts opt.translateVar("VW[L]", "The vulnerability window between each pair of links")
 
-
-opt.data["U[L]"] = Array.new
-opt.data["LU[L]"] = symByLink
-opt.data["LUO[L]"] = asym1ByLink
-opt.data["LUB[L]"] = asym2ByLink
-opt.data["LU[L]"].each_index {|i| opt.data["U[L]"][i] = opt.data["LU[L]"][i] | opt.data["LUO[L]"][i] | opt.data["LUB[L]"][i]}
-dataOF.puts opt.translateVar("U[L]", "For all links, all other links that will contribute to it in a negative scenario")
-dataOF.puts opt.translateVar("LU[L]", "For all links, the set of links that the radio is in a completely blind situation")
-dataOF.puts opt.translateVar("LUO[L]", "For all radios, the set of links that are asymmetric, where the opposing link does not coordinate")
-dataOF.puts opt.translateVar("LUB[L]", "For all radios, the set of links that are asymmetric, where the baseline link does not coordinate")
+#allLinks = hgraph.getLinkEdges
+#symByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| symByRadio.push(Array.new)}
+#symByLink=Array.new;  (1..hgraph.getLinkEdges.size).each {|l| symByLink.push(Array.new)}
+#asym1ByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| asym1ByRadio.push(Array.new)}
+#asym1ByLink=Array.new; (1..hgraph.getLinkEdges.size).each {|l| asym1ByLink.push(Array.new)}
+#asym2ByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| asym2ByRadio.push(Array.new)}
+#asym2ByLink=Array.new; (1..hgraph.getLinkEdges.size).each {|i|asym2ByLink.push(Array.new)}
+#allLinks.each_index do |bli|
+#  baseLink = allLinks[bli]
+#  radioIndex = hgraph.getRadioIndex(baseLink.srcID)
+#
+#  allLinks.each_index do |oli|
+#    oppLink = allLinks[oli]
+#    outgoingSE = hgraph.getSpatialEdge(baseLink.srcID, oppLink.srcID)
+#    incomingSE = hgraph.getSpatialEdge(oppLink.srcID, baseLink.srcID)
+#    
+#    # Skip if the links are the same or if both links have same transmitter
+#    next if(oppLink == baseLink)
+#    next if(oppLink.srcID==baseLink.srcID)
+#    
+#    if(hgraph.getSpatialEdge(oppLink.srcID,baseLink.dstID))  # If receiver in range of opposing...
+#      outgoingCoord=false; incomingCoord=false
+#      outgoingCoord=true if((not outgoingSE.nil?) and outgoingSE.backoff==1)
+#      incomingCoord=true if((not incomingSE.nil?) and incomingSE.backoff==1)
+#      break if(outgoingCoord && incomingCoord)
+#      if(outgoingCoord==false && incomingCoord==false)
+#        symByRadio[radioIndex].push(oli+1) 
+#        symByLink[bli].push(oli+1)
+#      end
+#
+#      if(incomingCoord==true)  # Baseline coordinates with opposing
+#        asym1ByRadio[radioIndex].push(oli+1)  
+#        asym1ByLink[bli].push(oli+1)
+#      end
+#      if(outgoingCoord==true)  # Opposing coordinates with baseline
+#        asym2ByRadio[radioIndex].push(oli+1)     
+#        asym2ByLink[bli].push(oli+1)
+#      end
+#    end
+#  end
+#end
+#symByRadio.each {|r| r.uniq!}; asym1ByRadio.each {|r| r.uniq!}; asym2ByRadio.each {|r| r.uniq!}
+#symByLink.each {|r| r.uniq!};  asym1ByLink.each {|r| r.uniq!}; asym2ByLink.each {|r| r.uniq!}
+#
+#
+#opt.data["U[L]"] = Array.new
+#opt.data["LU[L]"] = symByLink
+#opt.data["LUO[L]"] = asym1ByLink
+#opt.data["LUB[L]"] = asym2ByLink
+#opt.data["LU[L]"].each_index {|i| opt.data["U[L]"][i] = opt.data["LU[L]"][i] | opt.data["LUO[L]"][i] | opt.data["LUB[L]"][i]}
+#dataOF.puts opt.translateVar("U[L]", "For all links, all other links that will contribute to it in a negative scenario")
+#dataOF.puts opt.translateVar("LU[L]", "For all links, the set of links that the radio is in a completely blind situation")
+#dataOF.puts opt.translateVar("LUO[L]", "For all radios, the set of links that are asymmetric, where the opposing link does not coordinate")
+#dataOF.puts opt.translateVar("LUB[L]", "For all radios, the set of links that are asymmetric, where the baseline link does not coordinate")
