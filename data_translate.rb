@@ -445,6 +445,7 @@ allLinks.each do |baseLink|
   end
   opt.data["VW[L]"].push(a)
 end
+opt.data["VW[L]"].each {|l| l.each_index {|i| l[i]/=1000000.0}}
 dataOF.puts opt.translateVar("VW[L]", "The vulnerability window between each pair of links")
 
 #allLinks = hgraph.getLinkEdges
