@@ -183,11 +183,8 @@
   subto lossrate_eq:                    # Lossrate is the last variable in the series of multiplications (variables)
     forall <i> in L : LinkLossRate[i] == 1 - sr_vars[i,card(L)];
   
-  subto sr_vars_eq_inC:                 # Success rate for every network in C is considered to be 1
-    forall <i> in L : forall <c> in LC[i]  : sr_vals[i,c] == 1;
-
   subto lossrate_prod_vals_eq:          # Loss rate on network i due to network u
-    forall <i> in L : forall <u> in LU[i] : sr_vals[i,u] == (1 - exp(- (LDATA[u,"dAirtime"] / LDATA[u,"txLen"]) * (LDATA[i,"txLen"] + LDATA[u,"txLen"]))  * o[i,u]);
+    forall <l> in L : forall <j> in L : sr_vals[l,j] == exp(-0.25 * VW[l,j])  * o[l,j];
 
   subto lossrate_prod_vars_eq_init:     # Initialize the first multiplication in the chain
     forall <i> in L : sr_vars[i,1] == sr_vals[i,1];
