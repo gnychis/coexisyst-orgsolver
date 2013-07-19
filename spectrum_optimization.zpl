@@ -150,7 +150,7 @@
   # ***************************************************************************************************
   # Related to calculating the fairshare of airtime for each network
   subto nsharing_eq:                    # The number of networks sharing a frequency with each other
-    forall <r> in R : nsharing[r] == sum <l> in ROL[r] : o[r,l];
+    forall <r> in R :  nsharing[r] == sum <c> in C[r] : o[r,c];
 
   subto fs_eq:                          # Expected FairShare[i] equal to 1/nsharing, just written without division
     forall <r> in R : FairShare[r] * (nsharing[r]+1) == 1;
