@@ -181,7 +181,9 @@
   # ***************************************************************************************************
   # Related to calculating the lossrate variable for each of the links
   subto linklossrate_eq:
-    forall <l> in L : LinkLossRate[l] == 0.5;
+    forall <l> in L : LinkLossRate[l] == 0;
+#    forall <l> in L : forall <u> in U[l] : 
+#        LinkLossRate[l] == if(u==2) then 1 else 1 end;
 
 #  subto lossrate_eq:                    # Lossrate is the last variable in the series of multiplications (variables)
 #    forall <i> in L : LinkLossRate[i] == 1 - sr_vars[i,card(L)];

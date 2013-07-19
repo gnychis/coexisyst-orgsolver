@@ -1,2 +1,2 @@
 1 802.11agn wifi1 greece4life {2412,2437}
-2 802.11agn wifi2 greece4life2 {2412,2437}
+2 802.11agn wifi2 greece4life {2412,2437}

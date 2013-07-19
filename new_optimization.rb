@@ -334,7 +334,7 @@ hgraph.getRadios.each {|r|
 dataOF.puts opt.translateVar("C[R]", "For each radio, the set of radios that are within spatial range (i.e., r senses them) and they coordinate")
 
 opt.data["ROL[R]"]=Array.new
-hgraph.getRadios.each {|r| opt.data["ROL[R]"].push([hgraph.getLinkEdgeIndex(hgraph.getLinkEdgesByID(r.radioID)[0])+1]) }
+hgraph.getRadios.each {|r| opt.data["ROL[R]"].push([hgraph.getLinkEdgeIndex(hgraph.getLinkEdgesByTX(r.radioID)[0])+1]) }
 dataOF.puts opt.translateVar("ROL[R]", "For each radio, give one link that the radio participates in, TX or RX")
 
 networks=Hash.new
