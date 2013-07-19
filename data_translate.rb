@@ -331,7 +331,7 @@ hgraph.getRadios.each {|r|
   hgraph.getSpatialEdgesTo(r.radioID).each {|se| ses.push(se) if(se.backoff==1)}
   opt.data["C[R]"].push( ses.map {|se| hgraph.getRadioIndex(se.from)+1} )
   }
-dataOF.puts opt.translateVar("C[R]", "For each radio, the set of radios that are within spatial range (i.e., r senses them) and they coordinate")
+dataOF.puts opt.translateVar("C[R]", "For each radio, the set of radios that are within spatial range (i.e., r senses them) and it coordinates with them (uni-directional)")
 
 opt.data["ROL[R]"]=Array.new
 hgraph.getRadios.each {|r| opt.data["ROL[R]"].push([hgraph.getLinkEdgeIndex(hgraph.getLinkEdgesByTX(r.radioID)[0])+1]) }
