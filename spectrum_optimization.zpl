@@ -186,13 +186,13 @@
   subto lossrate_prod_vals_eq:          # Loss rate on link l due to link j
     forall <l> in L : forall <j> in U[l] do 
       if(1==card({j} inter LU[l])) then 
-          sr_vals[l,j] == exp( -0.25 * (LDATA[l,"txLen"] + LDATA[j,"txLen"])) * o[l,j]
+          sr_vals[l,j] == (0.25 * LinkAirtime[j]+1) * o[l,j]
       else
         if(1==card({j} inter LUO[l])) then
-          sr_vals[l,j] == exp( -0.25 * LDATA[l,"txLen"]) * o[l,j]
+          sr_vals[l,j] == (0.25 * LinkAirtime[j]+1) * o[l,j]
         else
           if(1==card({j} inter LUB[l])) then
-            sr_vals[l,j] == exp( -0.25 * LDATA[j,"txLen"]) * o[l,j]
+            sr_vals[l,j] == (0.25 * LinkAirtime[j]+1) * o[l,j]
           end
         end
       end;
