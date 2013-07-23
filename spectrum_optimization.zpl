@@ -217,10 +217,12 @@
   # Related to calculating the estimated overlap between two links which we do as a linear approximation
   # with 3 focus points.
   subto expComp_eq:
-    forall <l> in L : forall <j> in U[l] : expComp[l,j] == -(200 * vulnWin[l,j]);
+      forall <l> in L : forall <j> in U[l] : expComp[l,j] == -(200 * vulnWin[l,j]);
 
-#  subto estOverlap_eq:
-#    forall <l> in L : forall <j> in U[l] : estOverlap[l,j] == exp(expComp[l,j]);
+  subto estOverlap_eq:
+    if(USE_APPROX == 0) then
+      forall <l> in L : forall <j> in U[l] : estOverlap[l,j] == exp(expComp[l,j])
+    end;
 
   subto toggleIND_1:
     forall <l> in L : forall <j> in U[l] : forall <i> in FPS do
