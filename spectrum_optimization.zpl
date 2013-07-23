@@ -4,7 +4,8 @@
 #
 
   include "data.zpl";
-  param USE_APPROX := 1;
+  param USE_LINEAR_APPROX := 0;   # Avoid the use of an exponential function in computing overlap by using a
+                                  # linear approximation we introduced
 
 ############################################################################################################################################
 # CONSTANTS
@@ -220,29 +221,39 @@
       forall <l> in L : forall <j> in U[l] : expComp[l,j] == -(200 * vulnWin[l,j]);
 
   subto estOverlap_eq:
-    if(USE_APPROX == 0) then
+    if(USE_LINEAR_APPROX == 0) then
       forall <l> in L : forall <j> in U[l] : estOverlap[l,j] == exp(expComp[l,j])
     end;
 
   subto toggleIND_1:
-    forall <l> in L : forall <j> in U[l] : forall <i> in FPS do
-      expIND[l,j,i] >= ((expComp[l,j]-expFPS[i]) / EXP_MAX) + (EXP_DELTA / (2*EXP_MAX));
+    if(USE_LINEAR_APPROX == 1) then
+      forall <l> in L : forall <j> in U[l] : forall <i> in FPS do
+        expIND[l,j,i] >= ((expComp[l,j]-expFPS[i]) / EXP_MAX) + (EXP_DELTA / (2*EXP_MAX))
+      end;
   
   subto toggleIND_2:
-    forall <l> in L : forall <j> in U[l] : forall <i> in FPS do
-      expIND[l,j,i] <= 1 + ((expComp[l,j]-expFPS[i])/EXP_MAX);
+    if(USE_LINEAR_APPROX == 1) then
+      forall <l> in L : forall <j> in U[l] : forall <i> in FPS do
+        expIND[l,j,i] <= 1 + ((expComp[l,j]-expFPS[i])/EXP_MAX)
+    end;
 
   subto exp_low: 
-    forall <l> in L : forall <j> in U[l] do
-      0 == (expIND[l,j,1]-expIND[l,j,2]) * (expFPSvals[1] + expFPSvals[1]*expComp[l,j] - expFPSvals[1]*expFPS[1] - estOverlap[l,j]);
+    if(USE_LINEAR_APPROX == 1) then
+      forall <l> in L : forall <j> in U[l] do
+        0 == (expIND[l,j,1]-expIND[l,j,2]) * (expFPSvals[1] + expFPSvals[1]*expComp[l,j] - expFPSvals[1]*expFPS[1] - estOverlap[l,j])
+    end;
 
   subto exp_mid: 
-    forall <l> in L : forall <j> in U[l] do
-      0 == (expIND[l,j,2]-expIND[l,j,3]) * (expFPSvals[2] + expFPSvals[2]*expComp[l,j] - expFPSvals[2]*expFPS[2] - estOverlap[l,j]);
+    if(USE_LINEAR_APPROX == 1) then
+      forall <l> in L : forall <j> in U[l] do
+        0 == (expIND[l,j,2]-expIND[l,j,3]) * (expFPSvals[2] + expFPSvals[2]*expComp[l,j] - expFPSvals[2]*expFPS[2] - estOverlap[l,j])
+    end;
 
   subto exp_high: 
-    forall <l> in L : forall <j> in U[l] do
-      0 == (expIND[l,j,3]) * (expFPSvals[3] + expFPSvals[3]*expComp[l,j] - expFPSvals[3]*expFPS[3] - estOverlap[l,j]);
+    if(USE_LINEAR_APPROX == 1) then
+      forall <l> in L : forall <j> in U[l] do
+        0 == (expIND[l,j,3]) * (expFPSvals[3] + expFPSvals[3]*expComp[l,j] - expFPSvals[3]*expFPS[3] - estOverlap[l,j])
+    end;
 
   # ***************************************************************************************************
   # Related to calculating the lossrate variable for each of the links
