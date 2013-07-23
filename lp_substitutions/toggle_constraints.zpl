@@ -5,7 +5,7 @@ var s;
 var expVal;
 param N := 5;
 
-param x := -1.5;
+param x := -2.799999;
 
 param delta := 0.001;
 
@@ -15,16 +15,11 @@ subto toggle_ind1:
 subto toggle_ind2:
   forall <i> in I : y[i] <= 1 + ((x-v[i])/N);
 
-subto ind_sum:
-  s == (sum <i> in I : y[i]);
+subto exp_low: 
+  0 == (y[1]-y[2])*(exp(v[1]) + exp(v[1])*x - exp(v[1])*v[1] - expVal);
 
+subto exp_mid: 
+  0 == (y[2]-y[3])*(exp(v[2]) + exp(v[2])*x - exp(v[2])*v[2] - expVal);
 
-#subto lower:  # if x < -2
-#  (y[1]) * expVal == (y[1]) * (exp(v[1]) + exp(v[1])*x - exp(v[1])*v[1]);
-
-subto mid:    # if x >= -2 and x < -1
-  expVal == exp(v[2]) + exp(v[2])*x - exp(v[2])*v[2];
-
-subto high:   # if x >= -1
+subto exp_high: 
   0 == (y[3])*((exp(v[3]) + exp(v[3])*x - exp(v[3])*v[3]) - expVal);
-#  (y[1]*y[2]*y[3]) * expVal == (y[1]*y[2]*y[3])*(exp(v[3]) + exp(v[3])*x - exp(v[3])*v[3]);
