@@ -1,11 +1,11 @@
 set I := {1,2,3};
-param v[I] := <1> -3, <2> -2.8, <3> -1;
+param v[I] := <1> -3, <2> -2.8, <3> -0.1;
 var y[I] binary;
 var s;
 var expVal;
 param N := 5;
 
-param x := -2.799999;
+param x := 0;
 
 param delta := 0.001;
 

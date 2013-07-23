@@ -372,7 +372,7 @@ dataOF.puts "  param LDATA[L * LinkAttr] :="
 dataOF.print "      |#{opt.data["LinkAttr"].inspect[1..-2]} |"
 hgraph.getLinkEdges.each_index do |l|
   le = hgraph.getLinkEdges[l]
-  dataOF.print "\n   |#{l+1}|\t    #{hgraph.getRadioIndex(le.srcID)+1},\t      #{hgraph.getRadioIndex(le.dstID)+1},  #{le.freq},\t\t  #{le.bandwidth},\t  #{le.airtime}, \t      #{le.dAirtime},   #{le.txLen}  |"
+  dataOF.print "\n   |#{l+1}|\t    #{hgraph.getRadioIndex(le.srcID)+1},\t      #{hgraph.getRadioIndex(le.dstID)+1},  #{le.freq},\t\t  #{le.bandwidth},\t  #{le.airtime}, \t      #{le.dAirtime},   #{le.txLen / 1000000.0}  |"
 end
 dataOF.print ";\n"
 
@@ -446,7 +446,7 @@ allLinks.each do |baseLink|
   opt.data["VW[L]"].push(a)
 end
 opt.data["VW[L]"].each {|l| l.each_index {|i| l[i]/=1000000.0}}
-dataOF.puts opt.translateVar("VW[L]", "The vulnerability window between each pair of links")
+#dataOF.puts opt.translateVar("VW[L]", "The vulnerability window between each pair of links")
 
 allLinks = hgraph.getLinkEdges
 symByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| symByRadio.push(Array.new)}
