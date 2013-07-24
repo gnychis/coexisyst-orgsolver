@@ -258,17 +258,21 @@
   # ***************************************************************************************************
   # Related to calculating the lossrate variable for each of the links
   subto lossrate_eq:                    # Lossrate is the last variable in the series of multiplications (variables)
-    forall <l> in L : LinkLossRate[l] == 1 - sr_vars[l,card(L)];
+    forall <l> in L : LinkLossRate[l] == sr_vars[l,card(L)];
   
-  subto lossrate_prod_vals_eq:          # Estimated overlap pumped in
-    forall <l> in L : forall <j> in U[l] do 
-      sr_vals[l,j] == estOverlap[l,j] * o[l,j];
+  subto lossrate_prod_valsBad_eq:       # Estimated overlap pumped in
+    forall <l> in L : forall <j> in U[l] : forall <a,b,r> in OL with a==l and b==j do 
+      sr_vals[l,j] == (1 - estOverlap[l,j]) * o[l,j];
+  
+  subto lossrate_prod_valsGood_eq:      # Coordinating links introduce no loss, regardless of frequency
+    forall <l> in L : forall <j> in {L-U[l]} : 
+      sr_vals[l,j] == 0;
 
   subto lossrate_prod_vars_eq_init:     # Initialize the first multiplication in the chain
     forall <l> in L : sr_vars[l,1] == sr_vals[l,1];
 
   subto lossrate_prod_vars_eq:          # Loss rate variables which is a chain of multiplications
-    forall <i> in L : forall <j> in L with j!=1 : sr_vars[i,j] == sr_vars[i,j-1] * sr_vals[i,j];
+    forall <i> in L : forall <j> in L with j!=1 : sr_vars[i,j] == 1 - (1 - sr_vars[i,j-1]) * (1 - sr_vals[i,j]);
 
   # ***************************************************************************************************
   # Related to substitution for the min() in the airtime sensed so that the "actual" sensed is <= 1.

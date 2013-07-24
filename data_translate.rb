@@ -48,6 +48,17 @@ class Optimization
 
     end
 
+    if(data[var].kind_of?(Hash))
+      s += "  set #{var}  := "
+      d=data[var].keys
+      s+= "{ "
+      d.each_index do |i|
+        s += "<#{d[i]}>"
+        s += ", " if(i <  d.size-1)
+      end
+      s+= " };"
+    end
+
     s += "\n\n"
     return s
   end
@@ -529,3 +540,4 @@ dataOF.puts opt.translateVar("U[L]", "For all links, all other links that will c
 dataOF.puts opt.translateVar("LU[L]", "For all links, the set of links that the radio is in a completely blind situation")
 dataOF.puts opt.translateVar("LUO[L]", "For all radios, the set of links that are asymmetric, where the opposing link does not coordinate")
 dataOF.puts opt.translateVar("LUB[L]", "For all radios, the set of links that are asymmetric, where the baseline link does not coordinate")
+dataOF.puts opt.translateVar("OL", "For all conflicting link pairs, the loss rate on the link")
