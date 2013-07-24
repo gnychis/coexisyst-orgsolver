@@ -217,39 +217,39 @@
   # ***************************************************************************************************
   # Related to calculating the estimated overlap between two links which we do as a linear approximation
   # with 3 focus points.
-  subto expComp_eq:
+  subto expComp_eq:     # The component in the exponential function is the packets/second * vulnerability win
       forall <l> in L : forall <j> in U[l] : expComp[l,j] == -(200 * vulnWin[l,j]);
 
-  subto estOverlap_eq:
+  subto estOverlap_eq:  # If we are not using the approximation, then we compute it directly 
     if(USE_LINEAR_APPROX == 0) then
       forall <l> in L : forall <j> in U[l] : estOverlap[l,j] == exp(expComp[l,j])
     end;
 
-  subto toggleIND_1:
+  subto toggleIND_1:    # The indicator to see if the value is above our approximation focus points
     if(USE_LINEAR_APPROX == 1) then
       forall <l> in L : forall <j> in U[l] : forall <i> in FPS do
         expIND[l,j,i] >= ((expComp[l,j]-expFPS[i]) / EXP_MAX) + (EXP_DELTA / (2*EXP_MAX))
       end;
   
-  subto toggleIND_2:
+  subto toggleIND_2:    # The second constraint to determine the binary indicator
     if(USE_LINEAR_APPROX == 1) then
       forall <l> in L : forall <j> in U[l] : forall <i> in FPS do
         expIND[l,j,i] <= 1 + ((expComp[l,j]-expFPS[i])/EXP_MAX)
     end;
 
-  subto exp_low: 
+  subto exp_low:    # If the value falls on to the lower approximation line
     if(USE_LINEAR_APPROX == 1) then
       forall <l> in L : forall <j> in U[l] do
         0 == (expIND[l,j,1]-expIND[l,j,2]) * (expFPSvals[1] + expFPSvals[1]*expComp[l,j] - expFPSvals[1]*expFPS[1] - estOverlap[l,j])
     end;
 
-  subto exp_mid: 
+  subto exp_mid:    # If it falls on to the mid approximation line
     if(USE_LINEAR_APPROX == 1) then
       forall <l> in L : forall <j> in U[l] do
         0 == (expIND[l,j,2]-expIND[l,j,3]) * (expFPSvals[2] + expFPSvals[2]*expComp[l,j] - expFPSvals[2]*expFPS[2] - estOverlap[l,j])
     end;
 
-  subto exp_high: 
+  subto exp_high:   # And finally, the high line
     if(USE_LINEAR_APPROX == 1) then
       forall <l> in L : forall <j> in U[l] do
         0 == (expIND[l,j,3]) * (expFPSvals[3] + expFPSvals[3]*expComp[l,j] - expFPSvals[3]*expFPS[3] - estOverlap[l,j])
