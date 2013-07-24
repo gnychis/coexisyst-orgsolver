@@ -293,7 +293,11 @@ class Optimization
   end
 
   def run()
-    frequencies=`scip -f spectrum_optimization.zpl | grep "af\#"`.split("\n").map 
+    radios=Array.new
+    fString=`scip -f spectrum_optimization.zpl | grep "af\#"`.split("\n").map 
+    fString.each { |line|
+      line.split("#")
+    }
     puts frequencies
   end
 end
