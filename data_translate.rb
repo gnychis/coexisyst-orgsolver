@@ -17,8 +17,8 @@ Hyperedge = Struct.new(:id, :radios)
 
 def getLossRate(baseEdge,opposingEdge)
   return 0 if(baseEdge.nil? or opposingEdge.nil?)
-  return 1 if(baseEdge.rssi>=opposingEdge.rssi)
-  return 0
+  return 0 if(baseEdge.rssi>=opposingEdge.rssi)
+  return 1
 end
 
 class Optimization
@@ -515,10 +515,10 @@ opt.data["U[L]"].each_index { |bli|
     # Get the spatial edge from the baseLink TX to RX
     baseEdge=hgraph.getSpatialEdge(baseLink.srcID,baseLink.dstID)
     opposingEdge=hgraph.getSpatialEdge(oppLink.srcID,baseLink.dstID)
-    #puts "* #{baseLink.inspect}"
-    #puts "* #{oppLink.inspect}"
-    #puts "... #{baseEdge.inspect}"
-    #puts "... #{opposingEdge.inspect}"
+    puts "* BaseLink:  #{baseLink.inspect}"
+    puts "* OppsLink:  #{oppLink.inspect}"
+    puts "... #{baseEdge.inspect}"
+    puts "... #{opposingEdge.inspect}"
     opt.data["OL"]["#{bli+1},#{oli+1},#{getLossRate(baseEdge,opposingEdge)}"]=nil
   }
 }
