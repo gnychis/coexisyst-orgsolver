@@ -262,7 +262,7 @@
   
   subto lossrate_prod_valsBad_eq:       # Estimated overlap pumped in
     forall <l> in L : forall <j> in U[l] : forall <a,b,r> in OL with a==l and b==j do 
-      sr_vals[l,j] == (1 - probZeroTX[l,j]) * o[l,j];
+      sr_vals[l,j] == (1 - probZeroTX[l,j]) * o[l,j] * r;
   
   subto lossrate_prod_valsGood_eq:      # Coordinating links introduce no loss, regardless of frequency
     forall <l> in L : forall <j> in {L-U[l]} : 

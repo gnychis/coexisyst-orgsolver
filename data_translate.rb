@@ -526,10 +526,10 @@ opt.data["U[L]"].each_index { |bli|
     # Get the spatial edge from the baseLink TX to RX
     baseEdge=hgraph.getSpatialEdge(baseLink.srcID,baseLink.dstID)
     opposingEdge=hgraph.getSpatialEdge(oppLink.srcID,baseLink.dstID)
-    puts "* BaseLink:  #{baseLink.inspect}"
-    puts "* OppsLink:  #{oppLink.inspect}"
-    puts "... #{baseEdge.inspect}"
-    puts "... #{opposingEdge.inspect}"
+    #puts "* BaseLink:  #{baseLink.inspect}"
+    #puts "* OppsLink:  #{oppLink.inspect}"
+    #puts "... #{baseEdge.inspect}"
+    #puts "... #{opposingEdge.inspect}"
     opt.data["OL"]["#{bli+1},#{oli+1},#{getLossRate(baseEdge,opposingEdge)}"]=nil
   }
 }
