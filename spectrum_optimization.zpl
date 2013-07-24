@@ -114,7 +114,7 @@
   var expIND[L*L*FPS] binary;
   param EXP_MAX := 10;
   var expComp[L*L] >= -10;    # Make sure this is -EXP_MAX
-  var estOverlap[L*L];
+  var probZeroTX[L*L];
   param EXP_DELTA := 0.001;
   var expFPSvals[FPS];
   subto expFPSvals_eq:
@@ -220,9 +220,9 @@
   subto expComp_eq:     # The component in the exponential function is the packets/second * vulnerability win
       forall <l> in L : forall <j> in U[l] : expComp[l,j] == -(200 * vulnWin[l,j]);
 
-  subto estOverlap_eq:  # If we are not using the approximation, then we compute it directly 
+  subto probZeroTX_eq:  # If we are not using the approximation, then we compute it directly 
     if(USE_LINEAR_APPROX == 0) then
-      forall <l> in L : forall <j> in U[l] : estOverlap[l,j] == exp(expComp[l,j])
+      forall <l> in L : forall <j> in U[l] : probZeroTX[l,j] == exp(expComp[l,j])
     end;
 
   subto toggleIND_1:    # The indicator to see if the value is above our approximation focus points
@@ -240,19 +240,19 @@
   subto exp_low:    # If the value falls on to the lower approximation line
     if(USE_LINEAR_APPROX == 1) then
       forall <l> in L : forall <j> in U[l] do
-        0 == (expIND[l,j,1]-expIND[l,j,2]) * (expFPSvals[1] + expFPSvals[1]*expComp[l,j] - expFPSvals[1]*expFPS[1] - estOverlap[l,j])
+        0 == (expIND[l,j,1]-expIND[l,j,2]) * (expFPSvals[1] + expFPSvals[1]*expComp[l,j] - expFPSvals[1]*expFPS[1] - probZeroTX[l,j])
     end;
 
   subto exp_mid:    # If it falls on to the mid approximation line
     if(USE_LINEAR_APPROX == 1) then
       forall <l> in L : forall <j> in U[l] do
-        0 == (expIND[l,j,2]-expIND[l,j,3]) * (expFPSvals[2] + expFPSvals[2]*expComp[l,j] - expFPSvals[2]*expFPS[2] - estOverlap[l,j])
+        0 == (expIND[l,j,2]-expIND[l,j,3]) * (expFPSvals[2] + expFPSvals[2]*expComp[l,j] - expFPSvals[2]*expFPS[2] - probZeroTX[l,j])
     end;
 
   subto exp_high:   # And finally, the high line
     if(USE_LINEAR_APPROX == 1) then
       forall <l> in L : forall <j> in U[l] do
-        0 == (expIND[l,j,3]) * (expFPSvals[3] + expFPSvals[3]*expComp[l,j] - expFPSvals[3]*expFPS[3] - estOverlap[l,j])
+        0 == (expIND[l,j,3]) * (expFPSvals[3] + expFPSvals[3]*expComp[l,j] - expFPSvals[3]*expFPS[3] - probZeroTX[l,j])
     end;
 
   # ***************************************************************************************************
@@ -262,7 +262,7 @@
   
   subto lossrate_prod_valsBad_eq:       # Estimated overlap pumped in
     forall <l> in L : forall <j> in U[l] : forall <a,b,r> in OL with a==l and b==j do 
-      sr_vals[l,j] == (1 - estOverlap[l,j]) * o[l,j];
+      sr_vals[l,j] == (1 - probZeroTX[l,j]) * o[l,j];
   
   subto lossrate_prod_valsGood_eq:      # Coordinating links introduce no loss, regardless of frequency
     forall <l> in L : forall <j> in {L-U[l]} : 
