@@ -16,8 +16,7 @@ SpatialEdge = Struct.new(:from, :to, :rssi, :backoff)
 LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :airtime, :dAirtime, :txLen, :protocol)
 Hyperedge = Struct.new(:id, :radios)
 
+hgraph=Hypergraph.new(opts[:directory])
+opt = Optimization.new(hgraph)
 
-opt = Optimization.new
-hgraph=Hypergraph.new
-  
 
