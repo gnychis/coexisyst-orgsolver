@@ -139,4 +139,97 @@ class Hypergraph
     @@radios.push(radio) if(getRadio(radio.radioID).nil?)
   end
 
+  def initialize(data_dir)
+
+    #################################################################################################
+    # Read in the map.txt file in to a data structure
+    #######
+    File.readlines("#{data_dir}/map.txt").each do |line|
+
+      # Read in the map data
+      ls = line.split
+      f = line[line.index("{")+1,line.index("}")-line.index("{")-1].split(",").map{|i| i.to_i}
+
+      r = Radio.new(ls[0],   # the radioID
+                    ls[1],   # the protocol
+                    ls[2],   # the radio name
+                    ls[3],   # the network name
+                    f)       # the set of frequencies
+
+
+      # Store the radio if we do not yet have it in our graph
+      hgraph.newRadio(r) if(hgraph.getRadio(r.radioID).nil?)
+
+      # Store the hyperedge if we don't yet have the network in our graph
+      if(hgraph.getHyperedge(r.networkID).nil?)
+        hgraph.createHyperedge(r.networkID)
+        hgraph.addToHyperedge(r.networkID, r)
+      else
+        hgraph.addToHyperedge(r.networkID, r)
+      end
+      
+      ## FIXME: try to check for duplicate radio IDs and names
+    end
+
+
+    #################################################################################################
+    # Now, go through each of the data files and read the link data associated to the node
+    #######
+    Dir.glob("#{data_dir}/capture*.dat").each do |capfile|
+      
+      baselineRadio=nil           # Store the baseline radio for the capture file
+      baselineRadioInfo=nil       # This should resolve to the map info
+
+      File.readlines(capfile).each do |line|
+
+        # Read in the baselineRadio if this is the very first line
+        if(baselineRadio.nil?)
+          baselineRadioID = line.chomp.strip       
+          baselineRadio = hgraph.getRadioByName(baselineRadioID)   # Try to get it by name first
+          baselineRadio = hgraph.getRadio(baselineRadioID) if(baselineRadio.nil?)  # Then, try to get it by ID
+          next
+        end
+        
+        ls = line.split  # Go ahead and split the line
+
+        # Create a unique linkID for this link if it does not yet exist
+        lSrc = ls[0]
+        lDst = ls[1]
+        if(hgraph.getLinkEdge(lSrc, lDst).nil?)
+          hgraph.newLinkEdge( LinkEdge.new( 
+                              ls[0],        # The source ID for the link
+                              ls[1],        # The destination ID for the link
+                              ls[3].to_i,   # The frequency used
+                              ls[5].to_i,   # The bandwidth used on the link
+                              ls[6].to_f,   # The airtime observed on the link from the source to destination
+                              ls[6].to_f*1.3,   # FIXME: desired airtime is just the current airtime
+                              ls[7].to_i,   # The average transmission length in microseconds
+                              ls[2]))       # The protocol in use on the link
+        end
+        
+        # Create radio instances for both the source and destination if they do not exist
+        [lSrc,lDst].each do |radioID|
+          if(hgraph.getRadio(radioID).nil?)
+            hgraph.newRadio( Radio.new(
+                              radioID,
+                              ls[2],
+                              nil,
+                              nil,
+                              [ls[3].to_i]))
+          end
+        end
+
+        # Now create a spatial edge from the link source to the baseline radio
+        if(hgraph.getSpatialEdge(lSrc, baselineRadio.radioID).nil? and lSrc!=baselineRadio.radioID)
+          hgraph.newSpatialEdge( SpatialEdge.new(
+                                 lSrc,                      # From
+                                 baselineRadio.radioID,     # To
+                                 ls[4].to_i,                # RSSI
+                                 ls[8].to_i                 # Backoff
+                                 ))
+        end
+      end
+    end
+  end
+
 end
