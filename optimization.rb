@@ -289,9 +289,11 @@ class Optimization
     dataOF.puts translateVar("LUO[L]", "For all radios, the set of links that are asymmetric, where the opposing link does not coordinate")
     dataOF.puts translateVar("LUB[L]", "For all radios, the set of links that are asymmetric, where the baseline link does not coordinate")
     dataOF.puts translateVar("OL", "For all conflicting link pairs, the loss rate on the link")
+    dataOF.close
   end
 
   def run()
-    
+    frequencies=`scip -f spectrum_optimization.zpl | grep "af\#"`.split("\n").map 
+    puts frequencies
   end
 end

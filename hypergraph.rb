@@ -1,5 +1,10 @@
 #!/usr/bin/ruby
 
+Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies)
+SpatialEdge = Struct.new(:from, :to, :rssi, :backoff)
+LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :airtime, :dAirtime, :txLen, :protocol)
+Hyperedge = Struct.new(:id, :radios)
+
 class Hypergraph
   @@spatialEdges=Array.new
   @@radios=Array.new
