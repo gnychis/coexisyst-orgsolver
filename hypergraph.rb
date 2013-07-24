@@ -23,6 +23,10 @@ class Hypergraph
     return @@radios
   end
 
+  def getRadioByIndex(idx)
+    return @@radios[idx]
+  end
+
   def printLinkEdges()
     @@linkEdges.each {|l| puts l.inspect}
   end

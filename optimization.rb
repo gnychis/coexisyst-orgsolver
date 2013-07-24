@@ -296,8 +296,11 @@ class Optimization
     radios=Array.new
     fString=`scip -f spectrum_optimization.zpl | grep "af\#"`.split("\n").map 
     fString.each { |line|
-      line.split("#")
+      spl=line.split[0].split("#")
+      rid=spl[1].to_i
+      freq=spl[2].to_i
+      radios.push( [@hgraph.getRadioByIndex(rid-1), freq])
     }
-    puts frequencies
+    return radios
   end
 end

@@ -16,4 +16,4 @@ hgraph=Hypergraph.new(opts[:directory])
 
 opt = Optimization.new(hgraph)
 
-opt.run
+puts opt.run.inspect
