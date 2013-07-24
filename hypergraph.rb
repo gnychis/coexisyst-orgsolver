@@ -158,14 +158,14 @@ class Hypergraph
 
 
       # Store the radio if we do not yet have it in our graph
-      hgraph.newRadio(r) if(hgraph.getRadio(r.radioID).nil?)
+      newRadio(r) if(getRadio(r.radioID).nil?)
 
       # Store the hyperedge if we don't yet have the network in our graph
-      if(hgraph.getHyperedge(r.networkID).nil?)
-        hgraph.createHyperedge(r.networkID)
-        hgraph.addToHyperedge(r.networkID, r)
+      if(getHyperedge(r.networkID).nil?)
+        createHyperedge(r.networkID)
+        addToHyperedge(r.networkID, r)
       else
-        hgraph.addToHyperedge(r.networkID, r)
+        addToHyperedge(r.networkID, r)
       end
       
       ## FIXME: try to check for duplicate radio IDs and names
@@ -185,8 +185,8 @@ class Hypergraph
         # Read in the baselineRadio if this is the very first line
         if(baselineRadio.nil?)
           baselineRadioID = line.chomp.strip       
-          baselineRadio = hgraph.getRadioByName(baselineRadioID)   # Try to get it by name first
-          baselineRadio = hgraph.getRadio(baselineRadioID) if(baselineRadio.nil?)  # Then, try to get it by ID
+          baselineRadio = getRadioByName(baselineRadioID)   # Try to get it by name first
+          baselineRadio = getRadio(baselineRadioID) if(baselineRadio.nil?)  # Then, try to get it by ID
           next
         end
         
@@ -195,8 +195,8 @@ class Hypergraph
         # Create a unique linkID for this link if it does not yet exist
         lSrc = ls[0]
         lDst = ls[1]
-        if(hgraph.getLinkEdge(lSrc, lDst).nil?)
-          hgraph.newLinkEdge( LinkEdge.new( 
+        if(getLinkEdge(lSrc, lDst).nil?)
+          newLinkEdge( LinkEdge.new( 
                               ls[0],        # The source ID for the link
                               ls[1],        # The destination ID for the link
                               ls[3].to_i,   # The frequency used
@@ -209,8 +209,8 @@ class Hypergraph
         
         # Create radio instances for both the source and destination if they do not exist
         [lSrc,lDst].each do |radioID|
-          if(hgraph.getRadio(radioID).nil?)
-            hgraph.newRadio( Radio.new(
+          if(getRadio(radioID).nil?)
+            newRadio( Radio.new(
                               radioID,
                               ls[2],
                               nil,
@@ -220,8 +220,8 @@ class Hypergraph
         end
 
         # Now create a spatial edge from the link source to the baseline radio
-        if(hgraph.getSpatialEdge(lSrc, baselineRadio.radioID).nil? and lSrc!=baselineRadio.radioID)
-          hgraph.newSpatialEdge( SpatialEdge.new(
+        if(getSpatialEdge(lSrc, baselineRadio.radioID).nil? and lSrc!=baselineRadio.radioID)
+          newSpatialEdge( SpatialEdge.new(
                                  lSrc,                      # From
                                  baselineRadio.radioID,     # To
                                  ls[4].to_i,                # RSSI
