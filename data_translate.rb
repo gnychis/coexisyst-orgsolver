@@ -15,6 +15,12 @@ SpatialEdge = Struct.new(:from, :to, :rssi, :backoff)
 LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :airtime, :dAirtime, :txLen, :protocol)
 Hyperedge = Struct.new(:id, :radios)
 
+def getLossRate(baseEdge,opposingEdge)
+  return 0 if(baseEdge.nil? or opposingEdge.nil?)
+  return 1 if(baseEdge.rssi>=opposingEdge.rssi)
+  return 0
+end
+
 class Optimization
   attr_accessor :data
 
@@ -334,7 +340,7 @@ hgraph.getRadios.each {|r|
 dataOF.puts opt.translateVar("C[R]", "For each radio, the set of radios that are within spatial range (i.e., r senses them) and it coordinates with them (uni-directional)")
 
 opt.data["ROL[R]"]=Array.new
-hgraph.getRadios.each {|r| opt.data["ROL[R]"].push([hgraph.getLinkEdgeIndex(hgraph.getLinkEdgesByTX(r.radioID)[0])+1]) }
+hgraph.getRadios.each {|r| opt.data["ROL[R]"].push([hgraph.getLinkEdgeIndex(hgraph.getLinkEdgesByID(r.radioID)[0])+1]) }
 dataOF.puts opt.translateVar("ROL[R]", "For each radio, give one link that the radio participates in, TX or RX")
 
 networks=Hash.new
@@ -498,6 +504,27 @@ opt.data["LU[L]"] = symByLink
 opt.data["LUO[L]"] = asym1ByLink
 opt.data["LUB[L]"] = asym2ByLink
 opt.data["LU[L]"].each_index {|i| opt.data["U[L]"][i] = opt.data["LU[L]"][i] | opt.data["LUO[L]"][i] | opt.data["LUB[L]"][i]}
+
+opt.data["OL"] = Hash.new
+opt.data["U[L]"].each_index { |bli|
+  baseLink = hgraph.getLinkEdgeByIndex(bli)
+  opt.data["U[L]"][bli].each { |oli|
+    oli-=1
+    oppLink = hgraph.getLinkEdgeByIndex(oli)
+
+    # Get the spatial edge from the baseLink TX to RX
+    baseEdge=hgraph.getSpatialEdge(baseLink.srcID,baseLink.dstID)
+    opposingEdge=hgraph.getSpatialEdge(oppLink.srcID,baseLink.dstID)
+    #puts "* #{baseLink.inspect}"
+    #puts "* #{oppLink.inspect}"
+    #puts "... #{baseEdge.inspect}"
+    #puts "... #{opposingEdge.inspect}"
+    opt.data["OL"]["#{bli+1},#{oli+1},#{getLossRate(baseEdge,opposingEdge)}"]=nil
+  }
+}
+
+puts opt.data["OL"].keys
+
 dataOF.puts opt.translateVar("U[L]", "For all links, all other links that will contribute to it in a negative scenario")
 dataOF.puts opt.translateVar("LU[L]", "For all links, the set of links that the radio is in a completely blind situation")
 dataOF.puts opt.translateVar("LUO[L]", "For all radios, the set of links that are asymmetric, where the opposing link does not coordinate")
