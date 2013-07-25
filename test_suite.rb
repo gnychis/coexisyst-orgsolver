@@ -235,5 +235,45 @@ begin
 end
 
 begin
-  
+  new_intermed_test("Testing multilink interference with one loss rate being 0")
+  hgraph=nil
+  hgraph=Hypergraph.new
+
+  # Create 4 radios that have independent links
+  (1..4).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2412])) }
+  (5..8).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2437])) }
+  (9..10).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "ZigBee", "zigbee#{rid}", "network#{(rid-1)/2}", [2412,2437])) }
+
+  # Create links between the pairs of radios
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.4, 0.5, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 0.4, 0.5, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "7","8", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "9","10", 2437, 20, 0.2, 0.3, 2750, "ZigBee") )
+
+  # Nothing from the first two links are within range, but the two transmitters are within range of the 3rd and
+  # do not coordinate
+  hgraph.newSpatialEdge( SpatialEdge.new("1","9",-40,0) ) 
+  hgraph.newSpatialEdge( SpatialEdge.new("3","9",-40,0) ) 
+  hgraph.newSpatialEdge( SpatialEdge.new("5","9",-40,0) ) 
+  hgraph.newSpatialEdge( SpatialEdge.new("7","9",-40,0) ) 
+  hgraph.newSpatialEdge( SpatialEdge.new("9","10",-40,1) ) 
+
+  # Both transmitters affect the 3rd link's receiver
+  hgraph.newSpatialEdge( SpatialEdge.new("1","10",-20,0) )
+  hgraph.newSpatialEdge( SpatialEdge.new("3","10",-50,0) )
+  hgraph.newSpatialEdge( SpatialEdge.new("5","10",-20,0) )
+  hgraph.newSpatialEdge( SpatialEdge.new("7","10",-20,0) )
+
+  Optimization.new(hgraph).run
+  intermed_test("should go to channel 2412")
+  (hgraph.getRadio("9").activeFreq!=2412) ? test_result(false) : test_result(true)
+
+  # Change the loss rates around
+  hgraph.getSpatialEdge("3","10").rssi=-20
+  hgraph.getSpatialEdge("5","10").rssi=-50
+  intermed_test("should go to channel 2437")
+  Optimization.new(hgraph).run
+  (hgraph.getRadio("9").activeFreq!=2437) ? test_result(false) : test_result(true)
+
 end
