@@ -146,6 +146,13 @@ class Hypergraph
 
   def newRadio(radio)
     @@radios.push(radio) if(getRadio(radio.radioID).nil?)
+
+    if(getHyperedge(radio.networkID).nil?)
+      createHyperedge(radio.networkID)
+      addToHyperedge(radio.networkID, radio)
+    else
+      addToHyperedge(radio.networkID, radio)
+    end
   end
 
   def initialize()
@@ -172,14 +179,6 @@ class Hypergraph
 
       # Store the radio if we do not yet have it in our graph
       newRadio(r) if(getRadio(r.radioID).nil?)
-
-      # Store the hyperedge if we don't yet have the network in our graph
-      if(getHyperedge(r.networkID).nil?)
-        createHyperedge(r.networkID)
-        addToHyperedge(r.networkID, r)
-      else
-        addToHyperedge(r.networkID, r)
-      end
       
       ## FIXME: try to check for duplicate radio IDs and names
     end
