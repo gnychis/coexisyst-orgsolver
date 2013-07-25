@@ -1,7 +1,9 @@
 #!/usr/bin/ruby
+require 'rubygems'
 require 'trollop'
 require 'hypergraph'
 require 'optimization'
+require 'colorize'
 
 ###########################################################################
 ## Basic Airtime Split
@@ -9,6 +11,7 @@ require 'optimization'
 ## Basic split airtime test.  Put all on same frequency, they should end
 ## up on different frequencies
 begin
+  print "[0]".green + " Ensuring basic channel avoidance to meet airtime... ".yellow
   hgraph=Hypergraph.new
 
   # Create 6 radios that have independent links
@@ -26,7 +29,11 @@ begin
       hgraph.newSpatialEdge( SpatialEdge.new(le1.srcID,le2.srcID,-40,1) ) } }
 
   opt = Optimization.new(hgraph)
-  opt.run.each {|i| puts "#{i[0].radioID} #{i[0].networkID} #{i[1]}"  }
+  results = opt.run   # .each {|i| puts "#{i[0].radioID} #{i[0].networkID} #{i[1]}"  }
+
+  # The result is OK if all the frequencies are different
+  freqs = Array.new; results.each {|r| freqs.push(r.activeFreq)}
+  puts (freqs.uniq.size==3) ? "OK".red : "FAIL".red
 
 end
 
