@@ -148,7 +148,11 @@ class Hypergraph
     @@radios.push(radio) if(getRadio(radio.radioID).nil?)
   end
 
-  def initialize(data_dir)
+  def initialize()
+
+  end
+
+  def loadData(data_dir)
 
     #################################################################################################
     # Read in the map.txt file in to a data structure

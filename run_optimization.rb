@@ -12,7 +12,8 @@ Trollop::die :directory, "must exist" if(opts[:directory].nil? || File.directory
 Trollop::die :directory, "must include map.txt" if(File.exist?("#{opts[:directory]}/map.txt")==false)
 Trollop::die :directory, "must include data in files labaled capture<#>.dat" if(Dir.glob("#{opts[:directory]}/capture*.dat").size<1)
 
-hgraph=Hypergraph.new(opts[:directory])
+hgraph=Hypergraph.new
+hgraph.loadData(opts[:directory])
 
 opt = Optimization.new(hgraph)
 
