@@ -7,8 +7,17 @@ require 'colorize'
 
 $test_num=0
 
+def intermed_test(header)
+  print "    ...".green + " #{header}: ".yellow
+end
+
 def new_test(header)
-  print "[#{$test_num}]".green + " #{header}... ".yellow
+  print "\n[#{$test_num}]".green + " #{header}... ".yellow
+  $test_num+=1
+end
+
+def new_intermed_test(header)
+  puts "\n[#{$test_num}]".green + " #{header}... ".yellow
   $test_num+=1
 end
 
@@ -18,6 +27,7 @@ def test_result(result)
     return
   end
   puts "FAIL".red
+  raise RuntimeError, 'Test failed'
 end
 
 ###########################################################################
@@ -77,7 +87,7 @@ begin
 end
 
 begin
-  new_test("Testing that heterogeneous uncoordination will cause radio to avoid channel")
+  new_intermed_test("Testing that heterogeneous uncoordination will cause radio to avoid channel")
   hgraph=nil
   hgraph=Hypergraph.new
 
@@ -98,13 +108,131 @@ begin
   hgraph.newSpatialEdge( SpatialEdge.new("5","6",-40,1) ) 
 
   # The one ZigBee receiver is within range of the 802.11 transmitter (where interference is strong)
+  hgraph.newSpatialEdge( SpatialEdge.new("3","6",-20,0) )
+  Optimization.new(hgraph).run
+  intermed_test("should avoid channel 2436")
+  (hgraph.getRadio("5").activeFreq==2436) ? test_result(false) : test_result(true)
+
+  # Now, change the interference scenario and it should pick the other channel
+  hgraph.deleteSpatialEdge(hgraph.getSpatialEdge("3","6"))
   hgraph.newSpatialEdge( SpatialEdge.new("1","6",-20,0) )
+  Optimization.new(hgraph).run
+  intermed_test("should avoid channel 2412")
+  (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
+end
 
-  results=Optimization.new(hgraph).run_debug
+begin
+  new_intermed_test("Testing that it chooses the channel with the least interference")
+  hgraph=nil
+  hgraph=Hypergraph.new
 
-  # The result is OK if all the frequencies are different
-  freqs = Array.new; results.each {|r| freqs.push(r.activeFreq)}
-  puts ""
+  # Create 4 radios that have independent links
+  (1..2).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2412])) }
+  (3..4).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2436])) }
+  (5..6).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "ZigBee", "zigbee#{rid}", "network#{(rid-1)/2}", [2412,2436])) }
+
+  # Create links between the pairs of radios
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2436, 20, 0.4, 0.5, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2436, 20, 0.2, 0.3, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2436, 20, 0.2, 0.3, 2750, "ZigBee") )
+
+  # Nothing from the first two links are within range, but the two transmitters are within range of the 3rd and
+  # do not coordinate
+  hgraph.newSpatialEdge( SpatialEdge.new("1","5",-40,0) ) 
+  hgraph.newSpatialEdge( SpatialEdge.new("3","5",-40,0) ) 
+  hgraph.newSpatialEdge( SpatialEdge.new("5","6",-40,1) ) 
+
+  # Both transmitters affect the 3rd link's receiver
+  hgraph.newSpatialEdge( SpatialEdge.new("1","6",-20,0) )
+  hgraph.newSpatialEdge( SpatialEdge.new("3","6",-20,0) )
+
+  Optimization.new(hgraph).run
+  intermed_test("should avoid channel 2412")
+  (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
+
+  # Increase the interference on the second 802.11 link
+  hgraph.getLinkEdge("3","4").airtime=0.6;
+  hgraph.getLinkEdge("3","4").dAirtime=0.7;
+
+  Optimization.new(hgraph).run
+  intermed_test("should avoid channel 2437")
+  (hgraph.getRadio("5").activeFreq==2437) ? test_result(false) : test_result(true)
+end
+
+begin
+  new_test("Testing multilink interference")
+  hgraph=nil
+  hgraph=Hypergraph.new
+
+  # Create 4 radios that have independent links
+  (1..4).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2412])) }
+  (5..8).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2436])) }
+  (9..10).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "ZigBee", "zigbee#{rid}", "network#{(rid-1)/2}", [2412,2436])) }
+
+  # Create links between the pairs of radios
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2436, 20, 0.4, 0.5, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2436, 20, 0.2, 0.3, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2436, 20, 0.3, 0.4, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "7","8", 2436, 20, 0.2, 0.3, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "9","10", 2436, 20, 0.2, 0.3, 2750, "ZigBee") )
+
+  # Nothing from the first two links are within range, but the two transmitters are within range of the 3rd and
+  # do not coordinate
+  hgraph.newSpatialEdge( SpatialEdge.new("1","9",-40,0) ) 
+  hgraph.newSpatialEdge( SpatialEdge.new("3","9",-40,0) ) 
+  hgraph.newSpatialEdge( SpatialEdge.new("5","9",-40,0) ) 
+  hgraph.newSpatialEdge( SpatialEdge.new("7","9",-40,0) ) 
+  hgraph.newSpatialEdge( SpatialEdge.new("9","10",-40,1) ) 
+
+  # Both transmitters affect the 3rd link's receiver
+  hgraph.newSpatialEdge( SpatialEdge.new("1","10",-20,0) )
+  hgraph.newSpatialEdge( SpatialEdge.new("3","10",-20,0) )
+  hgraph.newSpatialEdge( SpatialEdge.new("5","10",-20,0) )
+  hgraph.newSpatialEdge( SpatialEdge.new("7","10",-20,0) )
+
+  Optimization.new(hgraph).run
+  (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
+end
+
+begin
+  new_intermed_test("Should choose channel where loss rate during collision is 0")
+  hgraph=nil
+  hgraph=Hypergraph.new
+
+  # Create 4 radios that have independent links
+  (1..2).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2412])) }
+  (3..4).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2436])) }
+  (5..6).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "ZigBee", "zigbee#{rid}", "network#{(rid-1)/2}", [2412,2436])) }
+
+  # Create links between the pairs of radios
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2436, 20, 0.2, 0.3, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2436, 20, 0.2, 0.3, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2436, 20, 0.2, 0.3, 2750, "ZigBee") )
+
+  # Nothing from the first two links are within range, but the two transmitters are within range of the 3rd and
+  # do not coordinate
+  hgraph.newSpatialEdge( SpatialEdge.new("1","5",-40,0) ) 
+  hgraph.newSpatialEdge( SpatialEdge.new("3","5",-40,0) ) 
+  hgraph.newSpatialEdge( SpatialEdge.new("5","6",-40,1) ) 
+
+  # The one ZigBee receiver is within range of the 802.11 transmitter (where interference is strong)
+  hgraph.newSpatialEdge( SpatialEdge.new("1","6",-50,0) )
+  hgraph.newSpatialEdge( SpatialEdge.new("3","6",-20,0) )
+
+  Optimization.new(hgraph).run
+  intermed_test("should avoid channel 2437")
+  (hgraph.getRadio("5").activeFreq==2437) ? test_result(false) : test_result(true)
+
+  # Switch the interference
+  hgraph.deleteSpatialEdge(hgraph.getSpatialEdge("1","6"))
+  hgraph.deleteSpatialEdge(hgraph.getSpatialEdge("3","6"))
+  hgraph.newSpatialEdge( SpatialEdge.new("1","6",-20,0) )
+  hgraph.newSpatialEdge( SpatialEdge.new("3","6",-50,0) )
+  hgraph.printSpatialEdges
+
+  Optimization.new(hgraph).run
+  intermed_test("should avoid channel 2437")
   hgraph.printRadios
-#  (freqs.uniq.size==1) ? test_result(true) : test_result(false)
+  (hgraph.getRadio("5").activeFreq==2437) ? test_result(false) : test_result(true)
+
 end

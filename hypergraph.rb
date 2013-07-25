@@ -47,6 +47,10 @@ class Hypergraph
     @@spatialEdges.push(edge) if(getSpatialEdge(edge.from, edge.to).nil?)
   end
 
+  def deleteSpatialEdge(edge)
+    @@spatialEdges.delete(edge)
+  end
+
   def getSpatialEdge(from, to)
     @@spatialEdges.each {|l| return l if(l.from==from and l.to==to)}
     return nil
