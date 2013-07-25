@@ -219,7 +219,7 @@
   # Related to calculating the estimated overlap between two links which we do as a linear approximation
   # with 3 focus points.
   subto expComp_eq:     # The component in the exponential function is the packets/second * vulnerability win
-      forall <l> in L : forall <j> in U[l] : expComp[l,j] == -(200 * vulnWin[l,j]);
+      forall <l> in L : forall <j> in U[l] : expComp[l,j] == -((LinkAirtime[j]/LDATA[j,"txLen"]) * vulnWin[l,j]);
 
   subto probZeroTX_eq:  # If we are not using the approximation, then we compute it directly 
     if(USE_LINEAR_APPROX == 0) then
