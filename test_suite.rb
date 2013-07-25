@@ -191,7 +191,7 @@ begin
   hgraph.newSpatialEdge( SpatialEdge.new("7","10",-20,0) )
 
   Optimization.new(hgraph).run
-  (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
+  (hgraph.getRadio("9").activeFreq==2412) ? test_result(false) : test_result(true)
 end
 
 begin
@@ -232,5 +232,8 @@ begin
   Optimization.new(hgraph).run
   intermed_test("should avoid channel 2412")
   (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
+end
 
+begin
+  
 end
