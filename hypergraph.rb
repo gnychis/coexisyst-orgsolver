@@ -156,7 +156,10 @@ class Hypergraph
   end
 
   def initialize()
-
+    @@spatialEdges=Array.new
+    @@radios=Array.new
+    @@hyperEdges=Array.new     
+    @@linkEdges=Array.new
   end
 
   def loadData(data_dir)
