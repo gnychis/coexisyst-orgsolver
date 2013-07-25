@@ -17,4 +17,4 @@ hgraph.loadData(opts[:directory])
 
 opt = Optimization.new(hgraph)
 
-puts opt.run.inspect
+opt.run.each {|i| puts i.inspect }

@@ -13,8 +13,9 @@ begin
 
   # Create 6 radios that have independent links
   (1..6).each {|rid| hgraph.newRadio( Radio.new(rid, "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2412,2436,2462])) }
-
-  hgraph.printRadios
+  
+  # Create links between the pairs of radios
+  hgraph.newLinkEdge(  )
 
 end
 
