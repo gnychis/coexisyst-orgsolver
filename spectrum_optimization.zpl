@@ -262,8 +262,9 @@
     forall <l> in L : LinkLossRate[l] == sr_vars[l,card(L)];
   
   subto lossrate_prod_valsBad_eq:       # Estimated overlap pumped in
-    forall <l> in L : forall <j> in U[l] : forall <a,b,r> in OL with a==l and b==j do 
-      sr_vals[l,j] == (1 - probZeroTX[l,j]) * o[l,j] * r;
+    forall <l> in L : forall <j> in U[l] : forall <a,b,r> in OL with a==l and b==j : 
+      forall <z,lR> in LR with l==z : forall <v,jR> in LR with v==j do 
+        sr_vals[l,j] == (1 - probZeroTX[l,j]) * o[lR,jR] * r;
   
   subto lossrate_prod_valsGood_eq:      # Coordinating links introduce no loss, regardless of frequency
     forall <l> in L : forall <j> in {L-U[l]} : 

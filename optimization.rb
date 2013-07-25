@@ -89,7 +89,17 @@ class Optimization
     dataOF.puts "\n"
 
     data["S[R]"]=Array.new
-    hgraph.getRadios.each {|r| data["S[R]"].push( hgraph.getSpatialEdgesTo(r.radioID).map {|se| hgraph.getRadioIndex(se.from)+1} )}
+    hgraph.getRadios.each {|r| 
+      inRange=hgraph.getSpatialEdgesTo(r.radioID)
+      if(inRange.nil? or inRange.size==0)
+        data["S[R]"].push( [] )
+      else
+#        puts "\n------- #{inRange.inspect}"
+#        puts inRange[0].from.inspect
+#        puts hgraph.getRadioIndex(inRange[0].from)
+        data["S[R]"].push( inRange.map {|se| hgraph.getRadioIndex(se.from)+1} )
+      end
+    }
     dataOF.puts translateVar("S[R]", "For each radio, the set of radios that are within spatial range (i.e., r senses them)")
 
     data["C[R]"]=Array.new
@@ -142,6 +152,13 @@ class Optimization
       dataOF.print "\n   |#{l+1}|\t    #{hgraph.getRadioIndex(le.srcID)+1},\t      #{hgraph.getRadioIndex(le.dstID)+1},  #{le.freq},\t\t  #{le.bandwidth},\t  #{le.airtime}, \t      #{le.dAirtime},   #{le.txLen / 1000000.0}  |"
     end
     dataOF.print ";\n"
+
+    dataOF.puts "\n"
+    data["LR"]=Hash.new
+    hgraph.getLinkEdges.each_index do |lei|
+      data["LR"]["#{lei+1},#{hgraph.getRadioIndex(hgraph.getLinkEdges[lei].srcID)+1}"]=nil
+    end
+    dataOF.puts translateVar("LR", "For each link, a radio that it belongs to")
 
     #################################################################################################
     ## Go through and check against sets of conflicts between a pair of links.
@@ -290,6 +307,24 @@ class Optimization
     dataOF.puts translateVar("LUB[L]", "For all radios, the set of links that are asymmetric, where the baseline link does not coordinate")
     dataOF.puts translateVar("OL", "For all conflicting link pairs, the loss rate on the link")
     dataOF.close
+  end
+  
+  def run_debug()
+    radios=Array.new
+    all=`scip -f spectrum_optimization.zpl`
+    puts "\n-------------------------"
+    puts all.split("\n")[50..-157]
+    puts "\n"
+    fString=`scip -f spectrum_optimization.zpl | grep "af\#"`.split("\n").map 
+    fString.each { |line|
+      spl=line.split[0].split("#")
+      rid=spl[1].to_i
+      freq=spl[2].to_i
+      radio = @hgraph.getRadioByIndex(rid-1)
+      radio.activeFreq = freq
+      radios.push( radio )
+    }
+    return radios
   end
 
   def run()
