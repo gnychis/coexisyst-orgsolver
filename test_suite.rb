@@ -5,13 +5,28 @@ require 'hypergraph'
 require 'optimization'
 require 'colorize'
 
+$test_num=0
+
+def new_test(header)
+  print "[#{$test_num}]".green + " #{header} ".yellow
+  $test_num+=1
+end
+
+def test_result(result)
+  if(result)
+    puts "OK".light_blue
+    return
+  end
+  puts "FAIL".red
+end
+
 ###########################################################################
 ## Basic Airtime Split
 ## ---------------------
 ## Basic split airtime test.  Put all on same frequency, they should end
 ## up on different frequencies
 begin
-  print "[0]".green + " Ensuring basic channel avoidance to meet airtime... ".yellow
+  new_test("Ensuring basic channel avoidance to meet airtime... ")
   hgraph=Hypergraph.new
 
   # Create 6 radios that have independent links
@@ -33,10 +48,9 @@ begin
 
   # The result is OK if all the frequencies are different
   freqs = Array.new; results.each {|r| freqs.push(r.activeFreq)}
-  puts (freqs.uniq.size==3) ? "OK".red : "FAIL".red
-
+  (freqs.uniq.size==3) ? test_result(true) : test_result(false)
 end
 
-#opt = Optimization.new(hgraph)
-
-#puts opt.run.inspect
+begin
+  
+end
