@@ -315,7 +315,8 @@ class Optimization
     puts "\n-------------------------"
     puts all.split("\n")[45..-157]
     puts "\n"
-    fString=`scip -f spectrum_optimization.zpl | grep "af\#"`.split("\n").map 
+    fString=`scip -f spectrum_optimization.zpl | grep -E "af\#|no solution"`.split("\n").map {|i| i.chomp}
+    raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
       spl=line.split[0].split("#")
       rid=spl[1].to_i
@@ -329,7 +330,8 @@ class Optimization
 
   def run()
     radios=Array.new
-    fString=`scip -f spectrum_optimization.zpl | grep "af\#"`.split("\n").map 
+    fString=`scip -f spectrum_optimization.zpl | grep -E "af\#|no solution"`.split("\n").map {|i| i.chomp}
+    raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
       spl=line.split[0].split("#")
       rid=spl[1].to_i
