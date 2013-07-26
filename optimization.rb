@@ -313,7 +313,7 @@ class Optimization
     radios=Array.new
     all=`scip -f spectrum_optimization.zpl`
     puts "\n-------------------------"
-    puts all.split("\n")[50..-157]
+    puts all.split("\n")[45..-157]
     puts "\n"
     fString=`scip -f spectrum_optimization.zpl | grep "af\#"`.split("\n").map 
     fString.each { |line|

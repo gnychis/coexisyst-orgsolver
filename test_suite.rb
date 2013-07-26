@@ -381,7 +381,7 @@ begin
   (5..6).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2412,2437])) }
 
   # Create links between the pairs of radios
-  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.6, 0.7, 3750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.6, 0.7, 2750, "802.11agn") )
   hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
   hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 0.2, 0.3, 4750, "802.11agn") )
   hgraph.newSpatialEdge( SpatialEdge.new("5","6",-40,0) )
