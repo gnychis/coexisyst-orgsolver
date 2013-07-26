@@ -5,7 +5,7 @@
 
   include "data.zpl";             # Load in the specific data to the environment, see sample_data.zpl for a post-processed example
 
-  param USE_LINEAR_APPROX := 0;   # Avoid the use of an exponential function in computing overlap by using a
+  param USE_LINEAR_APPROX := 1;   # Avoid the use of an exponential function in computing overlap by using a
                                   # linear approximation we introduced
 
 ############################################################################################################################################
