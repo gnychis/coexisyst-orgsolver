@@ -60,6 +60,7 @@
   var af[TF] binary;          # A binary representation of which radios picks which frequency
   var o[R*R] binary;          # Do the radios, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
   var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
+  var GoodFracAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
   var GoodAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
   var Residual[R] real;       # The residual airtime sensed for each radio.
   var LinkAirtime[L] real;    # The airtime for each link given the radio's airtime
@@ -343,10 +344,16 @@
 ################
 
 #  subto forceBetterSol:
-#    af[5,2412]==1;
-
-#  maximize min_prop_airtime: 
-#    sum <r> in R with RDATA[r,"dAirtime"]>0 : GoodAirtime[r]; 
+#    af[5,2437]==1;
 
   maximize min_prop_airtime: 
     sum <r> in R with RDATA[r,"dAirtime"]>0 : GoodAirtime[r] / RDATA[r,"dAirtime"]; 
+
+#  subto fraceq:
+#    forall <r> in R with RDATA[r,"dAirtime"]>0 : GoodFracAirtime[r] == GoodAirtime[r] / RDATA[r,"dAirtime"];
+
+#  maximize blah:
+#    GoodFracAirtime[5];
+
+#  maximize min_prop_airtime: 
+#    sum <r> in R with RDATA[r,"dAirtime"]>0 : GoodFracAirtime[r]; 
