@@ -346,6 +346,32 @@ begin
   (hgraph.getRadio("5").activeFreq==2437) ? test_result(false) : test_result(true)
 end
 
+begin
+  new_intermed_test("Testing asymmetric weights")
+  hgraph=nil
+  hgraph=Hypergraph.new
+
+  # Create 4 radios that have independent links
+  (1..2).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2412])) }
+  (3..4).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2412])) }
+
+  # Create links between the pairs of radios
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.4, 0.5, 3750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 0.4, 0.5, 2750, "802.11agn") )
+  hgraph.newSpatialEdge( SpatialEdge.new("1","2",-40, 0) )
+
+  # The second transmitter is within range of the primary receiver
+  hgraph.newSpatialEdge( SpatialEdge.new("3","2",-20,0) )
+
+  # Now, create the spatial edges so that it is completely hidden from 1
+  hgraph.newSpatialEdge( SpatialEdge.new("1","3",-20,0) )
+  hgraph.newSpatialEdge( SpatialEdge.new("3","1",-20,0) )
+
+  Optimization.new(hgraph).run_debug
+#  intermed_test("should avoid channel 2412")
+#  (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
+end
+
 #begin
 #  new_intermed_test("Testing asymmetric weights")
 #  hgraph=nil
