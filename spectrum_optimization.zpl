@@ -115,6 +115,7 @@
   var expIND[L*L*FPS] binary;
   param EXP_MAX := 10;
   var expComp[L*L] >= -10;    # Make sure this is -EXP_MAX
+  var probZeroTXinter[L*L*FPS];
   var probZeroTX[L*L];
   param EXP_DELTA := 0.001;
   var expFPSvals[FPS];
@@ -238,22 +239,28 @@
         expIND[l,j,i] <= 1 + ((expComp[l,j]-expFPS[i])/EXP_MAX)
     end;
 
+  subto probzero_eq:
+    if(USE_LINEAR_APPROX == 1) then
+      forall <l> in L : forall <j> in U[l] do
+        probZeroTX[l,j] == ((expIND[l,j,1]-expIND[l,j,2])*probZeroTXinter[l,j,1]) + ((expIND[l,j,2]-expIND[l,j,3])*probZeroTXinter[l,j,2]) + (expIND[l,j,3]*probZeroTXinter[l,j,3])
+    end;
+
   subto exp_low:    # If the value falls on to the lower approximation line
     if(USE_LINEAR_APPROX == 1) then
       forall <l> in L : forall <j> in U[l] do
-        0 == (expIND[l,j,1]-expIND[l,j,2]) * (expFPSvals[1] + expFPSvals[1]*expComp[l,j] - expFPSvals[1]*expFPS[1] - probZeroTX[l,j])
+        probZeroTXinter[l,j,1] == expFPSvals[1] + expFPSvals[1]*expComp[l,j] - expFPSvals[1]*expFPS[1]
     end;
 
   subto exp_mid:    # If it falls on to the mid approximation line
     if(USE_LINEAR_APPROX == 1) then
       forall <l> in L : forall <j> in U[l] do
-        0 == (expIND[l,j,2]-expIND[l,j,3]) * (expFPSvals[2] + expFPSvals[2]*expComp[l,j] - expFPSvals[2]*expFPS[2] - probZeroTX[l,j])
+        probZeroTXinter[l,j,2] == expFPSvals[2] + expFPSvals[2]*expComp[l,j] - expFPSvals[2]*expFPS[2]
     end;
 
   subto exp_high:   # And finally, the high line
     if(USE_LINEAR_APPROX == 1) then
       forall <l> in L : forall <j> in U[l] do
-        0 == (expIND[l,j,3]) * (expFPSvals[3] + expFPSvals[3]*expComp[l,j] - expFPSvals[3]*expFPS[3] - probZeroTX[l,j])
+        probZeroTXinter[l,j,3] == expFPSvals[3] + expFPSvals[3]*expComp[l,j] - expFPSvals[3]*expFPS[3]
     end;
 
   # ***************************************************************************************************
@@ -336,7 +343,7 @@
 ################
 
   maximize min_prop_airtime: 
-    sum <r> in R with RDATA[r,"dAirtime"]>0 : GoodAirtime[r] / RDATA[r,"dAirtime"]; 
+    sum <r> in R with RDATA[r,"dAirtime"]>0 : (GoodAirtime[r] / RDATA[r,"dAirtime"]) * 100; 
 
 #  minimize something:
 #    sum <r> in R with RDATA[r,"dAirtime"]>0 : RadioLossRate[r];
