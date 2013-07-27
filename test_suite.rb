@@ -391,10 +391,10 @@ begin
   hgraph.newSpatialEdge( SpatialEdge.new("3","6",-20,0) )
 
   # Now, create the spatial edges so that it is completely hidden from 1
-  #hgraph.newSpatialEdge( SpatialEdge.new("5","1",-20,1) )
-  #hgraph.newSpatialEdge( SpatialEdge.new("5","3",-20,1) )
+  hgraph.newSpatialEdge( SpatialEdge.new("5","1",-20,1) )
+  hgraph.newSpatialEdge( SpatialEdge.new("5","3",-20,1) )
 
-  Optimization.new(hgraph).run_debug
+  Optimization.new(hgraph).run
   intermed_test("should avoid channel 2412")
   (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
 end

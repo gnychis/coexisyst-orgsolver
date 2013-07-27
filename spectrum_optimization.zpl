@@ -223,10 +223,10 @@
   subto expComp_eq:     # The component in the exponential function is the packets/second * vulnerability win
       forall <l> in L : forall <j> in U[l] : expComp[l,j] == -((LinkAirtime[j]/LDATA[j,"txLen"]) * vulnWin[l,j]);
 
-  subto probZeroTX_eq:  # If we are not using the approximation, then we compute it directly 
-    if(USE_LINEAR_APPROX == 0) then
-      forall <l> in L : forall <j> in U[l] : probZeroTX[l,j] == exp(expComp[l,j])
-    end;
+#  subto probZeroTX_eq:  # If we are not using the approximation, then we compute it directly 
+#    if(USE_LINEAR_APPROX == 0) then
+#      forall <l> in L : forall <j> in U[l] : probZeroTX[l,j] == exp(expComp[l,j])
+#    end;
 
   subto toggleIND_1:    # The indicator to see if the value is above our approximation focus points
     if(USE_LINEAR_APPROX == 1) then
