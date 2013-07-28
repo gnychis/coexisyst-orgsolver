@@ -373,4 +373,10 @@ begin
   Optimization.new(hgraph).run
   intermed_test("should avoid channel 2412")
   (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
+
+  hgraph.getLinkEdge("1","2").txLen=2750
+  hgraph.getLinkEdge("3","4").txLen=5750
+  Optimization.new(hgraph).run
+  intermed_test("should avoid channel 2437")
+  (hgraph.getRadio("5").activeFreq==2437) ? test_result(false) : test_result(true)
 end
