@@ -343,17 +343,5 @@
 # OBJECTIVE FUNCTION
 ################
 
-#  subto forceBetterSol:
-#    af[5,2437]==1;
-
   maximize min_prop_airtime: 
     sum <r> in R with RDATA[r,"dAirtime"]>0 : GoodAirtime[r] / RDATA[r,"dAirtime"]; 
-
-#  subto fraceq:
-#    forall <r> in R with RDATA[r,"dAirtime"]>0 : GoodFracAirtime[r] == GoodAirtime[r] / RDATA[r,"dAirtime"];
-
-#  maximize blah:
-#    GoodFracAirtime[5];
-
-#  maximize min_prop_airtime: 
-#    sum <r> in R with RDATA[r,"dAirtime"]>0 : GoodFracAirtime[r]; 
