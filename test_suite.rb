@@ -43,9 +43,9 @@ begin
   (1..6).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2412,2437,2462])) }
 
   # Create links between the pairs of radios
-  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.4, 0.75, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 0.4, 0.75, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 0.4, 0.75, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 250, 300, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 250, 300, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 250, 300, 2750, "802.11agn") )
 
   # The transmitters are all within range of each other
   hgraph.getLinkEdges.each { |le1|
@@ -69,9 +69,9 @@ begin
   (1..6).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network1", [2412,2437,2462])) }
 
   # Create links between the pairs of radios
-  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.4, 0.75, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 0.4, 0.75, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 0.4, 0.75, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 250, 300, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 250, 300, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 250, 300, 2750, "802.11agn") )
 
   # The transmitters are all within range of each other
   hgraph.getLinkEdges.each { |le1|
@@ -97,9 +97,9 @@ begin
   (5..6).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "ZigBee", "zigbee#{rid}", "network#{(rid-1)/2}", [2412,2437])) }
 
   # Create links between the pairs of radios
-  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 0.2, 0.3, 2750, "ZigBee") )
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 250, 300, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 250, 300, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 250, 300, 2750, "ZigBee") )
 
   # Nothing from the first two links are within range, but the two transmitters are within range of the 3rd and
   # do not coordinate
@@ -132,9 +132,9 @@ begin
   (5..6).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "ZigBee", "zigbee#{rid}", "network#{(rid-1)/2}", [2412,2437])) }
 
   # Create links between the pairs of radios
-  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.4, 0.5, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 0.2, 0.3, 2750, "ZigBee") )
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 300, 320, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 250, 275, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 250, 275, 2750, "ZigBee") )
 
   # Nothing from the first two links are within range, but the two transmitters are within range of the 3rd and
   # do not coordinate
@@ -151,8 +151,8 @@ begin
   (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
 
   # Increase the interference on the second 802.11 link
-  hgraph.getLinkEdge("3","4").airtime=0.6;
-  hgraph.getLinkEdge("3","4").dAirtime=0.7;
+  hgraph.getLinkEdge("3","4").pps=330;
+  hgraph.getLinkEdge("3","4").ppsMax=350;
 
   Optimization.new(hgraph).run
   intermed_test("should avoid channel 2437")
@@ -170,11 +170,11 @@ begin
   (9..10).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "ZigBee", "zigbee#{rid}", "network#{(rid-1)/2}", [2412,2437])) }
 
   # Create links between the pairs of radios
-  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.4, 0.5, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 0.3, 0.4, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "7","8", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "9","10", 2437, 20, 0.2, 0.3, 2750, "ZigBee") )
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 150, 175, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 75, 90, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 110, 125, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "7","8", 2437, 20, 75, 90, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "9","10", 2437, 20, 75, 90, 2750, "ZigBee") )
 
   # Nothing from the first two links are within range, but the two transmitters are within range of the 3rd and
   # do not coordinate
@@ -205,9 +205,9 @@ begin
   (5..6).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "ZigBee", "zigbee#{rid}", "network#{(rid-1)/2}", [2412,2437])) }
 
   # Create links between the pairs of radios
-  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 0.2, 0.3, 2750, "ZigBee") )
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 75, 90, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 75, 90, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 75, 90, 2750, "ZigBee") )
 
   # Nothing from the first two links are within range, but the two transmitters are within range of the 3rd and
   # do not coordinate
@@ -245,11 +245,11 @@ begin
   (9..10).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "ZigBee", "zigbee#{rid}", "network#{(rid-1)/2}", [2412,2437])) }
 
   # Create links between the pairs of radios
-  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.4, 0.5, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 0.4, 0.5, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "7","8", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "9","10", 2437, 20, 0.2, 0.3, 2750, "ZigBee") )
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 150, 175, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 75, 90, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 150, 175, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "7","8", 2437, 20, 75, 90, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "9","10", 2437, 20, 75, 90, 2750, "ZigBee") )
 
   # Nothing from the first two links are within range, but the two transmitters are within range of the 3rd and
   # do not coordinate
@@ -288,9 +288,9 @@ begin
   (5..6).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2412,2437])) }
 
   # Create links between the pairs of radios
-  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 75, 90, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 75, 90, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 75, 90, 2750, "802.11agn") )
 
   # Nothing from the first two links are within range, but the two transmitters are within range of the 3rd and
   # do not coordinate
@@ -323,9 +323,9 @@ begin
   (5..6).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2412,2437])) }
 
   # Create links between the pairs of radios
-  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 75, 90, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 75, 90, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 75, 90, 2750, "802.11agn") )
 
   # First, the two transmitters are within range of the receiver
   hgraph.newSpatialEdge( SpatialEdge.new("5","6",-40,0) )
@@ -357,9 +357,9 @@ begin
   (5..6).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "802.11agn", "wifi#{rid}", "network#{(rid-1)/2}", [2412,2437])) }
 
   # Create links between the pairs of radios
-  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 0.4, 0.4, 5750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 0.2, 0.3, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 0.2, 0.3, 4750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 75, 90, 5750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 75, 90, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 75, 90, 2750, "802.11agn") )
   hgraph.newSpatialEdge( SpatialEdge.new("5","6",-40,0) )
 
   # First, the two transmitters are within range of the receiver

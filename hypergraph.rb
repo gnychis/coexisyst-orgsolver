@@ -2,7 +2,15 @@
 
 Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :activeFreq)
 SpatialEdge = Struct.new(:from, :to, :rssi, :backoff)
-LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :airtime, :dAirtime, :txLen, :protocol)
+LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :pps, :ppsMax, :txLen, :protocol) do
+  def airtime
+    return pps*(txLen/1000000.0)
+  end
+
+  def dAirtime
+    return ppsMax*(txLen/1000000.0)
+  end
+end
 Hyperedge = Struct.new(:id, :radios)
 
 class Hypergraph
@@ -220,8 +228,8 @@ class Hypergraph
                               ls[1],        # The destination ID for the link
                               ls[3].to_i,   # The frequency used
                               ls[5].to_i,   # The bandwidth used on the link
-                              ls[6].to_f,   # The airtime observed on the link from the source to destination
-                              ls[6].to_f*1.3,   # FIXME: desired airtime is just the current airtime
+                              ls[6].to_f,   # The PPS observed on the link from the source to destination
+                              ls[6].to_f,   # The max/peak PPS observed on the link from the source to destination
                               ls[7].to_i,   # The average transmission length in microseconds
                               ls[2]))       # The protocol in use on the link
         end
