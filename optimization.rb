@@ -321,9 +321,12 @@ class Optimization
       spl=line.split[0].split("#")
       rid=spl[1].to_i
       freq=spl[2].to_i
+      val=line.split[1].to_f
       radio = @hgraph.getRadioByIndex(rid-1)
-      radio.activeFreq = freq
-      radios.push( radio )
+      if(line.split[1].to_f>0.1)
+        radio.activeFreq = freq
+        radios.push( radio ) 
+      end
     }
     return radios
   end
@@ -336,9 +339,12 @@ class Optimization
       spl=line.split[0].split("#")
       rid=spl[1].to_i
       freq=spl[2].to_i
+      val=line.split[1].to_f
       radio = @hgraph.getRadioByIndex(rid-1)
-      radio.activeFreq = freq
-      radios.push( radio )
+      if(line.split[1].to_f>0.1)
+        radio.activeFreq = freq
+        radios.push( radio ) 
+      end
     }
     return radios
   end
