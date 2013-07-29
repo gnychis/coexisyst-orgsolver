@@ -1,0 +1,4 @@
+Scenario 1
+----------
+All networks have one transmitter within range of each other.  Their total airtime should push them away from
+each other in the spectrum.  
