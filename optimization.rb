@@ -137,7 +137,7 @@ class Optimization
     hgraph.getLinkEdges.each_index {|l| data["L"].push(l+1)}
     dataOF.puts translateVar("L", "The set of links in the optimization")
 
-    data["LinkAttr"]=LinkEdge.members[0..LinkEdge.members.size-2]
+    data["LinkAttr"]=["srcID", "dstID", "freq", "bandwidth", "airtime", "dAirtime", "txLen"]
     dataOF.puts translateVar("LinkAttr", "The set of attributes for each link")
 
     data["FL[L]"]=Array.new
@@ -146,6 +146,7 @@ class Optimization
 
     dataOF.puts "  # The data for each link"
     dataOF.puts "  param LDATA[L * LinkAttr] :="
+    #dataOF.print "      | \"srcID\", \"dstID\", \"freq\", \"bandwidth\", \"airtime\", \"dAirtime\", \"txLen\"  |"
     dataOF.print "      |#{data["LinkAttr"].inspect[1..-2]} |"
     hgraph.getLinkEdges.each_index do |l|
       le = hgraph.getLinkEdges[l]
@@ -321,9 +322,12 @@ class Optimization
       spl=line.split[0].split("#")
       rid=spl[1].to_i
       freq=spl[2].to_i
+      val=line.split[1].to_f
       radio = @hgraph.getRadioByIndex(rid-1)
-      radio.activeFreq = freq
-      radios.push( radio )
+      if(line.split[1].to_f>0.1)
+        radio.activeFreq = freq
+        radios.push( radio ) 
+      end
     }
     return radios
   end
@@ -336,9 +340,12 @@ class Optimization
       spl=line.split[0].split("#")
       rid=spl[1].to_i
       freq=spl[2].to_i
+      val=line.split[1].to_f
       radio = @hgraph.getRadioByIndex(rid-1)
-      radio.activeFreq = freq
-      radios.push( radio )
+      if(line.split[1].to_f>0.1)
+        radio.activeFreq = freq
+        radios.push( radio ) 
+      end
     }
     return radios
   end
