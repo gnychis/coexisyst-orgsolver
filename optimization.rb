@@ -10,6 +10,9 @@ end
 class Optimization
   attr_accessor :data
   attr_accessor :hgraph
+  attr_accessor :solve_time
+  attr_accessor :subgraph_time
+  attr_accessor :init_time
 
   def translateVar(var,comment)
     s=String.new
@@ -49,7 +52,12 @@ class Optimization
   def initialize(hgraph)
     @data = Hash.new
     @hgraph=hgraph
+    @solve_time = 0
+    @subgraph_time = 0
+    @init_time = 0
     dataOF = File.new("data.zpl", "w")
+
+    init_start=Time.now
 
     #################################################################################################
     ## Now, we need a unique numeric ID for every single transmitter.  This is strictly for the
@@ -87,20 +95,6 @@ class Optimization
       dataOF.puts ";" if(r==hgraph.getRadios.size-1)
     end
     dataOF.puts "\n"
-
-    data["S[R]"]=Array.new
-    hgraph.getRadios.each {|r| 
-      inRange=hgraph.getSpatialEdgesTo(r.radioID)
-      if(inRange.nil? or inRange.size==0)
-        data["S[R]"].push( [] )
-      else
-#        puts "\n------- #{inRange.inspect}"
-#        puts inRange[0].from.inspect
-#        puts hgraph.getRadioIndex(inRange[0].from)
-        data["S[R]"].push( inRange.map {|se| hgraph.getRadioIndex(se.from)+1} )
-      end
-    }
-    dataOF.puts translateVar("S[R]", "For each radio, the set of radios that are within spatial range (i.e., r senses them)")
 
     data["C[R]"]=Array.new
     hgraph.getRadios.each {|r| 
@@ -174,6 +168,7 @@ class Optimization
     dataOF.puts "## Information related to coordination between links"
     dataOF.puts ""
 
+    subgraph_start=Time.now
     # Calculate the vulnerability windows
     allLinks = hgraph.getLinkEdges
     data["VW[L]"]=Array.new
@@ -277,6 +272,8 @@ class Optimization
     symByRadio.each {|r| r.uniq!}; asym1ByRadio.each {|r| r.uniq!}; asym2ByRadio.each {|r| r.uniq!}
     symByLink.each {|r| r.uniq!};  asym1ByLink.each {|r| r.uniq!}; asym2ByLink.each {|r| r.uniq!}
 
+    @subgraph_time = Time.now - subgraph_start
+
 
     data["U[L]"] = Array.new
     data["LU[L]"] = symByLink
@@ -308,6 +305,7 @@ class Optimization
     dataOF.puts translateVar("LUB[L]", "For all radios, the set of links that are asymmetric, where the baseline link does not coordinate")
     dataOF.puts translateVar("OL", "For all conflicting link pairs, the loss rate on the link")
     dataOF.close
+    @init_time = Time.now - init_start
   end
   
   def run_debug()
@@ -333,6 +331,7 @@ class Optimization
   end
 
   def run()
+    solve_start = Time.now
     radios=Array.new
     fString=`scip -f spectrum_optimization.zpl | grep -E "af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
@@ -347,6 +346,7 @@ class Optimization
         radios.push( radio ) 
       end
     }
+    @solve_time = Time.now - solve_start
     return radios
   end
 end
