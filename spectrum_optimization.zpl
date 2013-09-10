@@ -292,22 +292,22 @@
     #forall <r> in R : ats[r] == sum <c> in C[r] : (RadioAirtime[c] * o[r,c]); #(RDATA[c,"dAirtime"] * o[r,c]);
 
   subto ats_min_lhv_eq:                 # The left hand value of the min for airtime sensed is airtime sensed
-    forall <i> in L : ats_min_lhv[i] == ats[i];
+    forall <i> in R : ats_min_lhv[i] == ats[i];
 
   subto ats_min1:                       # The value (ats_act)  must be less than the lhv
-    forall <i> in L : ats_act[i] <= ats_min_lhv[i];
+    forall <i> in R : ats_act[i] <= ats_min_lhv[i];
 
   subto ats_min2:                       # The value (ats_act) must be less than the rhv (fixed to 1)
-    forall <i> in L : ats_act[i] <= ats_min_rhv;
+    forall <i> in R : ats_act[i] <= ats_min_rhv;
 
   subto ats_min_c1:                     # A possible constraint given the min LP sub (see example in 'lp_substitutions/')
-    forall <i> in L : -ats_act[i] <= -ats_min_lhv[i] + ats_min_M*ats_min_y[i];
+    forall <i> in R : -ats_act[i] <= -ats_min_lhv[i] + ats_min_M*ats_min_y[i];
 
   subto ats_min_c2:                     # A possible constraint...
-    forall <i> in L : -ats_act[i] <= -ats_min_rhv + ats_min_M*(1-ats_min_y[i]);
+    forall <i> in R : -ats_act[i] <= -ats_min_rhv + ats_min_M*(1-ats_min_y[i]);
   
   subto residual_eq:                    # The residual is equal to 1 minus the airtime sensed
-    forall <i> in L : Residual[i] == 1 - ats_act[i];
+    forall <i> in R : Residual[i] == 1 - ats_act[i];
   
   # ***************************************************************************************************
   # Related to substitution for  O_ifrf ^ f_i ^ f_r
@@ -337,7 +337,7 @@
   do forall <i> in R do check RDATA[i,"dAirtime"] >= 0 and RDATA[i,"dAirtime"] <= 1;
 
   # Ensure that bandwidth is positive
-  do forall <i> in L do check RDATA[i,"bandwidth"] > 0;
+  do forall <i> in R do check RDATA[i,"bandwidth"] > 0;
   do forall <i> in R do check RDATA[i,"bandwidth"] > 0;
 
 ############################################################################################################################################
