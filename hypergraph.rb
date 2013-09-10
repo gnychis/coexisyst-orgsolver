@@ -52,6 +52,7 @@ class Hypergraph
   end
   
   def newSpatialEdge(edge)
+    return if(edge.from==edge.to)
     @@spatialEdges.push(edge) if(getSpatialEdge(edge.from, edge.to).nil?)
   end
 
@@ -65,6 +66,7 @@ class Hypergraph
   end
 
   def newLinkEdge(link)
+    return if(link.srcID==link.dstID)
     @@linkEdges.push(link) if(getLinkEdge(link.srcID, link.dstID).nil?)
   end
 
