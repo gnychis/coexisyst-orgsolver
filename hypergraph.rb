@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 
-Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :activeFreq)
+Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :activeFreq, :lossRate, :goodAirtime, :airtime)
 SpatialEdge = Struct.new(:from, :to, :rssi, :backoff)
 LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :pps, :ppsMax, :txLen, :protocol) do
   def airtime

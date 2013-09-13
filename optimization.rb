@@ -332,18 +332,29 @@ class Optimization
 
   def run()
     solve_start = Time.now
-    radios=Array.new
-    fString=`scip -f spectrum_optimization.zpl | grep -E "af\#|no solution"`.split("\n").map {|i| i.chomp}
+    radios = hgraph.getRadios 
+    fString=`scip -f spectrum_optimization.zpl | grep -E "RadioAirtime\|GoodAirtime\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
       spl=line.split[0].split("#")
       rid=spl[1].to_i
-      freq=spl[2].to_i
-      val=line.split[1].to_f
-      radio = @hgraph.getRadioByIndex(rid-1)
-      if(line.split[1].to_f>0.1)
-        radio.activeFreq = freq
-        radios.push( radio ) 
+
+      if(spl[0]=="af")
+        freq=spl[2].to_i
+        val=line.split[1].to_f
+        radios[rid-1].activeFreq = freq if(line.split[1].to_f>0.1)
+      end
+
+      if(spl[0]=="RadioLossRate")
+        radios[rid-1].lossRate = line.split[1].to_f
+      end
+
+      if(spl[0]=="GoodAirtime")
+        radios[rid-1].goodAirtime = line.split[1].to_f
+      end
+      
+      if(spl[0]=="RadioAirtime")
+        radios[rid-1].airtime = line.split[1].to_f
       end
     }
     @solve_time = Time.now - solve_start
