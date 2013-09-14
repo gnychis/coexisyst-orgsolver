@@ -99,6 +99,7 @@
   # For calculating the rough estimated of an expected "fair share" (fs) of airtime due to radios that
   # the radio coordinates with.
   var FairShare[R];
+  var AsymSense[R];
   var nsharing[R];
   
   # ***************************************************************************************************
@@ -283,6 +284,11 @@
 
   subto lossrate_prod_vars_eq:          # Loss rate variables which is a chain of multiplications
     forall <i> in L : forall <j> in L with j!=1 : sr_vars[i,j] == 1 - (1 - sr_vars[i,j-1]) * (1 - sr_vals[i,j]);
+  
+  # ***************************************************************************************************
+  # The amount of airtime sensed that will not back off to you
+  subto asymsense_eq:
+    forall <r> in R : AsymSense[r] == sum <c> in AS[r] : (RDATA[c,"dAirtime"] * o[r,c]);
 
   # ***************************************************************************************************
   # Related to substitution for the min() in the airtime sensed so that the "actual" sensed is <= 1.
