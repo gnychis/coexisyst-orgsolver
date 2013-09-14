@@ -175,7 +175,7 @@
     forall <r> in R :  nsharing[r] == sum <c> in C[r] : o[r,c];
 
   subto fs_eq:                          # Expected FairShare[i] equal to 1/nsharing, just written without division
-    forall <r> in R : FairShare[r] * (nsharing[r]+1) == 1;
+    forall <r> in R : (FairShare[r] * (nsharing[r]+1)) + AsymSense[r] == 1;
 
   # ***************************************************************************************************
   # Calculating the max of residual airtime and the fairshare, giving the maximum of them
