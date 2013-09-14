@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 
-Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :activeFreq, :lossRate, :goodAirtime, :airtime)
+Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :activeFreq, :lossRate, :goodAirtime, :airtime, :dAirtime)
 SpatialEdge = Struct.new(:from, :to, :rssi, :backoff)
 LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :pps, :ppsMax, :txLen, :protocol) do
   def airtime
@@ -18,6 +18,7 @@ class Hypergraph
   @@radios=Array.new
   @@hyperEdges=Array.new     
   @@linkEdges=Array.new
+  @@networks=0
 
   def getSpatialEdges()
     return @@spatialEdges
@@ -136,6 +137,7 @@ class Hypergraph
 
   def createHyperedge(networkID)
     @@hyperEdges.push(Hyperedge.new(networkID,Array.new)) if(getHyperedge(networkID).nil?)
+    @@networks+=1
   end
 
   def getRadioByName(radioName)
@@ -169,11 +171,37 @@ class Hypergraph
     end
   end
 
+  def newNetwork(type, frequencies, airtime_to, airtime_from, rssi_backoff_to, rssi_backoff_from)
+    @@networks+=1
+    total_radios=getRadios.length
+    radios=Array.new
+    (total_radios+1..total_radios+2).each {|rid| 
+      r = Radio.new("#{rid}", type, "radio#{rid}", "network#{@@networks}", frequencies)
+      newRadio(r) 
+    }
+
+    len=2750 if(type=="802.11agn")
+    len=2750 if(type=="Analog")
+
+    bw=20 if(type=="802.11agn")
+    bw=2  if(type=="Analog")
+    
+    pps_to=(1000000*airtime_to)/len       if(not airtime_to.nil?)
+    pps_from=(1000000*airtime_from)/len   if(not airtime_from.nil?)
+      
+    newLinkEdge( LinkEdge.new( "#{total_radios+1}","#{total_radios+2}", 2437, bw, pps_to, pps_to, len, type) ) if(not pps_to.nil?)
+    newLinkEdge( LinkEdge.new( "#{total_radios+2}","#{total_radios+1}", 2437, bw, pps_from, pps_from, len, type) ) if(not pps_from.nil?)
+      
+    newSpatialEdge( SpatialEdge.new("#{total_radios+1}","#{total_radios+2}",rssi_backoff_to[0],rssi_backoff_to[1])) if(not rssi_backoff_to.nil?)
+    newSpatialEdge( SpatialEdge.new("#{total_radios+2}","#{total_radios+1}",rssi_backoff_from[0],rssi_backoff_from[1])) if(not rssi_backoff_from.nil?)
+  end
+
   def initialize()
     @@spatialEdges=Array.new
     @@radios=Array.new
     @@hyperEdges=Array.new     
     @@linkEdges=Array.new
+    @@networks=0
   end
 
   def loadData(data_dir)
