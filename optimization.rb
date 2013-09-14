@@ -96,14 +96,27 @@ class Optimization
       dataOF.puts ";" if(r==hgraph.getRadios.size-1)
     end
     dataOF.puts "\n"
-
+    
     data["C[R]"]=Array.new
     hgraph.getRadios.each {|r| 
       ses=Array.new
-      hgraph.getSpatialEdgesTo(r.radioID).each {|se| ses.push(se) if(se.backoff==1)}
+      hgraph.getSpatialEdgesTo(r.radioID).each {|se| 
+        se2 = hgraph.getSpatialEdge(r.radioID,se.from)
+        if(not se2.nil?)
+          ses.push(se) if(se.backoff==1 and se2.backoff==1)
+        end
+      }
       data["C[R]"].push( ses.map {|se| hgraph.getRadioIndex(se.from)+1} )
       }
-    dataOF.puts translateVar("C[R]", "For each radio, the set of radios that are within spatial range (i.e., r senses them) and it coordinates with them (uni-directional)")
+    dataOF.puts translateVar("C[R]", "For each radio, the set of radios that coordinate (bi-directionaly)")
+
+    data["S[R]"]=Array.new
+    hgraph.getRadios.each {|r| 
+      ses=Array.new
+      hgraph.getSpatialEdgesTo(r.radioID).each {|se| ses.push(se) if(se.backoff==1)}
+      data["S[R]"].push( ses.map {|se| hgraph.getRadioIndex(se.from)+1} )
+      }
+    dataOF.puts translateVar("S[R]", "For each radio, the set of radios that are within spatial range (i.e., r senses them) and it coordinates with them (uni-directional)")
 
     data["ROL[R]"]=Array.new
     hgraph.getRadios.each {|r| data["ROL[R]"].push([hgraph.getLinkEdgeIndex(hgraph.getLinkEdgesByID(r.radioID)[0])+1]) }
