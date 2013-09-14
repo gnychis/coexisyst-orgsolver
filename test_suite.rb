@@ -30,6 +30,55 @@ def test_result(result)
   raise RuntimeError, 'Test failed'
 end
 
+begin
+  phone_freqs=[2460,2465,2470]
+  wifi_freqs=[2462]
+  
+  wifi_freqs.each do |curr_freq|
+
+    hgraph=Hypergraph.new
+
+    hgraph.newNetwork("802.11agn", [curr_freq], 0.510, nil, [-40,0], nil)
+    hgraph.newNetwork("Analog", [phone_freqs[0]], 0.999999, nil, [-40,0], nil)
+
+    # The main culprit
+    hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+    
+    # Additional networks that the baseline network senses
+    hgraph.newNetwork("802.11agn", [2412], 0.75, nil, [-40,0], nil)
+    hgraph.newNetwork("802.11agn", [2437], 0.51, nil, [-40,0], nil)
+    hgraph.newNetwork("802.11agn", [2437], 0.51, nil, [-40,0], nil)
+    hgraph.newNetwork("802.11agn", [2462], 0.75, nil, [-40,0], nil)
+    hgraph.newSpatialEdge(SpatialEdge.new("5", "1", -20, 1))
+    hgraph.newSpatialEdge(SpatialEdge.new("7", "1", -20, 1))
+    hgraph.newSpatialEdge(SpatialEdge.new("9", "1", -20, 1))
+    hgraph.newSpatialEdge(SpatialEdge.new("11", "1", -20, 1))
+    hgraph.newSpatialEdge(SpatialEdge.new("1", "5", -20, 1))
+    hgraph.newSpatialEdge(SpatialEdge.new("1", "7", -20, 1))
+    hgraph.newSpatialEdge(SpatialEdge.new("1", "9", -20, 1))
+    hgraph.newSpatialEdge(SpatialEdge.new("1", "11", -20, 1))
+
+    # Networks that create a little additional loss
+    hgraph.newNetwork("802.11agn", [2412], 0.02, nil, [-40,0], nil)
+    hgraph.newNetwork("802.11agn", [2437], 0.01, nil, [-40,0], nil)
+    hgraph.newNetwork("802.11agn", [2437], 0.02, nil, [-40,0], nil)
+    hgraph.newNetwork("802.11agn", [2462], 0.04, nil, [-40,0], nil)
+    hgraph.newSpatialEdge(SpatialEdge.new("13", "2", -20, 0))
+    hgraph.newSpatialEdge(SpatialEdge.new("15", "2", -20, 0))
+    hgraph.newSpatialEdge(SpatialEdge.new("17", "2", -20, 0))
+    hgraph.newSpatialEdge(SpatialEdge.new("19", "2", -20, 0))
+
+
+    opt = Optimization.new(hgraph)
+    opt.run
+
+    radios=hgraph.getRadios
+    puts radios[0].airtime/radios[0].dAirtime
+
+  end
+end
+exit
+
 ###########################################################################
 ## Basic Airtime Split
 ## ---------------------

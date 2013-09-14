@@ -88,6 +88,7 @@ class Optimization
       links=Array.new
       hgraph.getLinkEdgesByTX(hgraph.getRadios[r].radioID).each {|le| links.push(le) }
       da = 0; links.each {|l| da+=l.dAirtime}
+      hgraph.getRadios[r].dAirtime=da
       anylink=Array.new
       hgraph.getLinkEdgesByID(hgraph.getRadios[r].radioID).each {|le| anylink.push(le)}
       dataOF.print "     |#{r+1}| \t#{links.size}, \t#{da}, \t\t#{anylink[0].bandwidth} |"   # Print out the header
@@ -356,6 +357,12 @@ class Optimization
       if(spl[0]=="RadioAirtime")
         radios[rid-1].airtime = line.split[1].to_f
       end
+    }
+
+    radios.each {|r|
+      r.lossRate=0.0 if(r.lossRate.nil?)
+      r.goodAirtime=0.0 if(r.goodAirtime.nil?)
+      r.airtime=0.0 if(r.airtime.nil?)
     }
     @solve_time = Time.now - solve_start
     return radios
