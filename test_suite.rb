@@ -31,6 +31,7 @@ def test_result(result)
 end
 
 begin
+  new_test("Testing asymmetric sensing properly degrades expected airtime")
   phone_freqs=[2460,2465,2470]
   wifi_freqs=[2462]
   
@@ -73,11 +74,10 @@ begin
     opt.run
 
     radios=hgraph.getRadios
-    puts radios[0].airtime/radios[0].dAirtime
+    (radios[0].airtime/radios[0].dAirtime<0.1) ? test_result(true) : test_result(false)
 
   end
 end
-exit
 
 ###########################################################################
 ## Basic Airtime Split
