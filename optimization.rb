@@ -109,6 +109,19 @@ class Optimization
       data["C[R]"].push( ses.map {|se| hgraph.getRadioIndex(se.from)+1} )
       }
     dataOF.puts translateVar("C[R]", "For each radio, the set of radios that coordinate (bi-directionaly)")
+    
+    data["AS[R]"]=Array.new
+    hgraph.getRadios.each {|r| 
+      ses=Array.new
+      hgraph.getSpatialEdgesTo(r.radioID).each {|se| 
+        se2 = hgraph.getSpatialEdge(r.radioID,se.from)
+        if(se2.nil? or se2.backoff==0)
+          ses.push(se) if(se.backoff==1)
+        end
+      }
+      data["AS[R]"].push( ses.map {|se| hgraph.getRadioIndex(se.from)+1} )
+      }
+    dataOF.puts translateVar("AS[R]", "Asymmetric sensing of other radios (i.e., you sense them, but they don't sense you)")
 
     data["S[R]"]=Array.new
     hgraph.getRadios.each {|r| 
