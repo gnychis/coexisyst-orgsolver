@@ -40,7 +40,7 @@ begin
     hgraph=Hypergraph.new
 
     hgraph.newNetwork("802.11agn", [curr_freq], 0.510, nil, [-40,0], nil)
-    hgraph.newNetwork("Analog", [phone_freqs[0]], 0.999999, nil, [-40,0], nil)
+    hgraph.newNetwork("Analog", [phone_freqs[0]], 0.999, nil, [-40,0], nil)
 
     # The main culprit
     hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
