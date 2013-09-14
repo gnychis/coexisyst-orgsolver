@@ -69,7 +69,6 @@ begin
     hgraph.newSpatialEdge(SpatialEdge.new("17", "2", -20, 0))
     hgraph.newSpatialEdge(SpatialEdge.new("19", "2", -20, 0))
 
-
     opt = Optimization.new(hgraph)
     opt.run
 
