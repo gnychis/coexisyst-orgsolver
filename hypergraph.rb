@@ -182,9 +182,11 @@ class Hypergraph
 
     len=2750 if(type=="802.11agn")
     len=2750 if(type=="Analog")
+    len=1200 if(type=="ZigBee")
 
     bw=20 if(type=="802.11agn")
     bw=2  if(type=="Analog")
+    bw=5  if(type=="ZigBee")
     
     pps_to=(1000000*airtime_to)/len       if(not airtime_to.nil?)
     pps_from=(1000000*airtime_from)/len   if(not airtime_from.nil?)
