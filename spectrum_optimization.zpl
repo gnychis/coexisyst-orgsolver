@@ -66,6 +66,7 @@
   var LinkAirtime[L] real;    # The airtime for each link given the radio's airtime
   var LinkAirtimeFrac[L] real;
   var LinkDecrease[R] real;
+  var LinkPPS[L] real;
  
   # ***************************************************************************************************
   # Variables related to finding the min between rfs (the max between residual and fairshare) and
@@ -116,7 +117,8 @@
   param expOffsets[FPS] := <1> 0.01, <2> 0.02, <3> 0.04;
   var expIND[L*L*FPS] binary;
   param EXP_MAX := 10;
-  var expComp[L*L] >= -10;    # Make sure this is -EXP_MAX
+  var expComp[L*L]; # >= -10;    # Make sure this is -EXP_MAX
+  var expCompB[L*L]; # >= -10;    # Make sure this is -EXP_MAX
   var probZeroTXinter[L*L*FPS];
   var probZeroTX[L*L];
   param EXP_DELTA := 0.001;
@@ -221,12 +223,18 @@
   # ***************************************************************************************************
   # Related to calculating the estimated overlap between two links which we do as a linear approximation
   # with 3 focus points.
+  subto linkpps_eq:
+      forall <l> in L : LinkPPS[l] == LinkAirtime[l]/LDATA[l,"txLen"];
+
   subto expComp_eq:     # The component in the exponential function is the packets/second * vulnerability win
-      forall <l> in L : forall <j> in U[l] : expComp[l,j] == -((LinkAirtime[j]/LDATA[j,"txLen"]) * vulnWin[l,j]);
+      forall <l> in L : forall <j> in U[l] : expComp[l,j] * LinkPPS[j] == 1 - ( LinkPPS[j]*LDATA[j,"txLen"]);
+
+  subto expCompB_eq:
+      forall <l> in L : forall <j> in U[l] : expComp[l,j] * expCompB[l,j] == vulnWin[l,j];
 
   subto probZeroTX_eq:  # If we are not using the approximation, then we compute it directly 
     if(USE_LINEAR_APPROX == 0) then
-      forall <l> in L : forall <j> in U[l] : probZeroTX[l,j] == exp(expComp[l,j])
+      forall <l> in L : forall <j> in U[l] : probZeroTX[l,j] == exp( -expCompB[l,j] )
     end;
 
   subto toggleIND_1:    # The indicator to see if the value is above our approximation focus points
