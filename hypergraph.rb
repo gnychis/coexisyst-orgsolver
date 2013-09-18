@@ -1,5 +1,6 @@
 #!/usr/bin/ruby
 
+Network = Struct.new(:networkID, :protocol, :activeFreq, :bandwidth, :dAirtime, :airtime, :goodAirtime, :lossRate, :radios)
 Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :activeFreq, :lossRate, :goodAirtime, :airtime, :dAirtime)
 SpatialEdge = Struct.new(:from, :to, :rssi, :backoff)
 LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :pps, :ppsMax, :txLen, :protocol) do
@@ -18,7 +19,6 @@ class Hypergraph
   @@radios=Array.new
   @@hyperEdges=Array.new     
   @@linkEdges=Array.new
-  @@networks=0
 
   def getSpatialEdges()
     return @@spatialEdges
@@ -137,7 +137,6 @@ class Hypergraph
 
   def createHyperedge(networkID)
     @@hyperEdges.push(Hyperedge.new(networkID,Array.new)) if(getHyperedge(networkID).nil?)
-    @@networks+=1
   end
 
   def getRadioByName(radioName)
@@ -171,12 +170,40 @@ class Hypergraph
     end
   end
 
+  def getNetworks()
+    links=getLinkEdges()
+    se=getSpatialEdges()
+    radios=getRadios()
+
+    # Next, go through and create all of the networks
+    networks=Hash.new
+    radios.each do |r|
+      if(not networks.has_key?(r.networkID))
+        networks[r.networkID] = Network.new(r.networkID, r.protocol, r.activeFreq, nil, 0, 0, 0, 0, Array.new)
+      end
+      
+      lEdges = getLinkEdgesByTX(r.radioID)
+      next if(lEdges.nil? or lEdges.length==0)
+
+      network = networks[r.networkID]
+      network.bandwidth = lEdges[0].bandwidth
+
+      network.dAirtime+=r.dAirtime        if(not r.dAirtime.nil?)
+      network.airtime+=r.airtime          if(not r.airtime.nil?)
+      network.lossRate+=r.lossRate        if(not r.lossRate.nil?)
+      network.goodAirtime+=r.goodAirtime  if(not r.goodAirtime.nil?)
+
+      network.radios.push(r)
+    end
+    return networks
+  end
+
   def newNetwork(type, frequencies, airtime_to, airtime_from, rssi_backoff_to, rssi_backoff_from)
-    @@networks+=1
     total_radios=getRadios.length
     radios=Array.new
+    networks=getNetworks()
     (total_radios+1..total_radios+2).each {|rid| 
-      r = Radio.new("#{rid}", type, "radio#{rid}", "network#{@@networks}", frequencies)
+      r = Radio.new("#{rid}", type, "radio#{rid}", "network#{networks.length+1}", frequencies)
       newRadio(r) 
     }
 
@@ -203,7 +230,6 @@ class Hypergraph
     @@radios=Array.new
     @@hyperEdges=Array.new     
     @@linkEdges=Array.new
-    @@networks=0
   end
 
   def loadData(data_dir)
