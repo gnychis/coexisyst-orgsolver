@@ -469,7 +469,6 @@ class Optimization
 
       net_conflicts=Array.new
       @conflict_graph.each do |c|
-        puts c.from.srcID
         net_from=nil; net_to=nil
         networks.each_value  do |n|
           n.radios.each do |r|
