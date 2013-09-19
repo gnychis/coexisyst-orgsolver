@@ -210,9 +210,13 @@ class Hypergraph
     }
 
     len=2750 if(type=="802.11agn")
+    len=2750 if(type=="802.11n-40MHz")
+    len=3000 if(type=="802.11n")
     len=400 if(type=="Analog")
     len=1750 if(type=="ZigBee")
 
+    bw=40 if(type=="802.11n-40MHz")
+    bw=20 if(type=="802.11n")
     bw=20 if(type=="802.11agn")
     bw=2  if(type=="Analog")
     bw=5  if(type=="ZigBee")

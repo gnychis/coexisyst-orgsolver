@@ -1,8 +1,8 @@
 #!/usr/bin/ruby
 require 'rubygems'
-require 'trollop'
-require 'hypergraph'
-require 'optimization'
+require './trollop'
+require './hypergraph'
+require './optimization'
 require 'colorize'
 
 $test_num=0
