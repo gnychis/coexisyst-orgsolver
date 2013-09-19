@@ -31,6 +31,23 @@ def test_result(result)
 end
 
 begin
+
+  new_test("Testing loss rates")
+  hgraph=Hypergraph.new
+
+  hgraph.newNetwork("ZigBee", [2437], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11agn", [2437], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "2", -20, 0))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+  
+  results = Optimization.new(hgraph).run
+
+  radios = hgraph.getRadios
+
+  ((radios[0].lossRate-0.206660144620774).abs<0.001) ? test_result(true) : test_result(false);
+end
+
+begin
   new_test("Testing asymmetric sensing properly degrades expected airtime")
   phone_freqs=[2460,2465,2470]
   wifi_freqs=[2462]
@@ -180,8 +197,8 @@ begin
   (5..6).each {|rid| hgraph.newRadio( Radio.new("#{rid}", "ZigBee", "zigbee#{rid}", "network#{(rid-1)/2}", [2412,2437])) }
 
   # Create links between the pairs of radios
-  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 300, 320, 2750, "802.11agn") )
-  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 250, 275, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "1","2", 2437, 20, 250, 250, 2750, "802.11agn") )
+  hgraph.newLinkEdge( LinkEdge.new( "3","4", 2437, 20, 200, 200, 2750, "802.11agn") )
   hgraph.newLinkEdge( LinkEdge.new( "5","6", 2437, 20, 250, 275, 2750, "ZigBee") )
 
   # Nothing from the first two links are within range, but the two transmitters are within range of the 3rd and
@@ -199,8 +216,8 @@ begin
   (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
 
   # Increase the interference on the second 802.11 link
-  hgraph.getLinkEdge("3","4").pps=330;
-  hgraph.getLinkEdge("3","4").ppsMax=350;
+  hgraph.getLinkEdge("3","4").pps=300;
+  hgraph.getLinkEdge("3","4").ppsMax=300;
 
   Optimization.new(hgraph).run
   intermed_test("should avoid channel 2437")

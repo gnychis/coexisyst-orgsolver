@@ -1,6 +1,10 @@
 #!/usr/bin/ruby
 
+<<<<<<< HEAD
 Network = Struct.new(:networkID, :protocol, :activeFreq, :bandwidth, :dAirtime, :airtime, :goodAirtime, :lossRate, :radios, :links)
+=======
+Network = Struct.new(:networkID, :protocol, :activeFreq, :bandwidth, :dAirtime, :airtime, :goodAirtime, :lossRate, :radios)
+>>>>>>> 3bd29813aeea13e91e8e70d0bf6c72b2dc206749
 Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :activeFreq, :lossRate, :goodAirtime, :airtime, :dAirtime)
 SpatialEdge = Struct.new(:from, :to, :rssi, :backoff)
 LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :pps, :ppsMax, :txLen, :protocol) do
@@ -179,16 +183,25 @@ class Hypergraph
     networks=Hash.new
     radios.each do |r|
       if(not networks.has_key?(r.networkID))
+<<<<<<< HEAD
         networks[r.networkID] = Network.new(r.networkID, r.protocol, r.activeFreq, nil, 0, 0, 0, 0, Array.new, Array.new)
       end
       network = networks[r.networkID]
       
       network.radios.push(r)
       getLinkEdgesByTX(r.radioID).each {|l| network.links.push(l)}
+=======
+        networks[r.networkID] = Network.new(r.networkID, r.protocol, r.activeFreq, nil, 0, 0, 0, 0, Array.new)
+      end
+>>>>>>> 3bd29813aeea13e91e8e70d0bf6c72b2dc206749
       
       lEdges = getLinkEdgesByTX(r.radioID)
       next if(lEdges.nil? or lEdges.length==0)
 
+<<<<<<< HEAD
+=======
+      network = networks[r.networkID]
+>>>>>>> 3bd29813aeea13e91e8e70d0bf6c72b2dc206749
       network.bandwidth = lEdges[0].bandwidth
 
       network.dAirtime+=r.dAirtime        if(not r.dAirtime.nil?)
@@ -196,6 +209,10 @@ class Hypergraph
       network.lossRate+=r.lossRate        if(not r.lossRate.nil?)
       network.goodAirtime+=r.goodAirtime  if(not r.goodAirtime.nil?)
 
+<<<<<<< HEAD
+=======
+      network.radios.push(r)
+>>>>>>> 3bd29813aeea13e91e8e70d0bf6c72b2dc206749
     end
     return networks
   end
