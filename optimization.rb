@@ -7,12 +7,16 @@ def getLossRate(baseEdge,opposingEdge)
   return 1
 end
 
+Conflict = Struct.new(:from, :to, :type)
+NetworkConflict = Struct.new(:from, :to)
+
 class Optimization
   attr_accessor :data
   attr_accessor :hgraph
   attr_accessor :solve_time
   attr_accessor :subgraph_time
   attr_accessor :init_time
+  attr_accessor :conflict_graph
 
   def translateVar(var,comment)
     s=String.new
@@ -51,6 +55,7 @@ class Optimization
 
   def initialize(hgraph)
     @data = Hash.new
+    @conflict_graph = Array.new
     @hgraph=hgraph
     @solve_time = 0
     @subgraph_time = 0
@@ -283,15 +288,18 @@ class Optimization
           if(outgoingCoord==false && incomingCoord==false)
             symByRadio[radioIndex].push(oli+1) 
             symByLink[bli].push(oli+1)
+            @conflict_graph.push(Conflict.new(oppLink, baseLink, nil))
           end
 
           if(incomingCoord==true)  # Baseline coordinates with opposing
             asym1ByRadio[radioIndex].push(oli+1)  
             asym1ByLink[bli].push(oli+1)
+            @conflict_graph.push(Conflict.new(oppLink, baseLink, nil))
           end
           if(outgoingCoord==true)  # Opposing coordinates with baseline
             asym2ByRadio[radioIndex].push(oli+1)     
             asym2ByLink[bli].push(oli+1)
+            @conflict_graph.push(Conflict.new(oppLink, baseLink, nil))
           end
         end
       end
@@ -393,4 +401,105 @@ class Optimization
     @solve_time = Time.now - solve_start
     return radios
   end
+  
+  def getSpectrumPlot(draw_conflicts)
+
+    networks = hgraph.getNetworks
+
+    # Now sort the networks by their bandwidth
+    sorted_nets = networks.sort_by {|key,vals| networks[key].bandwidth}
+    sorted_nets.reverse!   # Largest first
+    
+    # Get all of the unique bandwidths
+    bandwidths = Array.new
+    networks.each_value {|n| bandwidths.push(n.bandwidth) if(not bandwidths.include?(n.bandwidth))}
+    
+    # Start to setup the data
+    data=Hash.new
+    data["x"]=Array.new
+    (0..2485-2400).each {|v| data["x"].push(2400+v)}
+    additional=""
+
+    airtime_bins=Hash.new
+    airtime_bins["802.11agn"]=Hash.new
+    airtime_bins["ZigBee"]=Hash.new
+    airtime_bins["Analog"]=Hash.new
+    airtime_bins["802.11agn"].default=0
+    airtime_bins["ZigBee"].default=0
+    airtime_bins["Analog"].default=0
+
+    objects=1
+    net_locations=Hash.new
+    # For each bandwidth, get the networks that belong to it and sort by airtime
+    bandwidths.sort.reverse.each do |bw|
+      curr_networks=Array.new
+      networks.each_value {|n| curr_networks.push(n) if(n.bandwidth==bw)}
+      curr_networks.sort_by {|n| n.dAirtime}
+      curr_networks.reverse!   # Most airtime first
+
+      curr_networks.each do |net|
+
+        color="#1E90FF" if(net.protocol=="802.11agn")
+        color="red" if(net.protocol=="Analog")
+        color="green" if(net.protocol=="ZigBee")
+
+        start_freq = (net.activeFreq - (net.bandwidth / 2.0)).to_i
+        end_freq = (net.activeFreq + (net.bandwidth / 2.0)).to_i
+
+        max_airtime=0.0
+        (start_freq..end_freq).each {|f| max_airtime=airtime_bins[net.protocol][f] if(airtime_bins[net.protocol][f]>max_airtime) }
+        (start_freq..end_freq).each {|f| airtime_bins[net.protocol][f]+=net.dAirtime }
+
+        prefix="W" if(net.protocol=="802.11agn")
+        prefix="A" if(net.protocol=="Analog")
+        prefix="Z" if(net.protocol=="ZigBee")
+
+        location=[net.activeFreq-1,max_airtime+(net.dAirtime/2.0)]
+        additional+="set object #{objects} rect from #{start_freq},#{max_airtime} to #{end_freq},#{max_airtime+net.dAirtime} fc rgb \"#{color}\" lw 3\n"
+        additional+="set label \"#{prefix}_{#{net.networkID.gsub("network","")}}\" at #{location[0]},#{location[1]} font \"Times-Roman,14\"\n"
+        net_locations[net.networkID]=location
+        objects+=1
+      end
+    end
+
+    net_conflicts=Array.new
+    @conflict_graph.each do |c|
+      puts c.from.srcID
+      net_from=nil; net_to=nil
+      networks.each_value  do |n|
+        n.radios.each do |r|
+          net_from=n if(r.radioID==c.from.srcID)
+          net_to=n if(r.radioID==c.to.srcID)
+        end
+      end
+      net_conflicts.push(NetworkConflict.new(net_from, net_to))
+    end
+
+    net_conflicts.each {|nc| 
+      loc_from=net_locations[nc.from.networkID]
+      loc_to=net_locations[nc.to.networkID]
+      add_from=0
+      add_to=0
+      if(loc_from[0] < loc_to[0])
+        add_from = 2
+        add_to = -1.5
+      else
+        add_from = -1.5
+        add_to = 2.5
+      end
+      additional+="set arrow from #{loc_from[0]+add_from},#{loc_from[1]} to #{loc_to[0]+add_to},#{loc_to[1]} lc rgb \'red\' lw 4\n"
+    }
+    
+    additional+="set object #{objects} rect from 2463,1.4 to 2469,1.5 fc rgb \"#1E90FF\" lw 2\n"; objects+=1
+    additional+="set object #{objects} rect from 2463,1.25 to 2469,1.35 fc rgb \"green\" lw 2\n"; objects+=1
+    additional+="set object #{objects} rect from 2463,1.10 to 2469,1.20 fc rgb \"red\" lw 2\n"; objects+=1
+    additional+="set label \"802.11\" at 2470.5,1.45\n"
+    additional+="set label \"ZigBee\" at 2470.5,1.30\n"
+    additional+="set label \"Analog\" at 2470.5,1.15\n"
+    additional+="set ylabel \"Airtime\" offset 1,-1.7\n"
+    ytics="(\"0\" 0, \"0.2\" 0.2, \"0.4\" 0.4, \"0.6\" 0.6, \"0.8\" 0.8, \"1\" 1)"
+    options=Hash["xrange",[data["x"][0],data["x"][-1]], "additional",additional, "style","lines", "ytics",ytics, "rotate",true, "yrange",[0,1.55], "lt",[1,1,1], "lc",[3,1,2], "grid",true, "xlabel", "Spectrum (MHz)","nokey",true]
+    return data,options
+  end
+
 end
