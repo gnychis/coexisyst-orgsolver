@@ -462,33 +462,36 @@ class Optimization
       end
     end
 
-    net_conflicts=Array.new
-    @conflict_graph.each do |c|
-      puts c.from.srcID
-      net_from=nil; net_to=nil
-      networks.each_value  do |n|
-        n.radios.each do |r|
-          net_from=n if(r.radioID==c.from.srcID)
-          net_to=n if(r.radioID==c.to.srcID)
-        end
-      end
-      net_conflicts.push(NetworkConflict.new(net_from, net_to))
-    end
+    if(draw_conflicts)
 
-    net_conflicts.each {|nc| 
-      loc_from=net_locations[nc.from.networkID]
-      loc_to=net_locations[nc.to.networkID]
-      add_from=0
-      add_to=0
-      if(loc_from[0] < loc_to[0])
-        add_from = 2
-        add_to = -1.5
-      else
-        add_from = -1.5
-        add_to = 2.5
+      net_conflicts=Array.new
+      @conflict_graph.each do |c|
+        puts c.from.srcID
+        net_from=nil; net_to=nil
+        networks.each_value  do |n|
+          n.radios.each do |r|
+            net_from=n if(r.radioID==c.from.srcID)
+            net_to=n if(r.radioID==c.to.srcID)
+          end
+        end
+        net_conflicts.push(NetworkConflict.new(net_from, net_to))
       end
-      additional+="set arrow from #{loc_from[0]+add_from},#{loc_from[1]} to #{loc_to[0]+add_to},#{loc_to[1]} lc rgb \'red\' lw 4\n"
-    }
+
+      net_conflicts.each {|nc| 
+        loc_from=net_locations[nc.from.networkID]
+        loc_to=net_locations[nc.to.networkID]
+        add_from=0
+        add_to=0
+        if(loc_from[0] < loc_to[0])
+          add_from = 2
+          add_to = -1.5
+        else
+          add_from = -1.5
+          add_to = 2.5
+        end
+        additional+="set arrow from #{loc_from[0]+add_from},#{loc_from[1]} to #{loc_to[0]+add_to},#{loc_to[1]} lc rgb \'red\' lw 4\n"
+      }
+    end
     
     additional+="set object #{objects} rect from 2463,1.4 to 2469,1.5 fc rgb \"#1E90FF\" lw 2\n"; objects+=1
     additional+="set object #{objects} rect from 2463,1.25 to 2469,1.35 fc rgb \"green\" lw 2\n"; objects+=1
