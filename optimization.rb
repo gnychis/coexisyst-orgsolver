@@ -464,6 +464,9 @@ class Optimization
 
     if(draw_conflicts)
 
+      additional+="set style line 1 lt 1 lw 14\n"
+      additional+="set style arrow 1 head filled size screen 0.035,30,45 ls 1\n"
+
       net_conflicts=Array.new
       @conflict_graph.each do |c|
         puts c.from.srcID
@@ -486,10 +489,10 @@ class Optimization
           add_from = 2
           add_to = -1.5
         else
-          add_from = -1.5
-          add_to = 2.5
+          add_from = -1
+          add_to = 3
         end
-        additional+="set arrow from #{loc_from[0]+add_from},#{loc_from[1]} to #{loc_to[0]+add_to},#{loc_to[1]} lc rgb \'red\' lw 4\n"
+        additional+="set arrow from #{loc_from[0]+add_from},#{loc_from[1]} to #{loc_to[0]+add_to},#{loc_to[1]} as 1 lc 1\n"
       }
     end
     
