@@ -69,7 +69,6 @@
   var o[R*R] binary;          # Do the radios, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
   var al[R*R] binary;           # Are the radios aligned in the spectrum
   var digitalConflict[R*R] binary;
-  var digitalDC[R*R] binary;
   var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
   var GoodFracAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
   var GoodAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
@@ -216,16 +215,18 @@
   # ***************************************************************************************************
   # The vulnerability window is dependent on whether the set of links is in a symmetric or asymmetric
   # hidden/coordination scenario.
+  # If in D[L, then...
   subto vulnWin_eq:
-    forall<l> in L : forall <j> in U[l] do
+    forall<l> in L : forall <j> in U[l] :
+      forall <z,lR> in LR with l==z : forall <v,jR> in LR with v==j do 
       if(1==card({j} inter LU[l])) then 
-        vulnWin[l,j] == LDATA[l,"txLen"] + LDATA[j,"txLen"]
+        vulnWin[l,j] == (LDATA[l,"txLen"] + LDATA[j,"txLen"]) * (1 - card({j} inter DU[l]) + digitalConflict[lR,jR]) 
       else
         if(1==card({j} inter LUO[l])) then
-          vulnWin[l,j] == LDATA[l,"txLen"]
+          vulnWin[l,j] == (LDATA[l,"txLen"]) * (1 - card({j} inter DU[l]) + digitalConflict[lR,jR]) 
         else
           if(1==card({j} inter LUB[l])) then
-            vulnWin[l,j] == LDATA[j,"txLen"]
+            vulnWin[l,j] == (LDATA[j,"txLen"]) * (1 - card({j} inter DU[l]) + digitalConflict[lR,jR])
           end
         end
       end;
@@ -292,7 +293,7 @@
   subto lossrate_prod_valsBad_eq:       # Estimated overlap pumped in
     forall <l> in L : forall <j> in U[l] : forall <a,b,r> in OL with a==l and b==j : 
       forall <z,lR> in LR with l==z : forall <v,jR> in LR with v==j do 
-        sr_vals[l,j] == (1 - probZeroTX[l,j]) * o[lR,jR] * (1-digitalDC[lR,jR]) * r;
+        sr_vals[l,j] == (1 - probZeroTX[l,j]) * o[lR,jR] * r;
   
   subto lossrate_prod_valsGood_eq:      # Coordinating links introduce no loss, regardless of frequency
     forall <l> in L : forall <j> in {L-U[l]} : 
@@ -367,17 +368,6 @@
   
   subto dc_c3:
     forall <i> in R : forall <r> in R : digitalConflict[i,r] >= card({r} inter DC[i]) + (1 - al[i,r]) - 1;
-  
-  # ***************************************************************************************************
-  # Digital, but they don't conflict with each other because they are aligned
-  subto ddc_c1:
-    forall <i> in R : forall <r> in R : digitalDC[i,r] <= card({r} inter DC[i]);
-  
-  subto ddc_c2:
-    forall <i> in R : forall <r> in R : digitalDC[i,r] <= 1 - digitalConflict[i,r];
-  
-  subto ddc_c3:
-    forall <i> in R : forall <r> in R : digitalDC[i,r] >= card({r} inter DC[i]) + (1 - digitalConflict[i,r]) - 1;
 
 ############################################################################################################################################
 # INPUT CHECK

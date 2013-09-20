@@ -292,6 +292,7 @@ class Optimization
     asym1ByLink=Array.new; (1..hgraph.getLinkEdges.size).each {|l| asym1ByLink.push(Array.new)}
     asym2ByRadio=Array.new; (1..hgraph.getRadios.size).each {|i| asym2ByRadio.push(Array.new)}
     asym2ByLink=Array.new; (1..hgraph.getLinkEdges.size).each {|i|asym2ByLink.push(Array.new)}
+    digitalU=Array.new; (1..hgraph.getLinkEdges.size).each {|i|digitalU.push(Array.new)}
     allLinks.each_index do |bli|
       baseLink = allLinks[bli]
       radioIndex = hgraph.getRadioIndex(baseLink.srcID)
@@ -313,17 +314,20 @@ class Optimization
           if(outgoingCoord==false && incomingCoord==false)
             symByRadio[radioIndex].push(oli+1) 
             symByLink[bli].push(oli+1)
+            digitalU[bli].push(oli+1) if((!outgoingSE.nil? && outgoingSE.digitally) || (!incomingSE.nil? && incomingSE.digitally))
             @conflict_graph.push(Conflict.new(oppLink, baseLink, nil))
           end
 
           if(incomingCoord==true)  # Baseline coordinates with opposing
             asym1ByRadio[radioIndex].push(oli+1)  
             asym1ByLink[bli].push(oli+1)
+            digitalU[bli].push(oli+1) if((!outgoingSE.nil? && outgoingSE.digitally) || (!incomingSE.nil? && incomingSE.digitally))
             @conflict_graph.push(Conflict.new(oppLink, baseLink, nil))
           end
           if(outgoingCoord==true)  # Opposing coordinates with baseline
             asym2ByRadio[radioIndex].push(oli+1)     
             asym2ByLink[bli].push(oli+1)
+            digitalU[bli].push(oli+1) if((!outgoingSE.nil? && outgoingSE.digitally) || (!incomingSE.nil? && incomingSE.digitally))
             @conflict_graph.push(Conflict.new(oppLink, baseLink, nil))
           end
         end
@@ -339,6 +343,7 @@ class Optimization
     data["LU[L]"] = symByLink
     data["LUO[L]"] = asym1ByLink
     data["LUB[L]"] = asym2ByLink
+    data["DU[L]"] = digitalU
     data["LU[L]"].each_index {|i| data["U[L]"][i] = data["LU[L]"][i] | data["LUO[L]"][i] | data["LUB[L]"][i]}
 
     data["OL"] = Hash.new
@@ -359,6 +364,7 @@ class Optimization
       }
     }
 
+    dataOF.puts translateVar("DU[L]", "For all links, all other links that are digitally uncoordinated")
     dataOF.puts translateVar("U[L]", "For all links, all other links that will contribute to it in a negative scenario")
     dataOF.puts translateVar("LU[L]", "For all links, the set of links that the radio is in a completely blind situation")
     dataOF.puts translateVar("LUO[L]", "For all radios, the set of links that are asymmetric, where the opposing link does not coordinate")
