@@ -43,6 +43,14 @@
       else 
         0   # They do not overlap with each other
       end;
+  
+  defnumb A(f1,b1,f2,b2) :=
+      if (LF(f1,b1) - LF(f2,b2) == 0)
+      then
+        1
+      else
+        0
+      end;
 
   defnumb IS_AVAIL_FREQ(i, freq) := 
       if( card( { freq } inter FR[i] ) == 1)
@@ -59,7 +67,11 @@
 
   var af[TF] binary;          # A binary representation of which radios picks which frequency
   var o[R*R] binary;          # Do the radios, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
+  var al[R*R] binary;           # Are the radios aligned in the spectrum
+  var digitalConflict[R*R] binary;
+  var digitalDC[R*R] binary;
   var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
+  var ql[QD] binary;
   var GoodFracAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
   var GoodAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
   var Residual[R] real;       # The residual airtime sensed for each radio.
@@ -174,7 +186,7 @@
   # ***************************************************************************************************
   # Related to calculating the fairshare of airtime for each network
   subto nsharing_eq:                    # The number of networks sharing a frequency with each other
-    forall <r> in R :  nsharing[r] == sum <c> in C[r] : o[r,c];
+    forall <r> in R :  nsharing[r] == sum <c> in C[r] : o[r,c] * (1-digitalConflict[r,c]);
 
   subto fs_eq:                          # Expected FairShare[i] equal to 1/nsharing, just written without division
     forall <r> in R : (FairShare[r] * (nsharing[r]+1)) + AsymSense[r] == 1;
@@ -281,7 +293,7 @@
   subto lossrate_prod_valsBad_eq:       # Estimated overlap pumped in
     forall <l> in L : forall <j> in U[l] : forall <a,b,r> in OL with a==l and b==j : 
       forall <z,lR> in LR with l==z : forall <v,jR> in LR with v==j do 
-        sr_vals[l,j] == (1 - probZeroTX[l,j]) * o[lR,jR] * r;
+        sr_vals[l,j] == (1 - probZeroTX[l,j]) * o[lR,jR] * (1-digitalDC[lR,jR]) * r;
   
   subto lossrate_prod_valsGood_eq:      # Coordinating links introduce no loss, regardless of frequency
     forall <l> in L : forall <j> in {L-U[l]} : 
@@ -296,13 +308,13 @@
   # ***************************************************************************************************
   # The amount of airtime sensed that will not back off to you
   subto asymsense_eq:
-    forall <r> in R : AsymSense[r] == sum <c> in AS[r] : (RDATA[c,"dAirtime"] * o[r,c]);
+    forall <r> in R : AsymSense[r] == sum <c> in AS[r] : (RDATA[c,"dAirtime"] * o[r,c] * (1-digitalConflict[r,c]));
 
   # ***************************************************************************************************
   # Related to substitution for the min() in the airtime sensed so that the "actual" sensed is <= 1.
   # The residual airtime ends up being 1 minus this value
   subto ats_eq:                         # The airtime each network senses is equal to...
-    forall <r> in R : ats[r] == sum <c> in S[r] : (RDATA[c,"dAirtime"] * o[r,c]);
+    forall <r> in R : ats[r] == sum <c> in S[r] : (RDATA[c,"dAirtime"] * o[r,c] * (1-digitalConflict[r,c]));
     #forall <r> in R : ats[r] == sum <c> in C[r] : (RadioAirtime[c] * o[r,c]); #(RDATA[c,"dAirtime"] * o[r,c]);
 
   subto ats_min_lhv_eq:                 # The left hand value of the min for airtime sensed is airtime sensed
@@ -339,6 +351,46 @@
 
   subto q_c4:                           # Must be greater than the sum of the them
     forall <i,r,fi,fr> in QD: q[i,r,fi,fr] >= O(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]) + af[i,fi] + af[r,fr] - 2;
+
+
+  # ***************************************************************************************************
+  # Related to whether or not the frequencies are aligned
+  subto qf_overlap:                     # Whether the active frequencies for two networks overlap
+    forall <i> in R : forall <r> in R with i != r : al[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : ql[i,r,fi,fr];
+
+  subto ql_c1:                           # Must be less than whether or not the frequencies overlap
+    forall <i,r,fi,fr> in QD : ql[i,r,fi,fr] <= A(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]);
+
+  subto ql_c2:                           # Must be less than whether or not i is using frequency fi
+    forall <i,r,fi,fr> in QD : ql[i,r,fi,fr] <= af[i,fi];
+
+  subto ql_c3:                           # Must be less than whether or not r is using frequency fr
+    forall <i,r,fi,fr> in QD : ql[i,r,fi,fr] <= af[r,fr];
+
+  subto ql_c4:                           # Must be greater than the sum of the them
+    forall <i,r,fi,fr> in QD: ql[i,r,fi,fr] >= A(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]) + af[i,fi] + af[r,fr] - 2;
+
+  # ***************************************************************************************************
+  # Are they digitally conflicted?
+  subto dc_c1:
+    forall <i> in R : forall <r> in R : digitalConflict[i,r] <= card({r} inter DC[i]);
+  
+  subto dc_c2:
+    forall <i> in R : forall <r> in R : digitalConflict[i,r] <= 1 - al[i,r];
+  
+  subto dc_c3:
+    forall <i> in R : forall <r> in R : digitalConflict[i,r] >= card({r} inter DC[i]) + (1 - al[i,r]) - 1;
+  
+  # ***************************************************************************************************
+  # Digital, but they don't conflict with each other because they are aligned
+  subto ddc_c1:
+    forall <i> in R : forall <r> in R : digitalDC[i,r] <= card({r} inter DC[i]);
+  
+  subto ddc_c2:
+    forall <i> in R : forall <r> in R : digitalDC[i,r] <= 1 - digitalConflict[i,r];
+  
+  subto ddc_c3:
+    forall <i> in R : forall <r> in R : digitalDC[i,r] >= card({r} inter DC[i]) + (1 - digitalConflict[i,r]) - 1;
 
 ############################################################################################################################################
 # INPUT CHECK

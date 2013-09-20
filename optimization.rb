@@ -1,5 +1,5 @@
 #!/usr/bin/ruby
-require 'hypergraph'
+require './hypergraph'
 
 def getLossRate(baseEdge,opposingEdge)
   return 0 if(baseEdge.nil? or opposingEdge.nil?)
@@ -101,6 +101,31 @@ class Optimization
       dataOF.puts ";" if(r==hgraph.getRadios.size-1)
     end
     dataOF.puts "\n"
+
+    # Set the digital flag for 802.11n, forced
+    hgraph.getRadios.each do |r1|
+      hgraph.getRadios.each do |r2|
+        next if(r1==r2)
+        se_toBase = hgraph.getSpatialEdge(r2.radioID, r1.radioID)
+        se_toBase.digitally = true if(!se_toBase.nil? and r2.protocol.gsub("-40GHz","")=="802.11n" and r1.protocol.gsub("-40MHz","")=="802.11n")
+
+        se_toOpp = hgraph.getSpatialEdge(r1.radioID, r2.radioID)
+        se_toOpp.digitally = true if(!se_toOpp.nil? and r2.protocol.gsub("-40GHz","")=="802.11n" and r1.protocol.gsub("-40MHz","")=="802.11n")
+      end
+    end
+
+    data["DC[R]"]=Array.new
+    hgraph.getRadios.each {|r| 
+      ses=Array.new
+      hgraph.getSpatialEdgesTo(r.radioID).each {|se| 
+        se2 = hgraph.getSpatialEdge(r.radioID,se.from)
+        if(not se2.nil?)
+          ses.push(se) if(se.backoff==1 and se2.backoff==1 and se.digitally==true)
+        end
+      }
+      data["DC[R]"].push( ses.map {|se| hgraph.getRadioIndex(se.from)+1} )
+      }
+    dataOF.puts translateVar("DC[R]", "For each radio, the set of radios that it digitally coordinates with (must be bi-directional)")
     
     data["C[R]"]=Array.new
     hgraph.getRadios.each {|r| 
@@ -282,8 +307,8 @@ class Optimization
         
         if(hgraph.getSpatialEdge(oppLink.srcID,baseLink.dstID))  # If receiver in range of opposing...
           outgoingCoord=false; incomingCoord=false
-          outgoingCoord=true if((not outgoingSE.nil?) and outgoingSE.backoff==1)
-          incomingCoord=true if((not incomingSE.nil?) and incomingSE.backoff==1)
+          outgoingCoord=true if((not outgoingSE.nil?) and outgoingSE.backoff==1 and !outgoingSE.digitally)
+          incomingCoord=true if((not incomingSE.nil?) and incomingSE.backoff==1 and !incomingSE.digitally)
           break if(outgoingCoord && incomingCoord)
           if(outgoingCoord==false && incomingCoord==false)
             symByRadio[radioIndex].push(oli+1) 
@@ -401,6 +426,56 @@ class Optimization
     @solve_time = Time.now - solve_start
     return radios
   end
+
+  def getFairnessPlot()
+    data = Hash.new
+    data["d"]=Array.new
+    additional=""
+
+    radios = hgraph.getRadios
+
+    radios.each {|r| puts "#{r.radioID} #{r.protocol} #{r.networkID}"}
+    puts "-------"
+    radios.sort_by! {|r| r.protocol}
+    radios.each {|r| puts "#{r.radioID} #{r.protocol} #{r.networkID}"}
+    puts "-------"
+
+    start_end=Array.new
+    curr_radio=0
+    curr_protocol=radios[0].protocol
+    start=0
+    radios.each do |r|
+      next if(r.dAirtime.nil? or r.dAirtime==0)
+      if(r.protocol != curr_protocol)
+        start_end.push([curr_protocol, start,curr_radio-1])
+        start=curr_radio
+        curr_protocol=r.protocol
+      end
+      data["d"].push(r.goodAirtime.round(3) / r.dAirtime.round(3))
+      puts "#{r.radioID} #{r.protocol} #{r.networkID} #{r.goodAirtime} #{r.dAirtime}"
+      curr_radio+=1
+    end
+
+    additional+="set style rect fc lt -1 fs solid 0.15 noborder\n"
+    start_end.each_index do |sei|
+      st=start_end[sei][1]
+      en=start_end[sei][2]
+      proto=start_end[sei][0]
+      offset=0
+      offset=-0.5 if(proto=="802.11agn")
+      offset=0 if(proto=="ZigBee")
+      offset=-0.5 if(proto=="802.11n")
+      offset=-1 if(proto=="802.11n-40MHz")
+      additional+="set label \"#{proto}\" at #{en-((en-st)/2.0)+offset},1.05\n"
+      next if(sei%2==1)
+      additional+="set obj rect from #{st-0.5}, graph 0 to #{en+0.5}, graph 1\n"
+    end
+  
+    ytics="(\"0\" 0, \"0.2\" 0.2, \"0.4\" 0.4, \"0.6\" 0.6, \"0.8\" 0.8, \"1\" 1)"
+    options=Hash["xrange",[-0.5,data["d"].length-0.5], "additional",additional, "ytics",ytics, "pointsize",4, "yrange",[0,1], "style","linespoints", "grid",true, "linewidth",8, "ylabel","Airtime / Desired Airtime", "xlabel","Relative Radio", "nokey",true]
+   
+    return data, options
+  end
   
   def getSpectrumPlot(draw_conflicts)
 
@@ -422,11 +497,14 @@ class Optimization
 
     airtime_bins=Hash.new
     airtime_bins["802.11agn"]=Hash.new
+    airtime_bins["802.11n"]=Hash.new
     airtime_bins["ZigBee"]=Hash.new
     airtime_bins["Analog"]=Hash.new
     airtime_bins["802.11agn"].default=0
+    airtime_bins["802.11n"].default=0
     airtime_bins["ZigBee"].default=0
     airtime_bins["Analog"].default=0
+    airtime_bins["802.11n-40MHz"]=airtime_bins["802.11n"]
 
     objects=1
     net_locations=Hash.new
@@ -440,6 +518,7 @@ class Optimization
       curr_networks.each do |net|
 
         color="#1E90FF" if(net.protocol=="802.11agn")
+        color="gold" if(net.protocol=="802.11n" || net.protocol=="802.11n-40MHz")
         color="red" if(net.protocol=="Analog")
         color="green" if(net.protocol=="ZigBee")
 
@@ -451,6 +530,7 @@ class Optimization
         (start_freq..end_freq).each {|f| airtime_bins[net.protocol][f]+=net.dAirtime }
 
         prefix="W" if(net.protocol=="802.11agn")
+        prefix="N" if(net.protocol=="802.11n" || net.protocol=="802.11n-40MHz")
         prefix="A" if(net.protocol=="Analog")
         prefix="Z" if(net.protocol=="ZigBee")
 
@@ -495,12 +575,14 @@ class Optimization
       }
     end
     
-    additional+="set object #{objects} rect from 2463,1.4 to 2469,1.5 fc rgb \"#1E90FF\" lw 2\n"; objects+=1
-    additional+="set object #{objects} rect from 2463,1.25 to 2469,1.35 fc rgb \"green\" lw 2\n"; objects+=1
-    additional+="set object #{objects} rect from 2463,1.10 to 2469,1.20 fc rgb \"red\" lw 2\n"; objects+=1
-    additional+="set label \"802.11\" at 2470.5,1.45\n"
-    additional+="set label \"ZigBee\" at 2470.5,1.30\n"
-    additional+="set label \"Analog\" at 2470.5,1.15\n"
+    additional+="set object #{objects} rect from 2460,1.4 to 2466,1.5 fc rgb \"#1E90FF\" lw 2\n"; objects+=1
+    additional+="set object #{objects} rect from 2460,1.25 to 2466,1.35 fc rgb \"green\" lw 2\n"; objects+=1
+    additional+="set object #{objects} rect from 2460,1.10 to 2466,1.20 fc rgb \"red\" lw 2\n"; objects+=1
+    additional+="set object #{objects} rect from 2423,1.4 to 2429,1.5 fc rgb \"gold\" lw 2\n"; objects+=1
+    additional+="set label \"802.11abgn\" at 2467.5,1.45\n"
+    additional+="set label \"802.11n (HT mode)\" at 2430.5,1.45\n"
+    additional+="set label \"ZigBee\" at 2467.5,1.30\n"
+    additional+="set label \"Analog\" at 2467.5,1.15\n"
     additional+="set ylabel \"Airtime\" offset 1,-1.7\n"
     ytics="(\"0\" 0, \"0.2\" 0.2, \"0.4\" 0.4, \"0.6\" 0.6, \"0.8\" 0.8, \"1\" 1)"
     options=Hash["xrange",[data["x"][0],data["x"][-1]], "additional",additional, "style","lines", "ytics",ytics, "rotate",true, "yrange",[0,1.55], "lt",[1,1,1], "lc",[3,1,2], "grid",true, "xlabel", "Spectrum (MHz)","nokey",true]

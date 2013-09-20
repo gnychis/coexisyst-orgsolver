@@ -1,8 +1,8 @@
 #!/usr/bin/ruby
 require 'rubygems'
-require 'trollop'
-require 'hypergraph'
-require 'optimization'
+require './trollop'
+require './hypergraph'
+require './optimization'
 require 'colorize'
 
 $test_num=0
@@ -28,6 +28,144 @@ def test_result(result)
   end
   puts "FAIL".red
   raise RuntimeError, 'Test failed'
+end
+
+begin
+
+  new_intermed_test("Testing alignment...")
+
+  intermed_test("basic 20MHz should align")
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n", [2412], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
+  Optimization.new(hgraph)
+  (`scip -f spectrum_optimization.zpl | grep "al#1#3"`.length > 0) ? test_result(true) : test_result(false);
+  
+  intermed_test("basic 20MHz should not align")
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n", [2413], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
+  Optimization.new(hgraph)
+  (`scip -f spectrum_optimization.zpl | grep "al#1#3"`.length > 0) ? test_result(false) : test_result(true);
+
+  intermed_test("basic 40MHz and 20MHz should align")
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
+  Optimization.new(hgraph)
+  (`scip -f spectrum_optimization.zpl | grep "al#1#3"`.length > 0) ? test_result(true) : test_result(false);
+
+  intermed_test("basic 40MHz and 20MHz should not align")
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2437], 0.26675, nil, [-40,0], nil)
+  Optimization.new(hgraph)
+  (`scip -f spectrum_optimization.zpl | grep "al#1#3"`.length > 0) ? test_result(false) : test_result(true);
+end
+
+begin
+  
+  new_intermed_test("Testing digital coordination")
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11agn", [2437], 0.26675, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2437], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("5", "1", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "5", -20, 1))
+
+  results = Optimization.new(hgraph).run
+
+  intermed_test("no digital coordination between legacy and 11n")
+  (hgraph.getSpatialEdge("1","3").digitally==true) ? test_result(false) : test_result(true);
+
+  intermed_test("digital coordination between HT 802.11n")
+  (hgraph.getSpatialEdge("1","5").digitally==true) ? test_result(true) : test_result(false);
+  
+end
+
+begin
+  
+  new_intermed_test("Testing digital conflicts and backoff")
+
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2437], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+  results = Optimization.new(hgraph).run
+  intermed_test("unaligned, it should be a digital conflict")
+  (`scip -f spectrum_optimization.zpl | grep "digitalConflict#1#3"`.length > 0) ? test_result(true) : test_result(false);
+
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+  results = Optimization.new(hgraph).run
+  intermed_test("aligned, it should NOT be a digital conflict")
+  (`scip -f spectrum_optimization.zpl | grep "digitalConflict#1#3"`.length > 0) ? test_result(false) : test_result(true);
+end
+
+begin
+  
+  new_intermed_test("Testing sharing between non-digitally coordinated")
+
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+  results = Optimization.new(hgraph).run
+  intermed_test("they should be digitally sharing")
+  (`scip -f spectrum_optimization.zpl | grep "nsharing"`.length > 0) ? test_result(true) : test_result(false);
+  
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2437], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+  results = Optimization.new(hgraph).run
+  intermed_test("they should not be digitally sharing")
+  (`scip -f spectrum_optimization.zpl | grep "nsharing"`.length > 0) ? test_result(false) : test_result(true);
+  
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 0))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 0))
+  results = Optimization.new(hgraph).run
+  intermed_test("they should not be digitally sharing")
+  (`scip -f spectrum_optimization.zpl | grep "nsharing"`.length > 0) ? test_result(false) : test_result(true);
+end
+
+begin
+  
+  new_intermed_test("Testing interference with digital coordination")
+
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2437], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "2", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "4", -20, 1))
+  results = Optimization.new(hgraph).run
+  intermed_test("there should be intereference")
+  (hgraph.getRadios[0].lossRate > 0) ? test_result(true) : test_result(false);
+
+
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "2", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "4", -20, 1))
+  results = Optimization.new(hgraph).run
+  intermed_test("there should not be intereference")
+  (hgraph.getRadios[0].lossRate == 0) ? test_result(true) : test_result(false);
 end
 
 begin
