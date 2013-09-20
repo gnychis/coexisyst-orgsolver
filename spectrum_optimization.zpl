@@ -67,7 +67,6 @@
 
   var af[TF] binary;          # A binary representation of which radios picks which frequency
   var o[R*R] binary;          # Do the radios, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
-  var al[R*R] binary;           # Are the radios aligned in the spectrum
   var digitalConflict[R*R] binary;
   var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
   var GoodFracAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
@@ -355,8 +354,8 @@
 
   # ***************************************************************************************************
   # Related to whether or not the frequencies are aligned
-  subto qf_overlap:                     # Whether the active frequencies for two networks overlap
-    forall <i> in R : forall <r> in R with i != r : al[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr] * A(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]);
+#  subto qf_overlap:                     # Whether the active frequencies for two networks overlap
+#    forall <i> in R : forall <r> in R with i != r : al[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr] * A(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]);
 
   # ***************************************************************************************************
   # Are they digitally conflicted?
@@ -364,10 +363,10 @@
     forall <i> in R : forall <r> in R : digitalConflict[i,r] <= card({r} inter DC[i]);
   
   subto dc_c2:
-    forall <i> in R : forall <r> in R : digitalConflict[i,r] <= 1 - al[i,r];
-  
+    forall <i> in R : forall <r> in R : digitalConflict[i,r] <= 1 - sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr] * A(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]);
+    
   subto dc_c3:
-    forall <i> in R : forall <r> in R : digitalConflict[i,r] >= card({r} inter DC[i]) + (1 - al[i,r]) - 1;
+    forall <i> in R : forall <r> in R : digitalConflict[i,r] >= card({r} inter DC[i]) + (1 - (sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr] * A(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]))) - 1;
 
 ############################################################################################################################################
 # INPUT CHECK
