@@ -307,8 +307,8 @@ class Optimization
         
         if(hgraph.getSpatialEdge(oppLink.srcID,baseLink.dstID))  # If receiver in range of opposing...
           outgoingCoord=false; incomingCoord=false
-          outgoingCoord=true if((not outgoingSE.nil?) and outgoingSE.backoff==1)
-          incomingCoord=true if((not incomingSE.nil?) and incomingSE.backoff==1)
+          outgoingCoord=true if((not outgoingSE.nil?) and outgoingSE.backoff==1 and !outgoingSE.digitally)
+          incomingCoord=true if((not incomingSE.nil?) and incomingSE.backoff==1 and !incomingSE.digitally)
           break if(outgoingCoord && incomingCoord)
           if(outgoingCoord==false && incomingCoord==false)
             symByRadio[radioIndex].push(oli+1) 

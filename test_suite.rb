@@ -107,6 +107,52 @@ begin
   intermed_test("aligned, it should NOT be a digital conflict")
   (`scip -f spectrum_optimization.zpl | grep "digitalConflict#1#3"`.length > 0) ? test_result(false) : test_result(true);
 end
+
+begin
+  
+  new_intermed_test("Testing sharing between non-digitally coordinated")
+
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+  results = Optimization.new(hgraph).run
+  intermed_test("they should be digitally sharing")
+  (`scip -f spectrum_optimization.zpl | grep "nsharing"`.length > 0) ? test_result(true) : test_result(false);
+  
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2437], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+  results = Optimization.new(hgraph).run
+  intermed_test("they should not be digitally sharing")
+  (`scip -f spectrum_optimization.zpl | grep "nsharing"`.length > 0) ? test_result(false) : test_result(true);
+  
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 0))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 0))
+  results = Optimization.new(hgraph).run
+  intermed_test("they should not be digitally sharing")
+  (`scip -f spectrum_optimization.zpl | grep "nsharing"`.length > 0) ? test_result(false) : test_result(true);
+end
+
+begin
+  
+  new_intermed_test("Testing sharing between non-digitally coordinated")
+
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2437], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "2", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "4", -20, 1))
+  results = Optimization.new(hgraph).run
+end
 exit
 
 begin
