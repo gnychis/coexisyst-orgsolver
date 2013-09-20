@@ -71,7 +71,6 @@
   var digitalConflict[R*R] binary;
   var digitalDC[R*R] binary;
   var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
-  var ql[QD] binary;
   var GoodFracAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
   var GoodAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
   var Residual[R] real;       # The residual airtime sensed for each radio.
@@ -356,19 +355,7 @@
   # ***************************************************************************************************
   # Related to whether or not the frequencies are aligned
   subto qf_overlap:                     # Whether the active frequencies for two networks overlap
-    forall <i> in R : forall <r> in R with i != r : al[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : ql[i,r,fi,fr];
-
-  subto ql_c1:                           # Must be less than whether or not the frequencies overlap
-    forall <i,r,fi,fr> in QD : ql[i,r,fi,fr] <= A(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]);
-
-  subto ql_c2:                           # Must be less than whether or not i is using frequency fi
-    forall <i,r,fi,fr> in QD : ql[i,r,fi,fr] <= af[i,fi];
-
-  subto ql_c3:                           # Must be less than whether or not r is using frequency fr
-    forall <i,r,fi,fr> in QD : ql[i,r,fi,fr] <= af[r,fr];
-
-  subto ql_c4:                           # Must be greater than the sum of the them
-    forall <i,r,fi,fr> in QD: ql[i,r,fi,fr] >= A(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]) + af[i,fi] + af[r,fr] - 2;
+    forall <i> in R : forall <r> in R with i != r : al[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : q[i,r,fi,fr] * A(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]);
 
   # ***************************************************************************************************
   # Are they digitally conflicted?
