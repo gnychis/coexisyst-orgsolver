@@ -434,11 +434,7 @@ class Optimization
 
     radios = hgraph.getRadios
 
-    radios.each {|r| puts "#{r.radioID} #{r.protocol} #{r.networkID}"}
-    puts "-------"
     radios.sort_by! {|r| r.protocol}
-    radios.each {|r| puts "#{r.radioID} #{r.protocol} #{r.networkID}"}
-    puts "-------"
 
     start_end=Array.new
     curr_radio=0
@@ -452,7 +448,6 @@ class Optimization
         curr_protocol=r.protocol
       end
       data["d"].push(r.goodAirtime.round(3) / r.dAirtime.round(3))
-      puts "#{r.radioID} #{r.protocol} #{r.networkID} #{r.goodAirtime} #{r.dAirtime}"
       curr_radio+=1
     end
 
