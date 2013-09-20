@@ -32,6 +32,40 @@ end
 
 begin
 
+  new_intermed_test("Testing alignment...")
+
+  intermed_test("basic 20MHz should align")
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n", [2412], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
+  Optimization.new(hgraph)
+  (`scip -f spectrum_optimization.zpl | grep "al#1#3"`.length > 0) ? test_result(true) : test_result(false);
+  
+  intermed_test("basic 20MHz should not align")
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n", [2413], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
+  Optimization.new(hgraph)
+  (`scip -f spectrum_optimization.zpl | grep "al#1#3"`.length > 0) ? test_result(false) : test_result(true);
+
+  intermed_test("basic 40MHz and 20MHz should align")
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
+  Optimization.new(hgraph)
+  (`scip -f spectrum_optimization.zpl | grep "al#1#3"`.length > 0) ? test_result(true) : test_result(false);
+
+  intermed_test("basic 40MHz and 20MHz should not align")
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2437], 0.26675, nil, [-40,0], nil)
+  Optimization.new(hgraph)
+  (`scip -f spectrum_optimization.zpl | grep "al#1#3"`.length > 0) ? test_result(false) : test_result(true);
+end
+exit
+
+begin
+
   new_test("Testing loss rates")
   hgraph=Hypergraph.new
 

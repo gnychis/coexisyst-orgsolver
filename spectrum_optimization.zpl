@@ -43,6 +43,14 @@
       else 
         0   # They do not overlap with each other
       end;
+  
+  defnumb A(f1,b1,f2,b2) :=
+      if (LF(f1,b1) - LF(f2,b2) == 0)
+      then
+        1
+      else
+        0
+      end;
 
   defnumb IS_AVAIL_FREQ(i, freq) := 
       if( card( { freq } inter FR[i] ) == 1)
@@ -59,7 +67,9 @@
 
   var af[TF] binary;          # A binary representation of which radios picks which frequency
   var o[R*R] binary;          # Do the radios, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
+  var al[R*R] binary;           # Are the radios aligned in the spectrum
   var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
+  var ql[QD] binary;
   var GoodFracAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
   var GoodAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.
   var Residual[R] real;       # The residual airtime sensed for each radio.
@@ -339,6 +349,24 @@
 
   subto q_c4:                           # Must be greater than the sum of the them
     forall <i,r,fi,fr> in QD: q[i,r,fi,fr] >= O(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]) + af[i,fi] + af[r,fr] - 2;
+
+
+  # ***************************************************************************************************
+  # Related to whether or not the frequencies are aligned
+  subto qf_overlap:                     # Whether the active frequencies for two networks overlap
+    forall <i> in R : forall <r> in R with i != r : al[i,r] == sum <i,fi> in TF : sum <r,fr> in TF : ql[i,r,fi,fr];
+
+  subto ql_c1:                           # Must be less than whether or not the frequencies overlap
+    forall <i,r,fi,fr> in QD : ql[i,r,fi,fr] <= A(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]);
+
+  subto ql_c2:                           # Must be less than whether or not i is using frequency fi
+    forall <i,r,fi,fr> in QD : ql[i,r,fi,fr] <= af[i,fi];
+
+  subto ql_c3:                           # Must be less than whether or not r is using frequency fr
+    forall <i,r,fi,fr> in QD : ql[i,r,fi,fr] <= af[r,fr];
+
+  subto ql_c4:                           # Must be greater than the sum of the them
+    forall <i,r,fi,fr> in QD: ql[i,r,fi,fr] >= A(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]) + af[i,fi] + af[r,fr] - 2;
 
 ############################################################################################################################################
 # INPUT CHECK
