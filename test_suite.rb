@@ -146,12 +146,13 @@ begin
 
   hgraph=Hypergraph.new
   hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
-  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2437], 0.26675, nil, [-40,0], nil)
   hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("3", "2", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("1", "4", -20, 1))
   results = Optimization.new(hgraph).run
+  hgraph.getRadios.each {|r| puts r.inspect}
 end
 exit
 
