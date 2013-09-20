@@ -68,6 +68,7 @@
   var af[TF] binary;          # A binary representation of which radios picks which frequency
   var o[R*R] binary;          # Do the radios, given their center frequencies, overlap?  Specifying binary means it will be 0 or 1...
   var al[R*R] binary;           # Are the radios aligned in the spectrum
+  var digitalConflict[R*R] binary;
   var q[QD] binary;           # The linear representation of ___ ^ ____ ^ ____
   var ql[QD] binary;
   var GoodFracAirtime[R] real;    # Airtime is a real number for each radios between 0 and 1.

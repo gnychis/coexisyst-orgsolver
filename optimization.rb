@@ -101,6 +101,31 @@ class Optimization
       dataOF.puts ";" if(r==hgraph.getRadios.size-1)
     end
     dataOF.puts "\n"
+
+    # Set the digital flag for 802.11n, forced
+    hgraph.getRadios.each do |r1|
+      hgraph.getRadios.each do |r2|
+        next if(r1==r2)
+        se_toBase = hgraph.getSpatialEdge(r2.radioID, r1.radioID)
+        se_toBase.digitally = true if(!se_toBase.nil? and r2.protocol.gsub("-40GHz","")=="802.11n" and r1.protocol.gsub("-40MHz","")=="802.11n")
+
+        se_toOpp = hgraph.getSpatialEdge(r1.radioID, r2.radioID)
+        se_toOpp.digitally = true if(!se_toOpp.nil? and r2.protocol.gsub("-40GHz","")=="802.11n" and r1.protocol.gsub("-40MHz","")=="802.11n")
+      end
+    end
+
+    data["DC[R]"]=Array.new
+    hgraph.getRadios.each {|r| 
+      ses=Array.new
+      hgraph.getSpatialEdgesTo(r.radioID).each {|se| 
+        se2 = hgraph.getSpatialEdge(r.radioID,se.from)
+        if(not se2.nil?)
+          ses.push(se) if(se.backoff==1 and se2.backoff==1 and se.digitally==true)
+        end
+      }
+      data["DC[R]"].push( ses.map {|se| hgraph.getRadioIndex(se.from)+1} )
+      }
+    dataOF.puts translateVar("DC[R]", "For each radio, the set of radios that it digitally coordinates with (must be bi-directional)")
     
     data["C[R]"]=Array.new
     hgraph.getRadios.each {|r| 

@@ -62,6 +62,32 @@ begin
   Optimization.new(hgraph)
   (`scip -f spectrum_optimization.zpl | grep "al#1#3"`.length > 0) ? test_result(false) : test_result(true);
 end
+
+begin
+  
+  new_intermed_test("Testing digital backoff")
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11agn", [2437], 0.26675, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2437], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("5", "1", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "5", -20, 1))
+
+  results = Optimization.new(hgraph).run
+
+  intermed_test("no digital coordination between legacy and 11n")
+  (hgraph.getSpatialEdge("1","3").digitally==true) ? test_result(false) : test_result(true);
+
+  intermed_test("digital coordination between HT 802.11n")
+  (hgraph.getSpatialEdge("1","5").digitally==true) ? test_result(true) : test_result(false);
+  
+  radios = hgraph.getRadios
+  #puts radios.inspect
+  hgraph.getSpatialEdges.each {|se| puts se.inspect}
+
+end
 exit
 
 begin
