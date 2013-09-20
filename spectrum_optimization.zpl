@@ -369,6 +369,17 @@
   subto ql_c4:                           # Must be greater than the sum of the them
     forall <i,r,fi,fr> in QD: ql[i,r,fi,fr] >= A(fi,RDATA[i,"bandwidth"],fr,RDATA[r,"bandwidth"]) + af[i,fi] + af[r,fr] - 2;
 
+  # ***************************************************************************************************
+  # Are they digitally conflicted?
+  subto dc_c1:
+    forall <i> in R : forall <r> in R : digitalConflict[i,r] <= card({r} inter DC[i]);
+  
+  subto dc_c2:
+    forall <i> in R : forall <r> in R : digitalConflict[i,r] <= 1 - al[i,r];
+  
+  subto dc_c3:
+    forall <i> in R : forall <r> in R : digitalConflict[i,r] >= card({r} inter DC[i]) + (1 - al[i,r]) - 1;
+
 ############################################################################################################################################
 # INPUT CHECK
 ################
