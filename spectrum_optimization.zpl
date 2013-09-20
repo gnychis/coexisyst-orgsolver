@@ -307,13 +307,13 @@
   # ***************************************************************************************************
   # The amount of airtime sensed that will not back off to you
   subto asymsense_eq:
-    forall <r> in R : AsymSense[r] == sum <c> in AS[r] : (RDATA[c,"dAirtime"] * o[r,c]);
+    forall <r> in R : AsymSense[r] == sum <c> in AS[r] : (RDATA[c,"dAirtime"] * o[r,c] * (1-digitalConflict[r,c]));
 
   # ***************************************************************************************************
   # Related to substitution for the min() in the airtime sensed so that the "actual" sensed is <= 1.
   # The residual airtime ends up being 1 minus this value
   subto ats_eq:                         # The airtime each network senses is equal to...
-    forall <r> in R : ats[r] == sum <c> in S[r] : (RDATA[c,"dAirtime"] * o[r,c]);
+    forall <r> in R : ats[r] == sum <c> in S[r] : (RDATA[c,"dAirtime"] * o[r,c] * (1-digitalConflict[r,c]));
     #forall <r> in R : ats[r] == sum <c> in C[r] : (RadioAirtime[c] * o[r,c]); #(RDATA[c,"dAirtime"] * o[r,c]);
 
   subto ats_min_lhv_eq:                 # The left hand value of the min for airtime sensed is airtime sensed

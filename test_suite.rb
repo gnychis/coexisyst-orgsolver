@@ -142,11 +142,11 @@ end
 
 begin
   
-  new_intermed_test("Testing sharing between non-digitally coordinated")
+  new_intermed_test("Testing residual with digital coordination")
 
   hgraph=Hypergraph.new
   hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
-  hgraph.newNetwork("802.11n", [2437], 0.26675, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
   hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("3", "2", -20, 1))
