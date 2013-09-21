@@ -397,6 +397,49 @@ class Optimization
   end
 
   def run()
+    run_parallel()
+  end
+  
+  def run_parallel()
+    `rm /tmp/*.sol`
+    solve_start = Time.now
+    radios = hgraph.getRadios 
+    `touch /tmp/fscip.set`
+    fString=`fscip /tmp/fscip.set spectrum_optimization.zpl -q -fsol /tmp/fscip.sol && cat /tmp/fscip.sol | grep -E "RadioAirtime\|GoodAirtime\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
+    raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
+    fString.each { |line|
+      spl=line.split[0].split("#")
+      rid=spl[1].to_i
+
+      if(spl[0]=="af")
+        freq=spl[2].to_i
+        val=line.split[1].to_f
+        radios[rid-1].activeFreq = freq if(line.split[1].to_f>0.1)
+      end
+
+      if(spl[0]=="RadioLossRate")
+        radios[rid-1].lossRate = line.split[1].to_f
+      end
+
+      if(spl[0]=="GoodAirtime")
+        radios[rid-1].goodAirtime = line.split[1].to_f
+      end
+      
+      if(spl[0]=="RadioAirtime")
+        radios[rid-1].airtime = line.split[1].to_f
+      end
+    }
+
+    radios.each {|r|
+      r.lossRate=0.0 if(r.lossRate.nil?)
+      r.goodAirtime=0.0 if(r.goodAirtime.nil?)
+      r.airtime=0.0 if(r.airtime.nil?)
+    }
+    @solve_time = Time.now - solve_start
+    return radios
+  end
+
+  def run_single()
     solve_start = Time.now
     radios = hgraph.getRadios 
     fString=`scip -f spectrum_optimization.zpl | grep -E "RadioAirtime\|GoodAirtime\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
@@ -506,8 +549,9 @@ class Optimization
     airtime_bins["ZigBee"].default=0
     airtime_bins["Analog"].default=0
     airtime_bins["802.11n-40MHz"]=airtime_bins["802.11n"]
+  
 
-    objects=1
+    objects=10
     net_locations=Hash.new
     # For each bandwidth, get the networks that belong to it and sort by airtime
     bandwidths.sort.reverse.each do |bw|
@@ -584,6 +628,30 @@ class Optimization
     additional+="set label \"802.11n (HT mode)\" at 2430.5,1.45\n"
     additional+="set label \"ZigBee\" at 2467.5,1.30\n"
     additional+="set label \"Analog\" at 2467.5,1.15\n"
+
+    if(true) 
+      additional+="set style rect fc lt -1 fs solid 0.07 noborder\n"
+      additional+="set style arrow 2 nohead lt 5 lw 5\n"
+
+      c1_low=0; airtime_bins.each {|k,v| c1_low = v[2402] if(v[2402]>c1_low)}
+      c1_high=0; airtime_bins.each {|k,v| c1_high = v[2423] if(v[2423]>c1_high)}
+      additional+="set obj 1 rect from 2402,0 to 2423,1\n"
+      additional+="set arrow from 2402,#{c1_low} to 2402,1 as 2 lc -1\n"
+      additional+="set arrow from 2423,#{c1_high} to 2423,1 as 2 lc -1\n"
+      
+      c6_low=0; airtime_bins.each {|k,v| c6_low = v[2427] if(v[2427]>c6_low)}
+      c6_high=0; airtime_bins.each {|k,v| c6_high = v[2447] if(v[2447]>c6_high)}
+      additional+="set obj 2 rect from 2427,0 to 2447,1\n"
+      additional+="set arrow from 2427,#{c6_low} to 2427,1 as 2 lc -1\n"
+      additional+="set arrow from 2447,#{c6_high} to 2447,1 as 2 lc -1\n"
+      
+      c11_low=0; airtime_bins.each {|k,v| c11_low = v[2452] if(v[2452]>c11_low)}
+      c11_high=0; airtime_bins.each {|k,v| c11_high = v[2472] if(v[2472]>c11_high)}
+      additional+="set obj 3 rect from 2452,0 to 2472,1\n"
+      additional+="set arrow from 2452,#{c11_low} to 2452,1 as 2 lc -1\n"
+      additional+="set arrow from 2472,#{c11_high} to 2472,1 as 2 lc -1\n"
+    end
+
     additional+="set ylabel \"Airtime\" offset 1,-1.7\n"
     ytics="(\"0\" 0, \"0.2\" 0.2, \"0.4\" 0.4, \"0.6\" 0.6, \"0.8\" 0.8, \"1\" 1)"
     options=Hash["xrange",[data["x"][0],data["x"][-1]], "additional",additional, "style","lines", "ytics",ytics, "rotate",true, "yrange",[0,1.55], "lt",[1,1,1], "lc",[3,1,2], "grid",true, "xlabel", "Spectrum (MHz)","nokey",true]
