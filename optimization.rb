@@ -401,7 +401,7 @@ class Optimization
   end
   
   def run_parallel()
-    `rm /tmp/*.sol`
+    `rm -f /tmp/*.sol`
     solve_start = Time.now
     radios = hgraph.getRadios 
     `touch /tmp/fscip.set`
