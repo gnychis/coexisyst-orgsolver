@@ -332,7 +332,7 @@
     forall <i> in R : -ats_act[i] <= -ats_min_rhv + ats_min_M*(1-ats_min_y[i]);
   
   subto residual_eq:                    # The residual is equal to 1 minus the airtime sensed
-    forall <i> in R : Residual[i] == 1 - ats_act[i];
+    forall <i> in R : Residual[i] == 1 - ats_act[i] - 0.000001;
   
   # ***************************************************************************************************
   # Related to substitution for  O_ifrf ^ f_i ^ f_r

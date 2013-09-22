@@ -4,7 +4,7 @@ param M := 100;
 var z;
 var y binary;
 
-minimize goal: z;
+maximize goal: z;
 
 subto min_za:
   z <= a;
