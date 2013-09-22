@@ -629,7 +629,7 @@ class Optimization
     additional+="set label \"ZigBee\" at 2467.5,1.30\n"
     additional+="set label \"Analog\" at 2467.5,1.15\n"
 
-    if(true) 
+    if(false) 
       additional+="set style rect fc lt -1 fs solid 0.07 noborder\n"
       additional+="set style arrow 2 nohead lt 5 lw 5\n"
 

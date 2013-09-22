@@ -5,11 +5,11 @@ Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :a
 SpatialEdge = Struct.new(:from, :to, :rssi, :backoff, :digitally)
 LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :pps, :ppsMax, :txLen, :protocol) do
   def airtime
-    return pps*(txLen/1000000.0)
+    return (pps*(txLen/1000000.0)).round(3)
   end
 
   def dAirtime
-    return ppsMax*(txLen/1000000.0)
+    return (ppsMax*(txLen/1000000.0)).round(3)
   end
 end
 Hyperedge = Struct.new(:id, :radios)
