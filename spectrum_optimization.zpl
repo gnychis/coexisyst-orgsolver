@@ -92,7 +92,7 @@
   var ats[R];
   var ats_act[R];
   var ats_min_lhv[R];
-  param ats_min_rhv := 1;
+  param ats_min_rhv := 0.999;
   var ats_min_y[R] binary;
   param ats_min_M := 100;
   
@@ -332,7 +332,7 @@
     forall <i> in R : -ats_act[i] <= -ats_min_rhv + ats_min_M*(1-ats_min_y[i]);
   
   subto residual_eq:                    # The residual is equal to 1 minus the airtime sensed
-    forall <i> in R : Residual[i] == 1 - ats_act[i] - 0.0001;
+    forall <i> in R : Residual[i] == 1 - ats_act[i];
   
   # ***************************************************************************************************
   # Related to substitution for  O_ifrf ^ f_i ^ f_r
