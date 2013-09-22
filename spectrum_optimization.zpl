@@ -92,7 +92,7 @@
   var ats[R];
   var ats_act[R];
   var ats_min_lhv[R];
-  param ats_min_rhv := 0.999;
+  param ats_min_rhv := 1.0;
   var ats_min_y[R] binary;
   param ats_min_M := 100;
   
