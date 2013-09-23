@@ -120,6 +120,8 @@
   # and loss rate between two links.
   var expComp[L*L]; # >= -10;    # Make sure this is -EXP_MAX
   var expCompB[L*L]; # >= -10;    # Make sure this is -EXP_MAX
+  var expCompC[L*L] real;
+  var expCompD[L*L] real;
   var probZeroTX[L*L];
 
 ############################################################################################################################################
@@ -220,21 +222,6 @@
   # ***************************************************************************************************
   # Related to calculating the estimated overlap between two links which we do as a linear approximation
   # with 3 focus points.
-#  subto linkpps_eq:
-#      forall <l> in L : LinkPPS[l] == LinkAirtime[l]/LDATA[l,"txLen"];
-#
-#  subto expComp_eq:     # The component in the exponential function is the packets/second * vulnerability win
-#      forall <l> in L : forall <j> in U[l] : expComp[l,j] * LinkPPS[j] == 1 - ( LinkPPS[j]*LDATA[j,"txLen"]);
-#
-#  subto expCompB_eq:
-#      forall <l> in L : forall <j> in U[l] : expComp[l,j] * expCompB[l,j] == vulnWin[l,j];
-#
-#  subto probZeroTX_eq:  # If we are not using the approximation, then we compute it directly 
-#      forall <l> in L : forall <j> in U[l] : probZeroTX[l,j] == exp( -expCompB[l,j] );
-
-  var expCompC[L*L] real;
-  var expCompD[L*L] real;
-
   subto expComp_eq:     # The component in the exponential function is the packets/second * vulnerability win
       forall <l> in L : forall <j> in U[l] : expComp[l,j] * LinkAirtime[j] == LDATA[j,"txLen"];
 
