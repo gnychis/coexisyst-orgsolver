@@ -1,5 +1,7 @@
 #!/usr/bin/ruby
 require './hypergraph'
+class Array; def sum; inject( nil ) { |sum,x| sum ? sum+x : x }; end; end
+class Array; def mean; sum / size; end; end
 
 def getLossRate(baseEdge,opposingEdge)
   return 0 if(baseEdge.nil? or opposingEdge.nil?)
@@ -475,6 +477,62 @@ class Optimization
     @solve_time = Time.now - solve_start
     return radios
   end
+  
+  def getFairnessBarPlot()
+    data = Hash.new
+    additional=""
+
+    protocols=["802.11agn","802.11n","802.11n-40MHz","ZigBee","Analog"]
+    protocols.each {|p| data[p]=Array.new}
+
+    radios = hgraph.getRadios
+
+    total_radios=0    
+    hgraph.getRadios.each do |r|
+      next if(r.dAirtime.nil? or r.dAirtime==0)
+      data[r.protocol].push(r.goodAirtime.round(3) / r.dAirtime.round(3))
+      total_radios+=1
+    end
+
+    protocols_in_use=0
+    protocols.each {|p| protocols_in_use+=1 if(data[p].length>0)}
+    protocols.each {|p| data.delete(p) if(data[p].length==0)}
+
+    curr_protocol=0
+    curr_radio=0
+    objects=1
+    xtics="("
+    st=0
+    en=0
+    protocols.each do |p|
+ 
+      st=(2*curr_protocol)+curr_radio-0.5
+      data[p].each_index do |di|
+        color="#1E90FF" if(p=="802.11agn")
+        color="gold" if(p=="802.11n" || p=="802.11n-40MHz")
+        color="red" if(p=="Analog")
+        color="green" if(p=="ZigBee")
+        additional+="set object #{objects} rect from #{(2*curr_protocol)+curr_radio-0.4},#{0} to #{(2*curr_protocol)+curr_radio+0.4},#{data[p][di]} fc rgb \"#{color}\" lw 3\n"
+        en=(2*curr_protocol)+curr_radio-0.5
+        objects+=1
+        curr_radio+=1
+      end
+      
+      xtics+="\"#{p.gsub("-","\\n")}\" #{[st,en].mean+0.5},"
+
+      curr_protocol+=1
+    end
+    xtics=xtics[0..-2]
+    xtics+=") font \"Times-Roman,28\""
+
+    data=Hash.new
+    data["x"]=(0..total_radios).to_a
+
+    ytics="(\"0\" 0, \"0.2\" 0.2, \"0.4\" 0.4, \"0.6\" 0.6, \"0.8\" 0.8, \"1\" 1)"
+    options=Hash["xoff",[0,-0.75], "xtics",xtics, "xrange",[-2,(2*curr_protocol)+curr_radio], "additional",additional, "ytics",ytics, "pointsize",4, "yrange",[0,1], "style","bargraph", "grid",true, "linewidth",8, "ylabel","Received / Desired Airtime \\nFraction", "xlabel","Networks Grouped By Protocol", "nokey",true]
+   
+    return data, options
+  end
 
   def getFairnessPlot()
     data = Hash.new
@@ -521,7 +579,10 @@ class Optimization
     return data, options
   end
   
-  def getSpectrumPlot(draw_conflicts)
+  def getSpectrumPlot(dc)
+
+    draw_conflicts=dc[0]
+    dc_set=dc[1]
 
     networks = hgraph.getNetworks
 
@@ -594,6 +655,7 @@ class Optimization
 
       net_conflicts=Array.new
       @conflict_graph.each do |c|
+        next if(!dc_set.include?(c.from.srcID) and !dc_set.include?(c.to.srcID))
         net_from=nil; net_to=nil
         networks.each_value  do |n|
           n.radios.each do |r|
