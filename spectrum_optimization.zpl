@@ -5,9 +5,6 @@
 
   include "data.zpl";             # Load in the specific data to the environment, see sample_data.zpl for a post-processed example
 
-  param USE_LINEAR_APPROX := 0;   # Avoid the use of an exponential function in computing overlap by using a
-                                  # linear approximation we introduced
-
 ############################################################################################################################################
 # CONSTANTS
 ##############
@@ -121,20 +118,9 @@
   # ***************************************************************************************************
   # Related to the linear approximation of the exponential function for estimating the overlap
   # and loss rate between two links.
-  set FPS := {1,2,3};
-  param expFPS[FPS] := <1> -3, <2> -1.5, <3> -0.4;
-  param expOffsets[FPS] := <1> 0.01, <2> 0.02, <3> 0.04;
-  var expIND[L*L*FPS] binary;
-  param EXP_MAX := 10;
   var expComp[L*L]; # >= -10;    # Make sure this is -EXP_MAX
   var expCompB[L*L]; # >= -10;    # Make sure this is -EXP_MAX
-  var probZeroTXinter[L*L*FPS];
   var probZeroTX[L*L];
-  param EXP_DELTA := 0.001;
-  var expFPSvals[FPS];
-  subto expFPSvals_eq:
-    forall <i> in FPS : expFPSvals[i] == exp(expFPS[i]);
-
 
 ############################################################################################################################################
 # CONSTRAINTS
@@ -244,45 +230,8 @@
       forall <l> in L : forall <j> in U[l] : expComp[l,j] * expCompB[l,j] == vulnWin[l,j];
 
   subto probZeroTX_eq:  # If we are not using the approximation, then we compute it directly 
-    if(USE_LINEAR_APPROX == 0) then
-      forall <l> in L : forall <j> in U[l] : probZeroTX[l,j] == exp( -expCompB[l,j] )
-    end;
+      forall <l> in L : forall <j> in U[l] : probZeroTX[l,j] == exp( -expCompB[l,j] );
 
-  subto toggleIND_1:    # The indicator to see if the value is above our approximation focus points
-    if(USE_LINEAR_APPROX == 1) then
-      forall <l> in L : forall <j> in U[l] : forall <i> in FPS do
-        expIND[l,j,i] >= ((expComp[l,j]-expFPS[i]) / EXP_MAX) + (EXP_DELTA / (2*EXP_MAX))
-      end;
-  
-  subto toggleIND_2:    # The second constraint to determine the binary indicator
-    if(USE_LINEAR_APPROX == 1) then
-      forall <l> in L : forall <j> in U[l] : forall <i> in FPS do
-        expIND[l,j,i] <= 1 + ((expComp[l,j]-expFPS[i])/EXP_MAX)
-    end;
-
-  subto probzero_eq:
-    if(USE_LINEAR_APPROX == 1) then
-      forall <l> in L : forall <j> in U[l] do
-        probZeroTX[l,j] == ((expIND[l,j,1]-expIND[l,j,2])*probZeroTXinter[l,j,1]) + ((expIND[l,j,2]-expIND[l,j,3])*probZeroTXinter[l,j,2]) + (expIND[l,j,3]*probZeroTXinter[l,j,3])
-    end;
-
-  subto exp_low:    # If the value falls on to the lower approximation line
-    if(USE_LINEAR_APPROX == 1) then
-      forall <l> in L : forall <j> in U[l] do
-        probZeroTXinter[l,j,1] == expFPSvals[1] + expFPSvals[1]*expComp[l,j] - expFPSvals[1]*expFPS[1]
-    end;
-
-  subto exp_mid:    # If it falls on to the mid approximation line
-    if(USE_LINEAR_APPROX == 1) then
-      forall <l> in L : forall <j> in U[l] do
-        probZeroTXinter[l,j,2] == expFPSvals[2] + expFPSvals[2]*expComp[l,j] - expFPSvals[2]*expFPS[2]
-    end;
-
-  subto exp_high:   # And finally, the high line
-    if(USE_LINEAR_APPROX == 1) then
-      forall <l> in L : forall <j> in U[l] do
-        probZeroTXinter[l,j,3] == expFPSvals[3] + expFPSvals[3]*expComp[l,j] - expFPSvals[3]*expFPS[3]
-    end;
 
   # ***************************************************************************************************
   # Related to calculating the lossrate variable for each of the links
