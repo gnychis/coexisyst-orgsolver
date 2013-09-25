@@ -2,6 +2,7 @@
 require './hypergraph'
 class Array; def sum; inject( nil ) { |sum,x| sum ? sum+x : x }; end; end
 class Array; def mean; sum / size; end; end
+class Array; def same_values?; self.uniq.length == 1; end; end
 
 def getLossRate(baseEdge,opposingEdge)
   return 0 if(baseEdge.nil? or opposingEdge.nil?)
@@ -399,15 +400,75 @@ class Optimization
   end
 
   def run()
-    run_parallel()
+    run_parallel(nil)
   end
   
-  def run_parallel()
+  def run_fcfs(solution_name,by)
+    networks = hgraph.getNetworks
+
+    sorted_nets = networks.sort_by {|key,vals| networks[key].bandwidth}
+    sorted_nets.reverse!   # Largest first
+    
+    # Get all of the unique bandwidths
+    bandwidths = Array.new
+    networks.each_value {|n| bandwidths.push(n.bandwidth) if(not bandwidths.include?(n.bandwidth))}
+
+    chosen_freqs=Hash.new
+    networks.each_key {|n| chosen_freqs[n]="4000"}
+
+    potential_freqs=Hash.new
+    networks.each_key {|n| potential_freqs[n]=networks[n].radios[0].frequencies}
+    networks.each_key {|n|
+      networks[n].radios.each {|r| r.frequencies=[4000]}
+    }
+    
+    bandwidths.sort.reverse.each do |bw|
+      curr_networks=Array.new
+      networks.each_value {|n| curr_networks.push(n) if(n.bandwidth==bw)}
+      curr_networks.sort_by! {|n| n.dAirtime}
+      curr_networks.reverse!   # Most airtime first
+
+      curr_networks.each do |net|
+        frequencies=net.radios[0].frequencies
+        outcomes=Hash.new
+        potential_freqs[net.networkID].each do |pf|
+          net.radios.each {|r| r.frequencies=[pf]}
+          initialize(hgraph)
+          run_single
+          outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].residual if(by=="residual")
+          outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].airtime if(by=="airtime")
+        end
+        os = outcomes.sort_by {|key,val| val}
+        #puts os.inspect
+        vls = os.map {|i| i[1]}
+        mx = 0; os.each {|i| mx=i[1] if(i[1]>mx)}
+        choose=Array.new
+        os.each {|i| choose.push(i[0]) if(i[1]==mx)}
+        #puts choose.inspect
+        freq = choose[rand(choose.length)]
+        net.radios.each {|r| r.frequencies=[freq]}
+        #puts freq.inspect
+        #puts "yep #{net.dAirtime} #{hgraph.getNetworks[net.networkID].airtime} #{hgraph.getNetworks[net.networkID].activeFreq}"
+      end
+    end
+     run_parallel(solution_name) 
+  end
+  
+  def run_fcfs_residual(solution_name)
+    run_fcfs(solution_name, "residual")
+  end
+
+  def run_fcfs_airtime(solution_name)
+    run_fcfs(solution_name, "airtime")
+  end
+  
+  def run_parallel(solution_name)
     `rm -f /tmp/*.sol`
     solve_start = Time.now
     radios = hgraph.getRadios 
     `touch /tmp/fscip.set`
-    fString=`fscip /tmp/fscip.set spectrum_optimization.zpl -q -fsol /tmp/fscip.sol && cat /tmp/fscip.sol | grep -E "RadioAirtime\|GoodAirtime\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
+    solution_name="/tmp/fscip.sol" if(solution_name.nil? or solution_name=="")
+    fString=`fscip /tmp/fscip.set spectrum_optimization.zpl -q -fsol #{solution_name} && cat #{solution_name} | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
       spl=line.split[0].split("#")
@@ -423,6 +484,14 @@ class Optimization
         radios[rid-1].lossRate = line.split[1].to_f
       end
 
+      if(spl[0]=="Residual")
+        radios[rid-1].residual = line.split[1].to_f
+      end
+      
+      if(spl[0]=="ats")
+        radios[rid-1].ats = line.split[1].to_f
+      end
+
       if(spl[0]=="GoodAirtime")
         radios[rid-1].goodAirtime = line.split[1].to_f
       end
@@ -436,6 +505,8 @@ class Optimization
       r.lossRate=0.0 if(r.lossRate.nil?)
       r.goodAirtime=0.0 if(r.goodAirtime.nil?)
       r.airtime=0.0 if(r.airtime.nil?)
+      r.ats=0.0 if(r.ats.nil?)
+      r.residual=0.0 if(r.residual.nil?)
     }
     @solve_time = Time.now - solve_start
     return radios
@@ -444,7 +515,7 @@ class Optimization
   def run_single()
     solve_start = Time.now
     radios = hgraph.getRadios 
-    fString=`scip -f spectrum_optimization.zpl | grep -E "RadioAirtime\|GoodAirtime\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
+    fString=`scip -f spectrum_optimization.zpl | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
       spl=line.split[0].split("#")
@@ -458,6 +529,14 @@ class Optimization
 
       if(spl[0]=="RadioLossRate")
         radios[rid-1].lossRate = line.split[1].to_f
+      end
+      
+      if(spl[0]=="Residual")
+        radios[rid-1].residual = line.split[1].to_f
+      end
+      
+      if(spl[0]=="ats")
+        radios[rid-1].ats = line.split[1].to_f
       end
 
       if(spl[0]=="GoodAirtime")
@@ -473,6 +552,8 @@ class Optimization
       r.lossRate=0.0 if(r.lossRate.nil?)
       r.goodAirtime=0.0 if(r.goodAirtime.nil?)
       r.airtime=0.0 if(r.airtime.nil?)
+      r.ats=0.0 if(r.ats.nil?)
+      r.residual=0.0 if(r.residual.nil?)
     }
     @solve_time = Time.now - solve_start
     return radios
@@ -504,7 +585,7 @@ class Optimization
     xtics="("
     st=0
     en=0
-    protocols.each do |p|
+    data.each_key do |p|
  
       st=(2*curr_protocol)+curr_radio-0.5
       data[p].each_index do |di|
