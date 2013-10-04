@@ -335,69 +335,8 @@
   do forall <i> in R do check RDATA[i,"bandwidth"] > 0;
   do forall <i> in R do check RDATA[i,"bandwidth"] > 0;
 
-############################################################################################################################################
-# OBJECTIVE FUNCTION
-################
+var airtimeFracs[R];
 
-  var airtimeFracs[R];
-  var jainTopSum real;
-  var jainTop real;
-  var jainBottom real;
-  var jainBottomSum real;
-  var jainN integer;
-  var jainFairness real;
-
-  subto atfracs:
-    forall <r> in R with RDATA[r,"dAirtime"]>0 : airtimeFracs[r] == GoodAirtime[r] / RDATA[r,"dAirtime"];
-    
-  subto jainN:
-    jainN == sum <r> in R with RDATA[r,"dAirtime"]>0 : 1;
-
-  subto jainTopSum_eq:
-    jainTopSum == sum <r> in R with RDATA[r,"dAirtime"]>0 : airtimeFracs[r];
-
-  subto jainTop_eq:
-    jainTop == jainTopSum * jainTopSum;
-
-  subto jainBottomSum_eq:
-    jainBottomSum == sum <r> in R with RDATA[r,"dAirtime"]>0 : airtimeFracs[r] * airtimeFracs[r];
-
-  subto jainBottom_eq:
-    jainBottom == jainBottomSum * jainN;
-
-  subto jainFairness_eq:
-    jainBottom * jainFairness == jainTop;
-
-#  maximize sumAirtime:
-#    sum <r> in R with RDATA[r,"dAirtime"]>0 : GoodAirtime[r];
-
-#  maximize jainFair:
-#    jainFairness;
- 
-#  maximize min_prop_airtime: 
-#    sum <r> in R with RDATA[r,"dAirtime"]>0 : GoodAirtime[r] / RDATA[r,"dAirtime"]; 
-
-
-######################################################################################
-  var fprod_vals[R];
-  var fprod_vars[R];
-  var fprod;
-
-  subto fprod_eq:
-    fprod == fprod_vars[card(R)];
-
-  subto fprod_vals_eq1:
-    forall <r> in R with RDATA[r,"dAirtime"]>0 : fprod_vals[r] == airtimeFracs[r];
+subto atfracs:
+  forall <r> in R with RDATA[r,"dAirtime"]>0 : airtimeFracs[r] == GoodAirtime[r] / RDATA[r,"dAirtime"];
   
-  subto fprod_vals_eq2:
-    forall <r> in R with RDATA[r,"dAirtime"]==0 : fprod_vals[r] == 1;
-
-  subto fprod_vars_init:
-    fprod_vars[1] == fprod_vals[1];
-
-  subto fprod_vars_eq:
-    forall <r> in R with r!=1 : fprod_vars[r] == fprod_vars[r-1] * fprod_vals[r];
-
-  maximize fracProducts:
-    fprod;
-
