@@ -403,7 +403,7 @@ class Optimization
     run_parallel(nil)
   end
   
-  def run_fcfs(solution_name,by)
+  def run_lf(solution_name,by)
     networks = hgraph.getNetworks
 
     sorted_nets = networks.sort_by {|key,vals| networks[key].bandwidth}
@@ -454,12 +454,56 @@ class Optimization
      run_parallel(solution_name) 
   end
   
+  def run_fcfs(solution_name,by)
+    networks = hgraph.getNetworks
+
+    curr_networks = networks
+    
+    potential_freqs=Hash.new
+    networks.each_key {|n| potential_freqs[n]=networks[n].radios[0].frequencies}
+    networks.each_key {|n|
+      networks[n].radios.each {|r| r.frequencies=[4000]}
+    }
+
+    curr_networks.each do |networkID,net|
+      frequencies=net.radios[0].frequencies
+      outcomes=Hash.new
+      potential_freqs[net.networkID].each do |pf|
+        net.radios.each {|r| r.frequencies=[pf]}
+        initialize(hgraph)
+        run_single
+        outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].residual if(by=="residual")
+        outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].airtime if(by=="airtime")
+      end
+      os = outcomes.sort_by {|key,val| val}
+      #puts os.inspect
+      vls = os.map {|i| i[1]}
+      mx = 0; os.each {|i| mx=i[1] if(i[1]>mx)}
+      choose=Array.new
+      os.each {|i| choose.push(i[0]) if(i[1]==mx)}
+      #puts choose.inspect
+      freq = choose[rand(choose.length)]
+      net.radios.each {|r| r.frequencies=[freq]}
+      #puts freq.inspect
+      #puts "yep #{net.dAirtime} #{hgraph.getNetworks[net.networkID].airtime} #{hgraph.getNetworks[net.networkID].activeFreq}"
+    end
+   run_parallel(solution_name) 
+  end
+  
   def run_fcfs_residual(solution_name)
     run_fcfs(solution_name, "residual")
   end
 
   def run_fcfs_airtime(solution_name)
     run_fcfs(solution_name, "airtime")
+  end
+  
+  def run_lf_residual(solution_name)
+    run_lf(solution_name, "residual")
+  end
+
+  def run_lf_airtime(solution_name)
+    run_lf(solution_name, "airtime")
   end
   
   def run_parallel(solution_name)
