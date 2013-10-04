@@ -377,28 +377,6 @@ class Optimization
     @init_time = Time.now - init_start
   end
   
-  def run_debug()
-    radios=Array.new
-    all=`scip -f spectrum_optimization.zpl`
-    puts "\n-------------------------"
-    puts all.split("\n")[45..-157]
-    puts "\n"
-    fString=`scip -f spectrum_optimization.zpl | grep -E "af\#|no solution"`.split("\n").map {|i| i.chomp}
-    raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
-    fString.each { |line|
-      spl=line.split[0].split("#")
-      rid=spl[1].to_i
-      freq=spl[2].to_i
-      val=line.split[1].to_f
-      radio = @hgraph.getRadioByIndex(rid-1)
-      if(line.split[1].to_f>0.1)
-        radio.activeFreq = freq
-        radios.push( radio ) 
-      end
-    }
-    return radios
-  end
-
   def run()
     run_parallel(nil)
   end
@@ -512,7 +490,7 @@ class Optimization
     radios = hgraph.getRadios 
     `touch /tmp/fscip.set`
     solution_name="/tmp/fscip.sol" if(solution_name.nil? or solution_name=="")
-    fString=`fscip /tmp/fscip.set spectrum_optimization.zpl -q -fsol #{solution_name} && cat #{solution_name} | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
+    fString=`fscip /tmp/fscip.set obj_prodPropAirtime.zpl -q -fsol #{solution_name} && cat #{solution_name} | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
       spl=line.split[0].split("#")
@@ -559,7 +537,7 @@ class Optimization
   def run_single()
     solve_start = Time.now
     radios = hgraph.getRadios 
-    fString=`scip -f spectrum_optimization.zpl | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
+    fString=`scip -f obj_prodPropAirtime.zpl | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
       spl=line.split[0].split("#")
