@@ -428,8 +428,8 @@ class Optimization
           net.radios.each {|r| r.frequencies=[pf]}
           initialize(hgraph)
           run_single
-          outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].residual
-#          outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].airtime if(by=="airtime")
+#          outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].residual
+          outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].airtime
         end
         os = outcomes.sort_by {|key,val| val}
         #puts os.inspect
@@ -465,8 +465,8 @@ class Optimization
         net.radios.each {|r| r.frequencies=[pf]}
         initialize(hgraph)
         run_single
-        outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].residual
-#        outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].airtime if(by=="airtime")
+#        outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].residual
+        outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].airtime
       end
       os = outcomes.sort_by {|key,val| val}
       #puts os.inspect
