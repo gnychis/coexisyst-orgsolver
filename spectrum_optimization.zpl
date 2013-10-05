@@ -107,7 +107,7 @@
   # the radio coordinates with.
   var FairShare[R];
   var AsymSense[R];
-  var nsharing[R] binary;
+  var nsharing[R] integer;
   
   # ***************************************************************************************************
   # Calculation of the max(residual,fairshare)

@@ -499,7 +499,7 @@ class Optimization
       ofunction=Objective::PROP_AIRTIME
     end
 
-    fString=`fscip /tmp/fscip.set #{ofunction}.zpl -q -fsol #{solution_name} && cat #{solution_name} | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
+    fString=`fscip /tmp/fscip.set #{ofunction}.zpl -q -fsol #{solution_name} 2> /dev/null && cat #{solution_name} | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
       spl=line.split[0].split("#")
