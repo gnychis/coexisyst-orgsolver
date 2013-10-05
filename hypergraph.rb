@@ -1,9 +1,54 @@
 #!/usr/bin/ruby
 
-Network = Struct.new(:networkID, :protocol, :activeFreq, :bandwidth, :dAirtime, :airtime, :goodAirtime, :lossRate, :radios, :links)
-Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :activeFreq, :lossRate, :goodAirtime, :airtime, :dAirtime, :residual, :ats)
-SpatialEdge = Struct.new(:from, :to, :rssi, :backoff, :digitally)
+Network = Struct.new(:networkID, :protocol, :activeFreq, :bandwidth, :dAirtime, :airtime, :goodAirtime, :lossRate, :radios, :links) do
+  def to_map
+    map = Hash.new
+    self.members.each { |m| map[m] = self[m] }
+    map
+  end
+
+  def to_json(*a)
+    to_map.to_json(*a)
+  end
+end
+
+Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :activeFreq, :lossRate, :goodAirtime, :airtime, :dAirtime, :residual, :ats) do
+  def to_map
+    map = Hash.new
+    self.members.each { |m| map[m] = self[m] }
+    map
+  end
+
+  def to_json(*a)
+    to_map.to_json(*a)
+  end
+end
+
+SpatialEdge = Struct.new(:from, :to, :rssi, :backoff, :digitally) do
+  def to_map
+    map = Hash.new
+    self.members.each { |m| map[m] = self[m] }
+    map
+  end
+
+  def to_json(*a)
+    to_map.to_json(*a)
+  end
+end
+
+
 LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :pps, :ppsMax, :txLen, :protocol) do
+
+  def to_map
+    map = Hash.new
+    self.members.each { |m| map[m] = self[m] }
+    map
+  end
+
+  def to_json(*a)
+    to_map.to_json(*a)
+  end
+
   def airtime
     return (pps*(txLen/1000000.0)).round(3)
   end
@@ -12,13 +57,28 @@ LinkEdge = Struct.new(:srcID, :dstID, :freq, :bandwidth, :pps, :ppsMax, :txLen, 
     return (ppsMax*(txLen/1000000.0)).round(3)
   end
 end
-Hyperedge = Struct.new(:id, :radios)
+
+Hyperedge = Struct.new(:id, :radios) do
+  def to_map
+    map = Hash.new
+    self.members.each { |m| map[m] = self[m] }
+    map
+  end
+
+  def to_json(*a)
+    to_map.to_json(*a)
+  end
+end
 
 class Hypergraph
   @@spatialEdges=Array.new
   @@radios=Array.new
   @@hyperEdges=Array.new     
   @@linkEdges=Array.new
+
+  def to_json
+    {'hyperEdges' => @@hyperEdges,'linkEdges' => @@linkEdges, 'spatialEdges' => @@spatialEdges, 'radios' => @@radios}.to_json
+  end
 
   def getSpatialEdges()
     return @@spatialEdges
