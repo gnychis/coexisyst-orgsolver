@@ -383,4 +383,11 @@ class Hypergraph
     end
   end
 
+  def init_json(json)
+    json["spatialEdges"].each {|se| @@spatialEdges.push(SpatialEdge.new(*se.values)) }
+    json["radios"].each {|ra| @@radios.push(Radio.new(*ra.values)) }
+    json["hyperEdges"].each {|he| @@hyperEdges.push(Hyperedge.new(*he.values)) }
+    json["linkEdges"].each {|le| @@linkEdges.push(LinkEdge.new(*le.values)) }    
+  end
+
 end

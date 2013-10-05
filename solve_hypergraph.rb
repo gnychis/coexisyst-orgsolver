@@ -22,4 +22,5 @@ prefix=opts[:file].split(".")[0]
 data=File.read(opts[:file])
 hgraph_json = JSON.parse(data)
 
-puts hgraph_json.inspect
+hgraph = Hypergraph.new
+hgraph.init_json(hgraph_json)
