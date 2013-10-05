@@ -4,6 +4,15 @@ class Array; def sum; inject( nil ) { |sum,x| sum ? sum+x : x }; end; end
 class Array; def mean; sum / size; end; end
 class Array; def same_values?; self.uniq.length == 1; end; end
 
+module Objective
+  PROD_PROP_AIRTIME = "obj_prodPropAirtime"
+  SUM_AIRTIME = "obj_sumAirtime"
+  PROP_AIRTIME = "obj_propAirtime"
+  PROD_JAIN_FAIRNESS = "obj_jainFairness"
+  FCFS = "obj_FCFS"
+  LARGEST_FIRST = "obj_LF"
+end
+
 def getLossRate(baseEdge,opposingEdge)
   return 0 if(baseEdge.nil? or opposingEdge.nil?)
   return 0 if(baseEdge.rssi>=opposingEdge.rssi)
@@ -466,22 +475,6 @@ class Optimization
       #puts "yep #{net.dAirtime} #{hgraph.getNetworks[net.networkID].airtime} #{hgraph.getNetworks[net.networkID].activeFreq}"
     end
    run_parallel(solution_name) 
-  end
-  
-  def run_fcfs_residual(solution_name)
-    run_fcfs(solution_name, "residual")
-  end
-
-  def run_fcfs_airtime(solution_name)
-    run_fcfs(solution_name, "airtime")
-  end
-  
-  def run_lf_residual(solution_name)
-    run_lf(solution_name, "residual")
-  end
-
-  def run_lf_airtime(solution_name)
-    run_lf(solution_name, "airtime")
   end
   
   def run_parallel(solution_name)
