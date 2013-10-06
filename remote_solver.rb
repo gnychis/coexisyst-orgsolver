@@ -26,6 +26,7 @@ objectives.each do |obj|
 
   host=phosts[rand(phosts.length)]
   phosts.delete(host)
+  puts "Running #{obj} on ece0#{host}"
 
   x = Thread.new { 
     exec = "ssh -o 'StrictHostKeyChecking no' ece0#{host} << EOF\n"
