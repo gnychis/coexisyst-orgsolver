@@ -23,6 +23,7 @@ Conflict = Struct.new(:from, :to, :type)
 NetworkConflict = Struct.new(:from, :to)
 
 class Optimization
+  attr_accessor :rand_dir
   attr_accessor :data
   attr_accessor :hgraph
   attr_accessor :solve_time
@@ -72,6 +73,7 @@ class Optimization
     @solve_time = 0
     @subgraph_time = 0
     @init_time = 0
+    @rand_dir="/tmp/#{rand(10000)}"
     dataOF = File.new("data.zpl", "w")
 
     init_start=Time.now
