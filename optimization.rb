@@ -74,7 +74,8 @@ class Optimization
     @subgraph_time = 0
     @init_time = 0
     @rand_dir="/tmp/#{rand(10000)}"
-    dataOF = File.new("data.zpl", "w")
+    `mkdir -p #{@rand_dir}`
+    dataOF = File.new("#{@rand_dir}/data.zpl", "w")
 
     init_start=Time.now
 
@@ -396,6 +397,7 @@ class Optimization
     else
       run_parallel(ofunction, solution_name)
     end
+    `rm -r #{@rand_dir}`
   end
   
   def run_lf(solution_name)
@@ -501,7 +503,10 @@ class Optimization
       ofunction=Objective::PROP_AIRTIME
     end
 
-    fString=`fscip /tmp/fscip.set #{ofunction}.zpl -q -fsol #{solution_name} 2> /dev/null && cat #{solution_name} | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
+    curr_dir=Dir.pwd
+    `cp spectrum_optimization.zpl #{@rand_dir}`
+    `cp obj_* #{@rand_dir}`
+    fString=`cd #{@rand_dir} && fscip /tmp/fscip.set #{ofunction}.zpl -q -fsol #{curr_dir}/#{solution_name} 2> /dev/null && cat #{curr_dir}/#{solution_name} | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
       spl=line.split[0].split("#")
@@ -548,7 +553,10 @@ class Optimization
   def run_single()
     solve_start = Time.now
     radios = hgraph.getRadios 
-    fString=`scip -f obj_prodPropAirtime.zpl | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
+    curr_dir=Dir.pwd
+    `cp spectrum_optimization.zpl #{@rand_dir}`
+    `cp obj_* #{@rand_dir}`
+    fString=`cd #{@rand_dir} && scip -f obj_prodPropAirtime.zpl | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
       spl=line.split[0].split("#")
