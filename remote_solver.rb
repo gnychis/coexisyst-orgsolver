@@ -8,8 +8,7 @@ require './plot.rb'
 class Array; def sum; inject( nil ) { |sum,x| sum ? sum+x : x }; end; end
 class Array; def mean; sum / size; end; end
 
-#objectives=["prodPropAirtime","sumAirtime","propAirtime","jainFairness","FCFS","LF"]
-objectives=["sumAirtime"]
+objectives=["prodPropAirtime","sumAirtime","propAirtime","jainFairness","FCFS","LF"]
 
 opts = Trollop::options do
   opt :file, "The input filename", :type => :string
@@ -22,8 +21,6 @@ curr_dir=Dir.pwd
 # The potential hosts to run the process on
 phosts=(10..31).to_a
 
-puts "#{opts[:file]}"
-
 # For each objective function, launch a new process
 objectives.each do |obj|
 
@@ -32,7 +29,7 @@ objectives.each do |obj|
   puts "Running #{obj} on ece0#{host}"
 
   x = Thread.new { 
-    exec = "ssh -o 'StrictHostKeyChecking no' ece0#{host} << EOF\n"
+    exec = "ssh -o 'StrictHostKeyChecking no' ece0#{host} 2>/dev/null << EOF\n"
     exec += "export PATH=$PATH:/afs/ece.cmu.edu/usr/gnychis/bin\n"
     exec += "export PATH=/afs/ece.cmu.edu/usr/gnychis/usr/bin:$PATH\n"
     exec += "cd #{curr_dir}\n"
