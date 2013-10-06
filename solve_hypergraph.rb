@@ -31,8 +31,6 @@ hgraph.init_json(hgraph_json)
 opt = Optimization.new(hgraph)
 opt.run("obj_#{opts[:objective]}", "#{prefix}")
 
-exit
-   
 # Do the plotting
 splot, options = opt.getSpectrumPlot([false,nil])
 plot("#{prefix}_#{opts[:objective]}",splot,options)
