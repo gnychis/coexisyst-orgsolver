@@ -8,7 +8,8 @@ require './plot.rb'
 class Array; def sum; inject( nil ) { |sum,x| sum ? sum+x : x }; end; end
 class Array; def mean; sum / size; end; end
 
-objectives=["prodPropAirtime","sumAirtime","propAirtime","jainFairness","FCFS","LF"]
+#objectives=["prodPropAirtime","sumAirtime","propAirtime","jainFairness","FCFS","LF"]
+objectives=["sumAirtime"]
 
 opts = Trollop::options do
   opt :file, "The input filename", :type => :string
@@ -21,6 +22,8 @@ curr_dir=Dir.pwd
 # The potential hosts to run the process on
 phosts=(10..31).to_a
 
+puts "#{opts[:file]}"
+
 # For each objective function, launch a new process
 objectives.each do |obj|
 
@@ -30,8 +33,10 @@ objectives.each do |obj|
 
   x = Thread.new { 
     exec = "ssh -o 'StrictHostKeyChecking no' ece0#{host} << EOF\n"
+    exec += "export PATH=$PATH:/afs/ece.cmu.edu/usr/gnychis/bin\n"
+    exec += "export PATH=/afs/ece.cmu.edu/usr/gnychis/usr/bin:$PATH\n"
     exec += "cd #{curr_dir}\n"
-    exec += "./solve_hypergraph.rb -f #{opts[:file]} -o #{obj}\n"
+    exec += "ruby solve_hypergraph.rb -f #{opts[:file]} -o #{obj}\n"
     exec += "EOF\n"
     `#{exec}`
     puts "Done with objective #{obj}"
