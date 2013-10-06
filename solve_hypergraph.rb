@@ -19,8 +19,21 @@ Trollop::die :objective, "Must pick a valid objective function"if(not objectives
 
 prefix=opts[:file].split(".")[0]
 
+# Read in the hypergraph specified
 data=File.read(opts[:file])
 hgraph_json = JSON.parse(data)
 
+# Create the local hypergraph from the data read in
 hgraph = Hypergraph.new
 hgraph.init_json(hgraph_json)
+
+# Run the optimization based on the objective
+opt = Optimization.new(hgraph)
+opt.run("obj_#{opts[:objective]}", "#{prefix}")
+   
+# Do the plotting
+splot, options = opt.getSpectrumPlot([false,nil])
+plot("intermed_01_#{Objective.const_get(c).gsub("obj_","")}",splot,options)
+
+splot, options = opt.getFairnessBarPlot()
+plot("intermed_01_fair_#{Objective.const_get(c).gsub("obj_","")}", splot, options)
