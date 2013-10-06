@@ -33,7 +33,7 @@ opt.run("obj_#{opts[:objective]}", "#{prefix}")
    
 # Do the plotting
 splot, options = opt.getSpectrumPlot([false,nil])
-plot("intermed_01_#{Objective.const_get(c).gsub("obj_","")}",splot,options)
+plot("#{prefix}_#{opts[:objective]}",splot,options)
 
 splot, options = opt.getFairnessBarPlot()
-plot("intermed_01_fair_#{Objective.const_get(c).gsub("obj_","")}", splot, options)
+plot("#{prefix}_fair_#{opts[:objective]}", splot, options)
