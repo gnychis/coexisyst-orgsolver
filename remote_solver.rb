@@ -22,6 +22,7 @@ curr_dir=Dir.pwd
 phosts=(10..31).to_a
 
 # For each objective function, launch a new process
+threads=Array.new
 objectives.each do |obj|
 
   host=phosts[rand(phosts.length)]
@@ -39,6 +40,7 @@ objectives.each do |obj|
     puts "Done with objective #{obj}"
   }
 
-  x.join
-  sleep 5
+  threads.push(x)
 end
+
+threads.each {|t| t.join}
