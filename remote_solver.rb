@@ -43,4 +43,5 @@ objectives.each do |obj|
   }
 
   x.join
+  sleep 5
 end
