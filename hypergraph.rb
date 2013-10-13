@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 
-Network = Struct.new(:networkID, :protocol, :activeFreq, :bandwidth, :dAirtime, :airtime, :goodAirtime, :lossRate, :radios, :links) do
+Network = Struct.new(:networkID, :protocol, :activeFreq, :bandwidth, :dAirtime, :airtime, :goodAirtime, :lossRate, :radios, :links, :rfs_max) do
   def to_map
     map = Hash.new
     self.members.each { |m| map[m] = self[m] }
@@ -12,7 +12,7 @@ Network = Struct.new(:networkID, :protocol, :activeFreq, :bandwidth, :dAirtime, 
   end
 end
 
-Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :activeFreq, :lossRate, :goodAirtime, :airtime, :dAirtime, :residual, :ats) do
+Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :activeFreq, :lossRate, :goodAirtime, :airtime, :dAirtime, :residual, :ats, :rfs_max) do
   def to_map
     map = Hash.new
     self.members.each { |m| map[m] = self[m] }
@@ -239,7 +239,7 @@ class Hypergraph
     networks=Hash.new
     radios.each do |r|
       if(not networks.has_key?(r.networkID))
-        networks[r.networkID] = Network.new(r.networkID, r.protocol, r.activeFreq, nil, 0, 0, 0, 0, Array.new, Array.new)
+        networks[r.networkID] = Network.new(r.networkID, r.protocol, r.activeFreq, nil, 0, 0, 0, 0, Array.new, Array.new,0.0)
       end
       network = networks[r.networkID]
       
@@ -255,6 +255,8 @@ class Hypergraph
       network.airtime+=r.airtime          if(not r.airtime.nil?)
       network.lossRate+=r.lossRate        if(not r.lossRate.nil?)
       network.goodAirtime+=r.goodAirtime  if(not r.goodAirtime.nil?)
+      network.rfs_max=r.rfs_max           if((not r.rfs_max.nil?) and (r.rfs_max>network.rfs_max))
+      network.rfs_max=r.rfs_max           if((not r.rfs_max.nil?) and (r.rfs_max>network.rfs_max))
 
     end
     return networks

@@ -432,8 +432,8 @@ class Optimization
           net.radios.each {|r| r.frequencies=[pf]}
           initialize(hgraph)
           run_single
-#          outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].residual
-          outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].airtime
+#          run_parallel(Objective::PROD_PROP_AIRTIME, nil)
+          outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].residual
         end
         os = outcomes.sort_by {|key,val| val}
         #puts os.inspect
@@ -445,7 +445,7 @@ class Optimization
         freq = choose[rand(choose.length)]
         net.radios.each {|r| r.frequencies=[freq]}
         #puts freq.inspect
-        #puts "yep #{net.dAirtime} #{hgraph.getNetworks[net.networkID].airtime} #{hgraph.getNetworks[net.networkID].activeFreq}"
+        #puts "#{net.networkID} #{net.dAirtime} #{freq} #{outcomes}"
       end
     end
      run_parallel(Objective::LARGEST_FIRST, solution_name) 
@@ -453,24 +453,21 @@ class Optimization
   
   def run_fcfs(solution_name)
     networks = hgraph.getNetworks
-
-    curr_networks = networks
-    
     potential_freqs=Hash.new
     networks.each_key {|n| potential_freqs[n]=networks[n].radios[0].frequencies}
     networks.each_key {|n|
       networks[n].radios.each {|r| r.frequencies=[4000]}
     }
-
-    curr_networks.each do |networkID,net|
+    curr_networks = networks.to_a.map {|i| i[1]}
+    curr_networks.shuffle.each do |net|
       frequencies=net.radios[0].frequencies
       outcomes=Hash.new
       potential_freqs[net.networkID].each do |pf|
         net.radios.each {|r| r.frequencies=[pf]}
         initialize(hgraph)
         run_single
-#        outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].residual
-        outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].airtime
+#        run_parallel(Objective::PROD_PROP_AIRTIME, nil)
+        outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].residual
       end
       os = outcomes.sort_by {|key,val| val}
       #puts os.inspect
@@ -486,6 +483,67 @@ class Optimization
     end
    run_parallel(Objective::FCFS, solution_name) 
   end
+
+  def reload_data(ofunction, solution_name)
+    solve_start = Time.now
+    radios = hgraph.getRadios 
+    curr_dir=Dir.pwd
+    radios.each {|r|
+      r.lossRate=0.0
+      r.goodAirtime=0.0
+      r.airtime=0.0
+      r.ats=0.0
+      r.residual=0.0
+      r.rfs_max=0.0
+    }
+    fString=`cat #{solution_name} | grep -E "RadioAirtime\|rfs_max\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
+    raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
+    fString.each { |line|
+      spl=line.split[0].split("#")
+      rid=spl[1].to_i
+
+      if(spl[0]=="af")
+        freq=spl[2].to_i
+        val=line.split[1].to_f
+        radios[rid-1].activeFreq = freq if(line.split[1].to_f>0.1)
+      end
+
+      if(spl[0]=="RadioLossRate")
+        radios[rid-1].lossRate = line.split[1].to_f
+      end
+      
+      if(spl[0]=="Residual")
+        radios[rid-1].residual = line.split[1].to_f
+      end
+      
+      if(spl[0]=="ats")
+        radios[rid-1].ats = line.split[1].to_f
+      end
+      
+      if(spl[0]=="rfs_max")
+        radios[rid-1].rfs_max = line.split[1].to_f
+      end
+
+      if(spl[0]=="GoodAirtime")
+        radios[rid-1].goodAirtime = line.split[1].to_f
+      end
+      
+      if(spl[0]=="RadioAirtime")
+        radios[rid-1].airtime = line.split[1].to_f
+      end
+    }
+
+    radios.each {|r|
+      r.lossRate=0.0 if(r.lossRate.nil?)
+      r.goodAirtime=0.0 if(r.goodAirtime.nil?)
+      r.airtime=0.0 if(r.airtime.nil?)
+      r.ats=0.0 if(r.ats.nil?)
+      r.residual=0.0 if(r.residual.nil?)
+      r.rfs_max=0.0 if(r.rfs_max.nil?)
+    }
+    @solve_time = Time.now - solve_start
+    return radios
+  end
   
   def run_parallel(ofunction, solution_name)
     `rm -f /tmp/*.sol`
@@ -493,20 +551,30 @@ class Optimization
     radios = hgraph.getRadios 
     `touch /tmp/fscip.set`
     
+    radios.each {|r|
+      r.lossRate=0.0
+      r.goodAirtime=0.0
+      r.airtime=0.0
+      r.ats=0.0
+      r.residual=0.0
+      r.rfs_max=0.0
+    }
+    
     if(solution_name.nil? or solution_name=="")
-      solution_name="/tmp/fscip.sol" if(solution_name.nil? or solution_name=="")
+      solution_name="fscip.sol" if(solution_name.nil? or solution_name=="")
+      curr_dir="#{@rand_dir}"
     else
       solution_name = "#{solution_name}_#{ofunction.gsub("obj_","")}.sol"
+      curr_dir="#{Dir.pwd}"
     end
 
     if((ofunction == Objective::FCFS) or (ofunction == Objective::LARGEST_FIRST))
       ofunction=Objective::PROP_AIRTIME
     end
 
-    curr_dir=Dir.pwd
     `cp spectrum_optimization.zpl #{@rand_dir}`
     `cp obj_* #{@rand_dir}`
-    fString=`cd #{@rand_dir} && fscip /tmp/fscip.set #{ofunction}.zpl -q -fsol #{curr_dir}/#{solution_name} 2> /dev/null && cat #{curr_dir}/#{solution_name} | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
+    fString=`cd #{@rand_dir} && fscip /tmp/fscip.set #{ofunction}.zpl -q -fsol #{curr_dir}/#{solution_name} 2> /dev/null && cat #{curr_dir}/#{solution_name} | grep -E "RadioAirtime\|GoodAirtime\|rfs_max\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
       spl=line.split[0].split("#")
@@ -529,6 +597,10 @@ class Optimization
       if(spl[0]=="ats")
         radios[rid-1].ats = line.split[1].to_f
       end
+      
+      if(spl[0]=="rfs_max")
+        radios[rid-1].rfs_max = line.split[1].to_f
+      end
 
       if(spl[0]=="GoodAirtime")
         radios[rid-1].goodAirtime = line.split[1].to_f
@@ -545,6 +617,7 @@ class Optimization
       r.airtime=0.0 if(r.airtime.nil?)
       r.ats=0.0 if(r.ats.nil?)
       r.residual=0.0 if(r.residual.nil?)
+      r.rfs_max=0.0 if(r.rfs_max.nil?)
     }
     @solve_time = Time.now - solve_start
     return radios
@@ -554,9 +627,17 @@ class Optimization
     solve_start = Time.now
     radios = hgraph.getRadios 
     curr_dir=Dir.pwd
+    radios.each {|r|
+      r.lossRate=0.0
+      r.goodAirtime=0.0
+      r.airtime=0.0
+      r.ats=0.0
+      r.residual=0.0
+      r.rfs_max=0.0
+    }
     `cp spectrum_optimization.zpl #{@rand_dir}`
     `cp obj_* #{@rand_dir}`
-    fString=`cd #{@rand_dir} && scip -f obj_prodPropAirtime.zpl | grep -E "RadioAirtime\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
+    fString=`cd #{@rand_dir} && scip -f obj_prodPropAirtime.zpl | grep -E "RadioAirtime\|rfs_max\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
       spl=line.split[0].split("#")
@@ -579,6 +660,10 @@ class Optimization
       if(spl[0]=="ats")
         radios[rid-1].ats = line.split[1].to_f
       end
+      
+      if(spl[0]=="rfs_max")
+        radios[rid-1].rfs_max = line.split[1].to_f
+      end
 
       if(spl[0]=="GoodAirtime")
         radios[rid-1].goodAirtime = line.split[1].to_f
@@ -595,6 +680,7 @@ class Optimization
       r.airtime=0.0 if(r.airtime.nil?)
       r.ats=0.0 if(r.ats.nil?)
       r.residual=0.0 if(r.residual.nil?)
+      r.rfs_max=0.0 if(r.rfs_max.nil?)
     }
     @solve_time = Time.now - solve_start
     return radios
@@ -612,7 +698,10 @@ class Optimization
     total_radios=0    
     hgraph.getRadios.each do |r|
       next if(r.dAirtime.nil? or r.dAirtime==0)
-      data[r.protocol].push(r.goodAirtime.round(3) / r.dAirtime.round(3))
+      straight_up = r.goodAirtime.round(3) / r.dAirtime.round(3)
+      with_retries = (r.rfs_max * (1-r.lossRate)).round(3) / r.dAirtime.round(3)
+      puts "#{r.networkID} #{r.goodAirtime.round(3)} #{r.dAirtime.round(3)} #{straight_up.round(3)} #{with_retries.round(3)} #{r.rfs_max.round(3)} #{r.lossRate.round(3)}"
+      data[r.protocol].push([straight_up.round(3),with_retries.round(3)].max)
       total_radios+=1
     end
 
@@ -650,56 +739,63 @@ class Optimization
     data=Hash.new
     data["x"]=(0..total_radios).to_a
 
+    additional+="set y2label \"Loss Rate\" offset -1,0\n"
+    additional+="set y2range [0:1]\n"
+    additional+="set y2tics (\"0\" 0, \"0.2\" 0.2, \"0.4\" 0.4, \"0.6\" 0.6, \"0.8\" 0.8, \"1\" 1.0)\n"
     ytics="(\"0\" 0, \"0.2\" 0.2, \"0.4\" 0.4, \"0.6\" 0.6, \"0.8\" 0.8, \"1\" 1)"
     options=Hash["xoff",[0,-0.75], "xtics",xtics, "xrange",[-2,(2*curr_protocol)+curr_radio], "additional",additional, "ytics",ytics, "pointsize",4, "yrange",[0,1], "style","bargraph", "grid",true, "linewidth",8, "ylabel","Received / Desired Airtime \\nFraction", "xlabel","Networks Grouped By Protocol", "nokey",true]
    
     return data, options
   end
 
-  def getFairnessPlot()
-    data = Hash.new
-    data["d"]=Array.new
-    additional=""
-
-    radios = hgraph.getRadios
-
-    radios.sort_by! {|r| r.protocol}
-
-    start_end=Array.new
-    curr_radio=0
-    curr_protocol=radios[0].protocol
-    start=0
-    radios.each do |r|
-      next if(r.dAirtime.nil? or r.dAirtime==0)
-      if(r.protocol != curr_protocol)
-        start_end.push([curr_protocol, start,curr_radio-1])
-        start=curr_radio
-        curr_protocol=r.protocol
-      end
-      data["d"].push(r.goodAirtime.round(3) / r.dAirtime.round(3))
-      curr_radio+=1
-    end
-
-    additional+="set style rect fc lt -1 fs solid 0.15 noborder\n"
-    start_end.each_index do |sei|
-      st=start_end[sei][1]
-      en=start_end[sei][2]
-      proto=start_end[sei][0]
-      offset=0
-      offset=-0.5 if(proto=="802.11agn")
-      offset=0 if(proto=="ZigBee")
-      offset=-0.5 if(proto=="802.11n")
-      offset=-1 if(proto=="802.11n-40MHz")
-      additional+="set label \"#{proto}\" at #{en-((en-st)/2.0)+offset},1.05\n"
-      next if(sei%2==1)
-      additional+="set obj rect from #{st-0.5}, graph 0 to #{en+0.5}, graph 1\n"
-    end
-  
-    ytics="(\"0\" 0, \"0.2\" 0.2, \"0.4\" 0.4, \"0.6\" 0.6, \"0.8\" 0.8, \"1\" 1)"
-    options=Hash["xrange",[-0.5,data["d"].length-0.5], "additional",additional, "ytics",ytics, "pointsize",4, "yrange",[0,1], "style","linespoints", "grid",true, "linewidth",8, "ylabel","Airtime / Desired Airtime", "xlabel","Relative Radio", "nokey",true]
-   
-    return data, options
-  end
+#  def getFairnessPlot()
+#    data = Hash.new
+#    data["d"]=Array.new
+#    additional=""
+#
+#    radios = hgraph.getRadios
+#
+#    radios.sort_by! {|r| r.protocol}
+#
+#    start_end=Array.new
+#    curr_radio=0
+#    curr_protocol=radios[0].protocol
+#    start=0
+#    radios.each do |r|
+#      next if(r.dAirtime.nil? or r.dAirtime==0)
+#      if(r.protocol != curr_protocol)
+#        start_end.push([curr_protocol, start,curr_radio-1])
+#        start=curr_radio
+#        curr_protocol=r.protocol
+#      end
+#
+#      straight_up = r.goodAirtime.round(3) / r.dAirtime.round(3)
+#      with_retries = (r.rfs_max * (1-r.lossRate)).round(3) / r.dAirtime.round(3)
+#
+#      data["d"].push([straight_up,with_retries].max)
+#      curr_radio+=1
+#    end
+#
+#    additional+="set style rect fc lt -1 fs solid 0.15 noborder\n"
+#    start_end.each_index do |sei|
+#      st=start_end[sei][1]
+#      en=start_end[sei][2]
+#      proto=start_end[sei][0]
+#      offset=0
+#      offset=-0.5 if(proto=="802.11agn")
+#      offset=0 if(proto=="ZigBee")
+#      offset=-0.5 if(proto=="802.11n")
+#      offset=-1 if(proto=="802.11n-40MHz")
+#      additional+="set label \"#{proto}\" at #{en-((en-st)/2.0)+offset},1.05\n"
+#      next if(sei%2==1)
+#      additional+="set obj rect from #{st-0.5}, graph 0 to #{en+0.5}, graph 1\n"
+#    end
+#  
+#    ytics="(\"0\" 0, \"0.2\" 0.2, \"0.4\" 0.4, \"0.6\" 0.6, \"0.8\" 0.8, \"1\" 1)"
+#    options=Hash["xrange",[-0.5,data["d"].length-0.5], "additional",additional, "ytics",ytics, "pointsize",4, "yrange",[0,1], "style","linespoints", "grid",true, "linewidth",8, "ylabel","Airtime / Desired Airtime", "xlabel","Relative Radio", "nokey",true]
+#   
+#    return data, options
+#  end
   
   def getSpectrumPlot(dc)
 
@@ -764,7 +860,8 @@ class Optimization
 
         location=[net.activeFreq-1,max_airtime+(net.dAirtime/2.0)]
         additional+="set object #{objects} rect from #{start_freq},#{max_airtime} to #{end_freq},#{max_airtime+net.dAirtime} fc rgb \"#{color}\" lw 3\n"
-        additional+="set label \"#{prefix}_{#{net.networkID.gsub("network","")}}\" at #{location[0]},#{location[1]} font \"Times-Roman,14\"\n"
+        additional+="set label \"#{prefix}{#{net.networkID.gsub("network","")}}\" at #{location[0]},#{location[1]} font \"Times-Roman,32\"\n" if(prefix=="W")
+        additional+="set label \"#{prefix}{#{net.networkID.gsub("network","").to_i-9}}\" at #{location[0]-1},#{location[1]} font \"Times-Roman,32\"\n" if(prefix=="Z")
         net_locations[net.networkID]=location
         objects+=1
       end
@@ -804,14 +901,25 @@ class Optimization
       }
     end
     
-    additional+="set object #{objects} rect from 2460,1.4 to 2466,1.5 fc rgb \"#1E90FF\" lw 2\n"; objects+=1
-    additional+="set object #{objects} rect from 2460,1.25 to 2466,1.35 fc rgb \"green\" lw 2\n"; objects+=1
-    additional+="set object #{objects} rect from 2460,1.10 to 2466,1.20 fc rgb \"red\" lw 2\n"; objects+=1
-    additional+="set object #{objects} rect from 2423,1.4 to 2429,1.5 fc rgb \"gold\" lw 2\n"; objects+=1
-    additional+="set label \"802.11abgn\" at 2467.5,1.45\n"
-    additional+="set label \"802.11n (HT mode)\" at 2430.5,1.45\n"
-    additional+="set label \"ZigBee\" at 2467.5,1.30\n"
-    additional+="set label \"Analog\" at 2467.5,1.15\n"
+    ###### Right Side
+#    additional+="set object #{objects} rect from 2460,1.4 to 2466,1.5 fc rgb \"#1E90FF\" lw 2\n"; objects+=1
+#    additional+="set object #{objects} rect from 2460,1.25 to 2466,1.35 fc rgb \"green\" lw 2\n"; objects+=1
+#    additional+="set object #{objects} rect from 2460,1.10 to 2466,1.20 fc rgb \"red\" lw 2\n"; objects+=1
+#    additional+="set object #{objects} rect from 2423,1.4 to 2429,1.5 fc rgb \"gold\" lw 2\n"; objects+=1
+#    additional+="set label \"802.11abgn\" at 2467.5,1.45\n"
+#    additional+="set label \"802.11n (HT mode)\" at 2430.5,1.45\n"
+#    additional+="set label \"ZigBee\" at 2467.5,1.30\n"
+#    additional+="set label \"Analog\" at 2467.5,1.15\n"
+    
+    ###### Left Side
+    additional+="set object #{objects} rect from 2402,1.4 to 2408,1.5 fc rgb \"#1E90FF\" lw 2\n"; objects+=1
+    additional+="set object #{objects} rect from 2402,1.25 to 2408,1.35 fc rgb \"green\" lw 2\n"; objects+=1
+    additional+="set object #{objects} rect from 2402,1.10 to 2408,1.20 fc rgb \"red\" lw 2\n"; objects+=1
+#    additional+="set object #{objects} rect from 2426,1.25 to 2432,1.35 fc rgb \"gold\" lw 2\n"; objects+=1
+    additional+="set label \"802.11abgn\" at 2409.5,1.45\n"
+#    additional+="set label \"802.11n\\n(HT mode)\" at 2433.5,1.30\n"
+    additional+="set label \"ZigBee\" at 2409.5,1.30\n"
+    additional+="set label \"Analog\" at 2409.5,1.15\n"
 
     if(false) 
       additional+="set style rect fc lt -1 fs solid 0.07 noborder\n"
