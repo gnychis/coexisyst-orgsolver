@@ -267,7 +267,7 @@ class Hypergraph
     radios=Array.new
     networks=getNetworks()
     nets_of_type=0
-    networks.each {|net| nets_of_type+=1 if(net[1].protocol==type)}
+    networks.each {|net| nets_of_type+=1 if(net[1].protocol.gsub("-40MHz","")==type.gsub("-40MHz",""))}
     (total_radios+1..total_radios+2).each { |rid| 
       r = Radio.new("#{rid}", type, "radio#{rid}", "network#{networks.length+1}", frequencies, nets_of_type+1)
       newRadio(r) 

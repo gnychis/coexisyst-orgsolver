@@ -856,8 +856,16 @@ class Optimization
     options=Hash["fontsize",72, "xrange",[0,curr_x], "additional",additional, "style","lines", "size",[6,1], "rotate",true, "yrange",[0,1], "lt",[1,1,1], "lc",[3,1,2], "grid",true, "xlabel", "Total Airtime","nokey",true]
     return data,options
   end
-  
+
+  def get5GHzSpectrumPlot(dc)
+    return spectrumPlot(dc,5660,5840)
+  end
+
   def getSpectrumPlot(dc)
+    return spectrumPlot(dc,2400,2485)
+  end
+  
+  def spectrumPlot(dc,from,to)
 
     draw_conflicts=dc[0]
     dc_set=dc[1]
@@ -875,7 +883,7 @@ class Optimization
     # Start to setup the data
     data=Hash.new
     data["x"]=Array.new
-    (0..2485-2400).each {|v| data["x"].push(2400+v)}
+    (0..to-from).each {|v| data["x"].push(from+v)}
     additional=""
 
     airtime_bins=Hash.new
@@ -921,9 +929,9 @@ class Optimization
 
         location=[net.activeFreq-1,max_airtime+(net.dAirtime/2.0)]
         additional+="set object #{objects} rect from #{start_freq},#{max_airtime} to #{end_freq},#{max_airtime+net.dAirtime} fc rgb \"#{color}\" lw 3\n"
-        additional+="set label \"#{prefix}{#{net.networkTypeID}}\" at #{location[0]-1},#{location[1]} font \"Times-Roman,32\"\n" if(prefix=="W")
-        additional+="set label \"#{prefix}{#{net.networkTypeID}}\" at #{location[0]-1},#{location[1]} font \"Times-Roman,32\"\n" if(prefix=="Z")
-        additional+="set label \"#{prefix}{#{net.networkTypeID}}\" at #{location[0]-1},#{location[1]} font \"Times-Roman,32\"\n" if(prefix=="N")
+        fontsize = (net.dAirtime>0.15) ? 32 : 20;
+        xoff = (net.dAirtime>0.15) ? 1 : 0.5;
+        additional+="set label \"#{prefix}{#{net.networkTypeID}}\" at #{location[0]-xoff},#{location[1]} font \"Times-Roman,#{fontsize}\"\n" if(prefix!="A")
         net_locations[net.networkID]=location
         objects+=1
       end
