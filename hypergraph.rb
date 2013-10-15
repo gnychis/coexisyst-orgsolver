@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 
-Network = Struct.new(:networkID, :protocol, :activeFreq, :bandwidth, :dAirtime, :airtime, :goodAirtime, :lossRate, :radios, :links, :rfs_max) do
+Network = Struct.new(:networkID, :protocol, :activeFreq, :bandwidth, :dAirtime, :airtime, :goodAirtime, :lossRate, :radios, :links, :rfs_max, :networkTypeID) do
   def to_map
     map = Hash.new
     self.members.each { |m| map[m] = self[m] }
@@ -12,7 +12,7 @@ Network = Struct.new(:networkID, :protocol, :activeFreq, :bandwidth, :dAirtime, 
   end
 end
 
-Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :activeFreq, :lossRate, :goodAirtime, :airtime, :dAirtime, :residual, :ats, :rfs_max) do
+Radio = Struct.new(:radioID, :protocol, :radioName, :networkID, :frequencies, :networkTypeID, :activeFreq, :lossRate, :goodAirtime, :airtime, :dAirtime, :residual, :ats, :rfs_max) do
   def to_map
     map = Hash.new
     self.members.each { |m| map[m] = self[m] }
@@ -239,7 +239,7 @@ class Hypergraph
     networks=Hash.new
     radios.each do |r|
       if(not networks.has_key?(r.networkID))
-        networks[r.networkID] = Network.new(r.networkID, r.protocol, r.activeFreq, nil, 0, 0, 0, 0, Array.new, Array.new,0.0)
+        networks[r.networkID] = Network.new(r.networkID, r.protocol, r.activeFreq, nil, 0, 0, 0, 0, Array.new, Array.new,0.0,r.networkTypeID)
       end
       network = networks[r.networkID]
       
@@ -266,8 +266,10 @@ class Hypergraph
     total_radios=getRadios.length
     radios=Array.new
     networks=getNetworks()
-    (total_radios+1..total_radios+2).each {|rid| 
-      r = Radio.new("#{rid}", type, "radio#{rid}", "network#{networks.length+1}", frequencies)
+    nets_of_type=0
+    networks.each {|net| nets_of_type+=1 if(net[1].protocol==type)}
+    (total_radios+1..total_radios+2).each { |rid| 
+      r = Radio.new("#{rid}", type, "radio#{rid}", "network#{networks.length+1}", frequencies, nets_of_type+1)
       newRadio(r) 
     }
 

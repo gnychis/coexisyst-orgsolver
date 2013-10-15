@@ -480,6 +480,7 @@ class Optimization
       net.radios.each {|r| r.frequencies=[freq]}
       #puts freq.inspect
       #puts "yep #{net.dAirtime} #{hgraph.getNetworks[net.networkID].airtime} #{hgraph.getNetworks[net.networkID].activeFreq}"
+      puts "#{net.networkID} #{net.dAirtime} #{freq} #{outcomes}"
     end
    run_parallel(Objective::FCFS, solution_name) 
   end
@@ -505,6 +506,7 @@ class Optimization
       if(spl[0]=="af")
         freq=spl[2].to_i
         val=line.split[1].to_f
+        puts line
         radios[rid-1].activeFreq = freq if(line.split[1].to_f>0.1)
       end
 
@@ -574,6 +576,7 @@ class Optimization
 
     `cp spectrum_optimization.zpl #{@rand_dir}`
     `cp obj_* #{@rand_dir}`
+    `rm -f #{curr_dir}/#{solution_name}`
     fString=`cd #{@rand_dir} && fscip /tmp/fscip.set #{ofunction}.zpl -q -fsol #{curr_dir}/#{solution_name} 2> /dev/null && cat #{curr_dir}/#{solution_name} | grep -E "RadioAirtime\|GoodAirtime\|rfs_max\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
@@ -797,6 +800,63 @@ class Optimization
 #    return data, options
 #  end
   
+  def getPipelinePlot()
+
+    additional=""
+    networks = hgraph.getNetworks
+    curr_x=0
+    objects=10
+
+    net_map=Hash.new
+    net_map["network1"]="W6"
+    net_map["network2"]="W5"
+    net_map["network3"]="N4"
+    net_map["network4"]="A1"
+    net_map["network5"]="W3"
+    net_map["network6"]="Z1"
+    net_map["network7"]="N1"
+    net_map["network8"]="W2"
+    net_map["network9"]="W1"
+    net_map["network10"]="Z2"
+    net_map["network11"]="N3"
+    net_map["network12"]="W4"
+    net_map["network13"]="N2"
+
+    # For each bandwidth, get the networks that belong to it and sort by airtime
+    networks.each do |networkID,net|
+
+      color="#1E90FF" if(net.protocol=="802.11agn")
+      color="gold" if(net.protocol=="802.11n" || net.protocol=="802.11n-40MHz")
+      color="red" if(net.protocol=="Analog")
+      color="green" if(net.protocol=="ZigBee")
+
+      prefix="W" if(net.protocol=="802.11agn")
+      prefix="N" if(net.protocol=="802.11n" || net.protocol=="802.11n-40MHz")
+      prefix="A" if(net.protocol=="Analog")
+      prefix="Z" if(net.protocol=="ZigBee")
+
+      puts net.dAirtime if(net.protocol=="Analog")
+      
+      additional+="set object #{objects} rect from #{curr_x},0 to #{curr_x+net.dAirtime},1 fc rgb \"#{color}\" lw 3\n"
+      location=Array.new
+      location[0]=([curr_x,curr_x+net.dAirtime].mean)-0.05
+      location[1]=0.5
+      puts "#{location.inspect} #{curr_x} #{net.dAirtime} #{curr_x+net.dAirtime}"
+      additional+="set label \"#{net_map[net.networkID]}\" at #{location[0]},#{location[1]} font \"Times-Roman,67\"\n"
+      objects+=1
+      curr_x+=net.dAirtime
+    end
+      
+    additional+="set style arrow 1 head filled ls 1\n"
+    additional+="set label \"Network arrival order\" at 0,1.23 font \"Times-Roman,80\"\n"
+    additional+="set arrow from 0.65,1.22 to 0.82,1.22 as 1 lc -1 lw 20\n"
+
+#    additional+="set ylabel \"Networks\\n(in order of arrival)\" offset 1.5,0 rotate by 270\n"
+    additional+="unset ytics\n"
+    options=Hash["fontsize",72, "xrange",[0,curr_x], "additional",additional, "style","lines", "size",[6,1], "rotate",true, "yrange",[0,1], "lt",[1,1,1], "lc",[3,1,2], "grid",true, "xlabel", "Total Airtime","nokey",true]
+    return data,options
+  end
+  
   def getSpectrumPlot(dc)
 
     draw_conflicts=dc[0]
@@ -824,7 +884,8 @@ class Optimization
     airtime_bins["ZigBee"]=Hash.new
     airtime_bins["Analog"]=Hash.new
     airtime_bins["802.11agn"].default=0
-    airtime_bins["802.11n"].default=0
+    airtime_bins["802.11n"]=airtime_bins["802.11agn"]
+#    airtime_bins["802.11n"].default=0
     airtime_bins["ZigBee"].default=0
     airtime_bins["Analog"].default=0
     airtime_bins["802.11n-40MHz"]=airtime_bins["802.11n"]
@@ -839,7 +900,7 @@ class Optimization
       curr_networks.sort_by {|n| n.dAirtime}
       curr_networks.reverse!   # Most airtime first
 
-      curr_networks.each do |net|
+      curr_networks.shuffle.each do |net|
 
         color="#1E90FF" if(net.protocol=="802.11agn")
         color="gold" if(net.protocol=="802.11n" || net.protocol=="802.11n-40MHz")
@@ -860,8 +921,9 @@ class Optimization
 
         location=[net.activeFreq-1,max_airtime+(net.dAirtime/2.0)]
         additional+="set object #{objects} rect from #{start_freq},#{max_airtime} to #{end_freq},#{max_airtime+net.dAirtime} fc rgb \"#{color}\" lw 3\n"
-        additional+="set label \"#{prefix}{#{net.networkID.gsub("network","")}}\" at #{location[0]},#{location[1]} font \"Times-Roman,32\"\n" if(prefix=="W")
-        additional+="set label \"#{prefix}{#{net.networkID.gsub("network","").to_i-9}}\" at #{location[0]-1},#{location[1]} font \"Times-Roman,32\"\n" if(prefix=="Z")
+        additional+="set label \"#{prefix}{#{net.networkTypeID}}\" at #{location[0]-1},#{location[1]} font \"Times-Roman,32\"\n" if(prefix=="W")
+        additional+="set label \"#{prefix}{#{net.networkTypeID}}\" at #{location[0]-1},#{location[1]} font \"Times-Roman,32\"\n" if(prefix=="Z")
+        additional+="set label \"#{prefix}{#{net.networkTypeID}}\" at #{location[0]-1},#{location[1]} font \"Times-Roman,32\"\n" if(prefix=="N")
         net_locations[net.networkID]=location
         objects+=1
       end
@@ -915,9 +977,9 @@ class Optimization
     additional+="set object #{objects} rect from 2402,1.4 to 2408,1.5 fc rgb \"#1E90FF\" lw 2\n"; objects+=1
     additional+="set object #{objects} rect from 2402,1.25 to 2408,1.35 fc rgb \"green\" lw 2\n"; objects+=1
     additional+="set object #{objects} rect from 2402,1.10 to 2408,1.20 fc rgb \"red\" lw 2\n"; objects+=1
-#    additional+="set object #{objects} rect from 2426,1.25 to 2432,1.35 fc rgb \"gold\" lw 2\n"; objects+=1
+    additional+="set object #{objects} rect from 2426,1.25 to 2432,1.35 fc rgb \"gold\" lw 2\n"; objects+=1
     additional+="set label \"802.11abgn\" at 2409.5,1.45\n"
-#    additional+="set label \"802.11n\\n(HT mode)\" at 2433.5,1.30\n"
+    additional+="set label \"802.11n\\n(HT mode)\" at 2433.5,1.30\n"
     additional+="set label \"ZigBee\" at 2409.5,1.30\n"
     additional+="set label \"Analog\" at 2409.5,1.15\n"
 
