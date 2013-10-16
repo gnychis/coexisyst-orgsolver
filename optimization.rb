@@ -760,9 +760,6 @@ class Optimization
     xtics=xtics[0..-2]
     xtics+=") font \"Times-Roman,28\""
 
-    data=Hash.new
-    data["x"]=(0..total_radios).to_a
-
     additional+="set y2label \"Loss Rate\" offset -1,0\n"
     additional+="set y2range [0:1]\n"
     additional+="set y2tics (\"0\" 0, \"0.2\" 0.2, \"0.4\" 0.4, \"0.6\" 0.6, \"0.8\" 0.8, \"1\" 1.0)\n"
@@ -821,31 +818,17 @@ class Optimization
 #    return data, options
 #  end
   
-  def getPipelinePlot()
+  def getPipelinePlot(ordered)
 
     additional=""
-    networks = hgraph.getNetworks
     curr_x=0
     objects=10
 
-    net_map=Hash.new
-    net_map["network1"]="W6"
-    net_map["network2"]="W5"
-    net_map["network3"]="N4"
-    net_map["network4"]="A1"
-    net_map["network5"]="W3"
-    net_map["network6"]="Z1"
-    net_map["network7"]="N1"
-    net_map["network8"]="W2"
-    net_map["network9"]="W1"
-    net_map["network10"]="Z2"
-    net_map["network11"]="N3"
-    net_map["network12"]="W4"
-    net_map["network13"]="N2"
-
     # For each bandwidth, get the networks that belong to it and sort by airtime
-    networks.each do |networkID,net|
+    ordered.each do |net|
 
+      hgraph.getNetworks().each {|nkey,n2| net = n2 if(n2.networkID==net.networkID)}
+      
       color="#1E90FF" if(net.protocol=="802.11agn")
       color="gold" if(net.protocol=="802.11n" || net.protocol=="802.11n-40MHz")
       color="red" if(net.protocol=="Analog")
@@ -856,25 +839,32 @@ class Optimization
       prefix="A" if(net.protocol=="Analog")
       prefix="Z" if(net.protocol=="ZigBee")
 
-      puts net.dAirtime if(net.protocol=="Analog")
-      
       additional+="set object #{objects} rect from #{curr_x},0 to #{curr_x+net.dAirtime},1 fc rgb \"#{color}\" lw 3\n"
       location=Array.new
       location[0]=([curr_x,curr_x+net.dAirtime].mean)-0.05
       location[1]=0.5
-      puts "#{location.inspect} #{curr_x} #{net.dAirtime} #{curr_x+net.dAirtime}"
-      additional+="set label \"#{net_map[net.networkID]}\" at #{location[0]},#{location[1]} font \"Times-Roman,67\"\n"
+      location[0]+=0.01 if(prefix=="Z" and (net.networkTypeID==3 || net.networkTypeID==2))
+
+      splits=["W4","W10","W8","W12"]
+      spl=""
+      if(splits.include?("#{prefix}#{net.networkTypeID}"))
+        spl="\\n"
+        location[0]+=0.01
+        location[1]+=0.15      
+      end
+      additional+="set label \"#{prefix}#{spl}#{net.networkTypeID}\" at #{location[0]},#{location[1]} font \"Times-Roman,67\"\n"
       objects+=1
       curr_x+=net.dAirtime
     end
       
     additional+="set style arrow 1 head filled ls 1\n"
     additional+="set label \"Network arrival order\" at 0,1.23 font \"Times-Roman,80\"\n"
-    additional+="set arrow from 0.65,1.22 to 0.82,1.22 as 1 lc -1 lw 20\n"
+    additional+="set arrow from 0.95,1.22 to 1.1,1.22 as 1 lc -1 lw 20\n"
 
 #    additional+="set ylabel \"Networks\\n(in order of arrival)\" offset 1.5,0 rotate by 270\n"
     additional+="unset ytics\n"
-    options=Hash["fontsize",72, "xrange",[0,curr_x], "additional",additional, "style","lines", "size",[6,1], "rotate",true, "yrange",[0,1], "lt",[1,1,1], "lc",[3,1,2], "grid",true, "xlabel", "Total Airtime","nokey",true]
+    options=Hash["fontsize",72, "xrange",[0,curr_x], "additional",additional, "style","lines", "size","6,1", "rotate",true, "yrange",[0,1], "lt",[1,1,1], "lc",[3,1,2], "grid",true, "xlabel", "Total Airtime","nokey",true]
+    data=Hash.new
     return data,options
   end
 
