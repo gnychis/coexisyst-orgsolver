@@ -293,6 +293,8 @@ class Hypergraph
       
     newSpatialEdge( SpatialEdge.new("#{total_radios+1}","#{total_radios+2}",rssi_backoff_to[0],rssi_backoff_to[1])) if(not rssi_backoff_to.nil?)
     newSpatialEdge( SpatialEdge.new("#{total_radios+2}","#{total_radios+1}",rssi_backoff_from[0],rssi_backoff_from[1])) if(not rssi_backoff_from.nil?)
+    
+    return getNetworks().to_a[-1][1]
   end
 
   def initialize()
