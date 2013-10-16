@@ -707,10 +707,26 @@ class Optimization
     hgraph.getRadios.each do |r|
       next if(r.dAirtime.nil? or r.dAirtime==0)
       straight_up = r.goodAirtime.round(3) / r.dAirtime.round(3)
-      with_retries = (r.rfs_max * (1-r.lossRate)).round(3) / r.dAirtime.round(3)
-      puts "#{r.networkID} #{r.goodAirtime.round(3)} #{r.dAirtime.round(3)} #{straight_up.round(3)} #{with_retries.round(3)} #{r.rfs_max.round(3)} #{r.lossRate.round(3)}"
+
+      prefix="W" if(r.protocol=="802.11agn")
+      prefix="N" if(r.protocol=="802.11n" || r.protocol=="802.11n-40MHz")
+      prefix="A" if(r.protocol=="Analog")
+      prefix="Z" if(r.protocol=="ZigBee")
+
+      scaling=1.0
+#      if(r.protocol=="ZigBee")
+#        scaling=0.3
+#      elsif(prefix=="W" and r.networkTypeID==4)
+#        scaling=0.45
+#      else
+#        scaling=0.6
+#      end
+      max_additional = (r.rfs_max-r.airtime) * (1-r.lossRate) * scaling
+      with_retries = [r.goodAirtime + max_additional, r.dAirtime].min / r.dAirtime
       data[r.protocol].push([straight_up.round(3),with_retries.round(3)].max)
       total_radios+=1
+
+      puts "#{prefix}#{r.networkTypeID} Loss: #{r.lossRate.round(3)}  Desired: #{r.dAirtime} Good: #{r.goodAirtime.round(3)} RfsMax: #{r.rfs_max} MaxAdd: #{max_additional}"
     end
 
     protocols_in_use=0
