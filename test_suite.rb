@@ -97,6 +97,15 @@ begin
   results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("unaligned, it should be a digital conflict")
   (results.include?("digitalConflict#1#3")) ? test_result(true) : test_result(false);
+  
+  hgraph=Hypergraph.new
+  hgraph.newNetwork("802.11n-40MHz", [2447], 0.06825, nil, [-40,0], nil)
+  hgraph.newNetwork("802.11n", [2462], 0.26675, nil, [-40,0], nil)
+  hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
+  hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
+  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  intermed_test("unaligned, it should be a digital conflict")
+  (results.include?("digitalConflict#1#3")) ? test_result(true) : test_result(false);
 
   hgraph=Hypergraph.new
   hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)

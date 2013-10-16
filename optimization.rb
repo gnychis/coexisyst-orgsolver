@@ -126,10 +126,10 @@ class Optimization
       hgraph.getRadios.each do |r2|
         next if(r1==r2)
         se_toBase = hgraph.getSpatialEdge(r2.radioID, r1.radioID)
-        se_toBase.digitally = true if(!se_toBase.nil? and r2.protocol.gsub("-40GHz","")=="802.11n" and r1.protocol.gsub("-40MHz","")=="802.11n")
+        se_toBase.digitally = true if(!se_toBase.nil? and r2.protocol.gsub("-40MHz","")=="802.11n" and r1.protocol.gsub("-40MHz","")=="802.11n")
 
         se_toOpp = hgraph.getSpatialEdge(r1.radioID, r2.radioID)
-        se_toOpp.digitally = true if(!se_toOpp.nil? and r2.protocol.gsub("-40GHz","")=="802.11n" and r1.protocol.gsub("-40MHz","")=="802.11n")
+        se_toOpp.digitally = true if(!se_toOpp.nil? and r2.protocol.gsub("-40MHz","")=="802.11n" and r1.protocol.gsub("-40MHz","")=="802.11n")
       end
     end
 
@@ -581,7 +581,7 @@ class Optimization
 
     `cp spectrum_optimization.zpl #{@rand_dir}`
     `cp obj_* #{@rand_dir}`
-    `rm -f #{curr_dir}/#{solution_name}`
+    #`rm -f #{curr_dir}/#{solution_name}`
     fString=`cd #{@rand_dir} && fscip /tmp/fscip.set #{ofunction}.zpl -q -fsol #{curr_dir}/#{solution_name} 2> /dev/null && cat #{curr_dir}/#{solution_name} | grep -E "RadioAirtime\|GoodAirtime\|rfs_max\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
