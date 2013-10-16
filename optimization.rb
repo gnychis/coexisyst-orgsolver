@@ -31,6 +31,10 @@ class Optimization
   attr_accessor :init_time
   attr_accessor :conflict_graph
 
+  def getRandDir()
+    return @rand_dir
+  end
+
   def translateVar(var,comment)
     s=String.new
     s += "  # #{comment}\n" if(not comment.nil?)
@@ -395,9 +399,9 @@ class Optimization
     elsif(ofunction == Objective::LARGEST_FIRST)
       run_lf(solution_name)
     else
-      run_parallel(ofunction, solution_name)
+      return run_parallel(ofunction, solution_name)
     end
-    `rm -r #{@rand_dir}`
+#    `rm -r #{@rand_dir}`
   end
   
   def run_lf(solution_name)
@@ -448,7 +452,7 @@ class Optimization
         #puts "#{net.networkID} #{net.dAirtime} #{freq} #{outcomes}"
       end
     end
-     run_parallel(Objective::LARGEST_FIRST, solution_name) 
+     return run_parallel(Objective::LARGEST_FIRST, solution_name) 
   end
   
   def run_fcfs(solution_name)
@@ -483,7 +487,7 @@ class Optimization
       #puts "yep #{net.dAirtime} #{hgraph.getNetworks[net.networkID].airtime} #{hgraph.getNetworks[net.networkID].activeFreq}"
       #puts "#{net.networkID} #{net.dAirtime} #{freq} #{outcomes}"
     end
-   run_parallel(Objective::FCFS, solution_name) 
+    return run_parallel(Objective::FCFS, solution_name) 
   end
 
   def reload_data(ofunction, solution_name)
@@ -553,7 +557,7 @@ class Optimization
     solve_start = Time.now
     radios = hgraph.getRadios 
     `touch /tmp/fscip.set`
-    
+
     radios.each {|r|
       r.lossRate=0.0
       r.goodAirtime=0.0
@@ -624,7 +628,7 @@ class Optimization
       r.rfs_max=0.0 if(r.rfs_max.nil?)
     }
     @solve_time = Time.now - solve_start
-    return radios
+    return `cat #{curr_dir}/#{solution_name}`
   end
 
   def run_single()

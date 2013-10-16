@@ -96,7 +96,7 @@ begin
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
   results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("unaligned, it should be a digital conflict")
-  (`scip -f obj_prodPropAirtime.zpl | grep "digitalConflict#1#3"`.length > 0) ? test_result(true) : test_result(false);
+  (results.include?("digitalConflict#1#3")) ? test_result(true) : test_result(false);
 
   hgraph=Hypergraph.new
   hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
@@ -105,7 +105,7 @@ begin
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
   results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("aligned, it should NOT be a digital conflict")
-  (`scip -f obj_prodPropAirtime.zpl | grep "digitalConflict#1#3"`.length > 0) ? test_result(false) : test_result(true);
+  (results.include?("digitalConflict#1#3")) ? test_result(false) : test_result(true);
 end
 
 begin
@@ -119,7 +119,7 @@ begin
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
   results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("they should be digitally sharing")
-  (`scip -f obj_prodPropAirtime.zpl | grep "nsharing"`.length > 0) ? test_result(true) : test_result(false);
+  (results.include?("nsharing")) ? test_result(true) : test_result(false);
   
   hgraph=Hypergraph.new
   hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
@@ -128,7 +128,7 @@ begin
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
   results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("they should not be digitally sharing")
-  (`scip -f obj_prodPropAirtime.zpl | grep "nsharing"`.length > 0) ? test_result(false) : test_result(true);
+  (results.include?("nsharing")) ? test_result(false) : test_result(true);
   
   hgraph=Hypergraph.new
   hgraph.newNetwork("802.11n-40MHz", [2422], 0.06825, nil, [-40,0], nil)
@@ -137,7 +137,7 @@ begin
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 0))
   results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("they should not be digitally sharing")
-  (`scip -f obj_prodPropAirtime.zpl | grep "nsharing"`.length > 0) ? test_result(false) : test_result(true);
+  (results.include?("nsharing")) ? test_result(false) : test_result(true);
 end
 
 begin
@@ -256,7 +256,8 @@ begin
       next if(le1==le2)
       hgraph.newSpatialEdge( SpatialEdge.new(le1.srcID,le2.srcID,-40,1) ) } }
 
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = hgraph.getRadios
 
   # The result is OK if all the frequencies are different
   freqs = Array.new; results.each {|r| freqs.push(r.activeFreq)}
@@ -282,7 +283,8 @@ begin
       next if(le1==le2)
       hgraph.newSpatialEdge( SpatialEdge.new(le1.srcID,le2.srcID,-40,1) ) } }
 
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = hgraph.getRadios
 
   # The result is OK if all the frequencies are different
   freqs = Array.new; results.each {|r| freqs.push(r.activeFreq)}
