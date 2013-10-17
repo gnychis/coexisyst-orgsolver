@@ -694,6 +694,43 @@ class Optimization
     return radios
   end
   
+  def self.getMultiFairnessBarPlot(pdata,options)
+
+    additional=""
+
+    k1 = pdata.keys[0]
+    k2 = pdata.keys[1]
+
+    vs1 = pdata[k1]
+    vs2 = pdata[k2]
+
+    objects=10
+    vs1[0].each_index do |ri|
+
+      str1 = vs1[0][ri]
+      vals1 = vs1[1][ri]
+
+      str2 = vs2[0][ri]
+      vals2 = vs2[1][ri]
+
+      if(vals1>vals2)
+        additional+="set object #{objects} rect from #{str1} fs pattern 11 lw 3\n"
+        objects+=1
+        additional+="set object #{objects} rect from #{str2} fs pattern 12 lw 3\n"
+        objects+=1
+      else
+        additional+="set object #{objects} rect from #{str2} fs pattern 12 lw 3\n"
+        objects+=1
+        additional+="set object #{objects} rect from #{str1} fs pattern 11 lw 3\n"
+        objects+=1
+      end
+    end
+
+    options["additional"]=additional
+   
+    return options
+  end
+  
   def getFairnessBarPlot()
     data = Hash.new
     additional=""
@@ -739,6 +776,8 @@ class Optimization
     xtics="("
     st=0
     en=0
+    locations=Array.new
+    values = Array.new
     data.each_key do |p|
  
       st=(2*curr_protocol)+curr_radio-0.5
@@ -748,6 +787,8 @@ class Optimization
         color="red" if(p=="Analog")
         color="green" if(p=="ZigBee")
         additional+="set object #{objects} rect from #{(2*curr_protocol)+curr_radio-0.4},#{0} to #{(2*curr_protocol)+curr_radio+0.4},#{data[p][di]} fc rgb \"#{color}\" lw 3\n"
+        values.push(data[p][di])
+        locations.push("#{(2*curr_protocol)+curr_radio-0.4},#{0} to #{(2*curr_protocol)+curr_radio+0.4},#{data[p][di]} fc rgb \"#{color}\"")
         en=(2*curr_protocol)+curr_radio-0.5
         objects+=1
         curr_radio+=1
@@ -766,7 +807,7 @@ class Optimization
     ytics="(\"0\" 0, \"0.2\" 0.2, \"0.4\" 0.4, \"0.6\" 0.6, \"0.8\" 0.8, \"1\" 1)"
     options=Hash["xoff",[0,-0.75], "xtics",xtics, "xrange",[-2,(2*curr_protocol)+curr_radio], "additional",additional, "ytics",ytics, "pointsize",4, "yrange",[0,1], "style","bargraph", "grid",true, "linewidth",8, "ylabel","Received / Desired Airtime \\nFraction", "xlabel","Networks Grouped By Protocol", "nokey",true]
    
-    return data, options
+    return data, options, locations, values
   end
 
 #  def getFairnessPlot()
