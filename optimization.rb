@@ -393,18 +393,18 @@ class Optimization
     @init_time = Time.now - init_start
   end
   
-  def run(ofunction, solution_name)
+  def run(parallel, ofunction, solution_name)
     if(ofunction == Objective::FCFS)
-      run_fcfs(solution_name)
+      run_fcfs(parallel, solution_name)
     elsif(ofunction == Objective::LARGEST_FIRST)
-      run_lf(solution_name)
+      run_lf(parallel, solution_name)
     else
-      return run_parallel(ofunction, solution_name)
+      return solve(parallel, ofunction, solution_name)
     end
 #    `rm -r #{@rand_dir}`
   end
   
-  def run_lf(solution_name)
+  def run_lf(parallel, solution_name)
     networks = hgraph.getNetworks
 
     sorted_nets = networks.sort_by {|key,vals| networks[key].bandwidth}
@@ -435,8 +435,7 @@ class Optimization
         potential_freqs[net.networkID].each do |pf|
           net.radios.each {|r| r.frequencies=[pf]}
           initialize(hgraph)
-          run_single
-#          run_parallel(Objective::PROD_PROP_AIRTIME, nil)
+          solve(false, Objective::PROD_PROP_AIRTIME, nil)
           outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].residual
         end
         os = outcomes.sort_by {|key,val| val}
@@ -452,7 +451,7 @@ class Optimization
         #puts "#{net.networkID} #{net.dAirtime} #{freq} #{outcomes}"
       end
     end
-     return run_parallel(Objective::LARGEST_FIRST, solution_name) 
+     return solve(parallel, Objective::LARGEST_FIRST, solution_name) 
   end
   
   def run_fcfs(solution_name)
@@ -470,8 +469,7 @@ class Optimization
       potential_freqs[net.networkID].each do |pf|
         net.radios.each {|r| r.frequencies=[pf]}
         initialize(hgraph)
-        run_single
-#        run_parallel(Objective::PROD_PROP_AIRTIME, nil)
+        solve(false, Objective::PROD_PROP_AIRTIME, nil)
         outcomes[pf]=hgraph.getNetworks[net.networkID].radios[0].residual
       end
       os = outcomes.sort_by {|key,val| val}
@@ -487,7 +485,7 @@ class Optimization
       #puts "yep #{net.dAirtime} #{hgraph.getNetworks[net.networkID].airtime} #{hgraph.getNetworks[net.networkID].activeFreq}"
       #puts "#{net.networkID} #{net.dAirtime} #{freq} #{outcomes}"
     end
-    return run_parallel(Objective::FCFS, solution_name) 
+    return solve(parallel, Objective::FCFS, solution_name) 
   end
 
   def reload_data(ofunction, solution_name)
@@ -552,7 +550,7 @@ class Optimization
     return radios
   end
   
-  def run_parallel(ofunction, solution_name)
+  def solve(parallel, ofunction, solution_name)
     `rm -f /tmp/*.sol`
     solve_start = Time.now
     radios = hgraph.getRadios 
@@ -582,7 +580,13 @@ class Optimization
     `cp spectrum_optimization.zpl #{@rand_dir}`
     `cp obj_* #{@rand_dir}`
     #`rm -f #{curr_dir}/#{solution_name}`
-    fString=`cd #{@rand_dir} && fscip /tmp/fscip.set #{ofunction}.zpl -q -fsol #{curr_dir}/#{solution_name} 2> /dev/null && cat #{curr_dir}/#{solution_name} | grep -E "RadioAirtime\|GoodAirtime\|rfs_max\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
+    if(parallel)
+      `cd #{@rand_dir} && fscip /tmp/fscip.set #{ofunction}.zpl -q -fsol #{curr_dir}/#{solution_name} 2> /dev/null`
+    else
+      `cd #{@rand_dir} && scip -f #{ofunction}.zpl > #{curr_dir}/#{solution_name} 2> /dev/null`
+    end
+
+    fString=`cat #{curr_dir}/#{solution_name} | grep -E "RadioAirtime\|GoodAirtime\|rfs_max\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
     raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
     fString.each { |line|
       spl=line.split[0].split("#")
@@ -629,69 +633,6 @@ class Optimization
     }
     @solve_time = Time.now - solve_start
     return `cat #{curr_dir}/#{solution_name}`
-  end
-
-  def run_single()
-    solve_start = Time.now
-    radios = hgraph.getRadios 
-    curr_dir=Dir.pwd
-    radios.each {|r|
-      r.lossRate=0.0
-      r.goodAirtime=0.0
-      r.airtime=0.0
-      r.ats=0.0
-      r.residual=0.0
-      r.rfs_max=0.0
-    }
-    `cp spectrum_optimization.zpl #{@rand_dir}`
-    `cp obj_* #{@rand_dir}`
-    fString=`cd #{@rand_dir} && scip -f obj_prodPropAirtime.zpl | grep -E "RadioAirtime\|rfs_max\|GoodAirtime\|Residual\|ats\|RadioLossRate\|af\#|no solution"`.split("\n").map {|i| i.chomp}
-    raise RuntimeError, '!!!! NO SOLUTION AVAILABLE !!!!' if(fString.include?("no solution available"))
-    fString.each { |line|
-      spl=line.split[0].split("#")
-      rid=spl[1].to_i
-
-      if(spl[0]=="af")
-        freq=spl[2].to_i
-        val=line.split[1].to_f
-        radios[rid-1].activeFreq = freq if(line.split[1].to_f>0.1)
-      end
-
-      if(spl[0]=="RadioLossRate")
-        radios[rid-1].lossRate = line.split[1].to_f
-      end
-      
-      if(spl[0]=="Residual")
-        radios[rid-1].residual = line.split[1].to_f
-      end
-      
-      if(spl[0]=="ats")
-        radios[rid-1].ats = line.split[1].to_f
-      end
-      
-      if(spl[0]=="rfs_max")
-        radios[rid-1].rfs_max = line.split[1].to_f
-      end
-
-      if(spl[0]=="GoodAirtime")
-        radios[rid-1].goodAirtime = line.split[1].to_f
-      end
-      
-      if(spl[0]=="RadioAirtime")
-        radios[rid-1].airtime = line.split[1].to_f
-      end
-    }
-
-    radios.each {|r|
-      r.lossRate=0.0 if(r.lossRate.nil?)
-      r.goodAirtime=0.0 if(r.goodAirtime.nil?)
-      r.airtime=0.0 if(r.airtime.nil?)
-      r.ats=0.0 if(r.ats.nil?)
-      r.residual=0.0 if(r.residual.nil?)
-      r.rfs_max=0.0 if(r.rfs_max.nil?)
-    }
-    @solve_time = Time.now - solve_start
-    return radios
   end
   
   def self.getMultiFairnessBarPlot(pdata,options)

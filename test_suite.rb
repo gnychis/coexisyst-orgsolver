@@ -63,6 +63,8 @@ end
 #  (`scip -f obj_prodPropAirtime.zpl | grep "al#1#3"`.length > 0) ? test_result(false) : test_result(true);
 #end
 
+PARALLEL=true
+
 begin
   
   new_intermed_test("Testing digital coordination")
@@ -75,7 +77,7 @@ begin
   hgraph.newSpatialEdge(SpatialEdge.new("5", "1", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("1", "5", -20, 1))
 
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
 
   intermed_test("no digital coordination between legacy and 11n")
   (hgraph.getSpatialEdge("1","3").digitally==true) ? test_result(false) : test_result(true);
@@ -94,7 +96,7 @@ begin
   hgraph.newNetwork("802.11n", [2437], 0.26675, nil, [-40,0], nil)
   hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("unaligned, it should be a digital conflict")
   (results.include?("digitalConflict#1#3")) ? test_result(true) : test_result(false);
   
@@ -103,7 +105,7 @@ begin
   hgraph.newNetwork("802.11n", [2462], 0.26675, nil, [-40,0], nil)
   hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("unaligned, it should be a digital conflict")
   (results.include?("digitalConflict#1#3")) ? test_result(true) : test_result(false);
 
@@ -112,7 +114,7 @@ begin
   hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
   hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("aligned, it should NOT be a digital conflict")
   (results.include?("digitalConflict#1#3")) ? test_result(false) : test_result(true);
 end
@@ -126,7 +128,7 @@ begin
   hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
   hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("they should be digitally sharing")
   (results.include?("nsharing")) ? test_result(true) : test_result(false);
   
@@ -135,7 +137,7 @@ begin
   hgraph.newNetwork("802.11n", [2437], 0.26675, nil, [-40,0], nil)
   hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("they should not be digitally sharing")
   (results.include?("nsharing")) ? test_result(false) : test_result(true);
   
@@ -144,7 +146,7 @@ begin
   hgraph.newNetwork("802.11n", [2412], 0.26675, nil, [-40,0], nil)
   hgraph.newSpatialEdge(SpatialEdge.new("1", "3", -20, 0))
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 0))
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("they should not be digitally sharing")
   (results.include?("nsharing")) ? test_result(false) : test_result(true);
 end
@@ -160,7 +162,7 @@ begin
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("3", "2", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("1", "4", -20, 1))
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("there should be intereference")
   (hgraph.getRadios[0].lossRate > 0) ? test_result(true) : test_result(false);
 
@@ -172,7 +174,7 @@ begin
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("3", "2", -20, 1))
   hgraph.newSpatialEdge(SpatialEdge.new("1", "4", -20, 1))
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("there should not be intereference")
   (hgraph.getRadios[0].lossRate == 0) ? test_result(true) : test_result(false);
 end
@@ -187,7 +189,7 @@ begin
   hgraph.newSpatialEdge(SpatialEdge.new("3", "2", -20, 0))
   hgraph.newSpatialEdge(SpatialEdge.new("3", "1", -20, 1))
   
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
 
   radios = hgraph.getRadios
 
@@ -234,7 +236,7 @@ begin
     hgraph.newSpatialEdge(SpatialEdge.new("19", "2", -20, 0))
 
     opt = Optimization.new(hgraph)
-    opt.run(Objective::PROD_PROP_AIRTIME,nil)
+    opt.run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
 
     radios=hgraph.getRadios
     (radios[0].airtime/radios[0].dAirtime<0.1) ? test_result(true) : test_result(false)
@@ -265,7 +267,7 @@ begin
       next if(le1==le2)
       hgraph.newSpatialEdge( SpatialEdge.new(le1.srcID,le2.srcID,-40,1) ) } }
 
-  Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   results = hgraph.getRadios
 
   # The result is OK if all the frequencies are different
@@ -292,7 +294,7 @@ begin
       next if(le1==le2)
       hgraph.newSpatialEdge( SpatialEdge.new(le1.srcID,le2.srcID,-40,1) ) } }
 
-  Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   results = hgraph.getRadios
 
   # The result is OK if all the frequencies are different
@@ -323,14 +325,14 @@ begin
 
   # The one ZigBee receiver is within range of the 802.11 transmitter (where interference is strong)
   hgraph.newSpatialEdge( SpatialEdge.new("3","6",-20,0) )
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("should avoid channel 2437")
   (hgraph.getRadio("5").activeFreq==2437) ? test_result(false) : test_result(true)
 
   # Now, change the interference scenario and it should pick the other channel
   hgraph.deleteSpatialEdge(hgraph.getSpatialEdge("3","6"))
   hgraph.newSpatialEdge( SpatialEdge.new("1","6",-20,0) )
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("should avoid channel 2412")
   (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
 end
@@ -360,7 +362,7 @@ begin
   hgraph.newSpatialEdge( SpatialEdge.new("1","6",-20,0) )
   hgraph.newSpatialEdge( SpatialEdge.new("3","6",-20,0) )
 
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("should avoid channel 2412")
   (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
 
@@ -368,7 +370,7 @@ begin
   hgraph.getLinkEdge("3","4").pps=300;
   hgraph.getLinkEdge("3","4").ppsMax=300;
 
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("should avoid channel 2437")
   (hgraph.getRadio("5").activeFreq==2437) ? test_result(false) : test_result(true)
 end
@@ -404,7 +406,7 @@ begin
   hgraph.newSpatialEdge( SpatialEdge.new("5","10",-20,0) )
   hgraph.newSpatialEdge( SpatialEdge.new("7","10",-20,0) )
 
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   (hgraph.getRadio("9").activeFreq==2412) ? test_result(false) : test_result(true)
 end
 
@@ -433,7 +435,7 @@ begin
   hgraph.newSpatialEdge( SpatialEdge.new("1","6",-50,0) )
   hgraph.newSpatialEdge( SpatialEdge.new("3","6",-20,0) )
 
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("should avoid channel 2437")
   (hgraph.getRadio("5").activeFreq==2437) ? test_result(false) : test_result(true)
 
@@ -443,7 +445,7 @@ begin
   hgraph.newSpatialEdge( SpatialEdge.new("1","6",-20,0) )
   hgraph.newSpatialEdge( SpatialEdge.new("3","6",-50,0) )
 
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("should avoid channel 2412")
   (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
 end
@@ -479,7 +481,7 @@ begin
   hgraph.newSpatialEdge( SpatialEdge.new("5","10",-20,0) )
   hgraph.newSpatialEdge( SpatialEdge.new("7","10",-20,0) )
 
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("should go to channel 2412")
   (hgraph.getRadio("9").activeFreq!=2412) ? test_result(false) : test_result(true)
 
@@ -487,7 +489,7 @@ begin
   hgraph.getSpatialEdge("3","10").rssi=-20
   hgraph.getSpatialEdge("5","10").rssi=-50
   intermed_test("should go to channel 2437")
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   (hgraph.getRadio("9").activeFreq!=2437) ? test_result(false) : test_result(true)
 end
 
@@ -513,7 +515,7 @@ begin
 
   # The one ZigBee receiver is within range of the 802.11 transmitter (where interference is strong)
   hgraph.newSpatialEdge( SpatialEdge.new("3","6",-20,0) )
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("should avoid channel 2437")
   (hgraph.getRadio("5").activeFreq==2437) ? test_result(false) : test_result(true)
 
@@ -521,7 +523,7 @@ begin
   hgraph.deleteSpatialEdge(hgraph.getSpatialEdge("3","6"))
   hgraph.deleteSpatialEdge(hgraph.getSpatialEdge("1","5"))
   hgraph.newSpatialEdge( SpatialEdge.new("1","6",-20,0) )
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("should avoid channel 2412")
   (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
 end
@@ -548,14 +550,14 @@ begin
 
   # Now, create the spatial edges so that it is completely hidden from 1
   hgraph.newSpatialEdge( SpatialEdge.new("3","5",-20,1) )
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("should avoid channel 2412")
   (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
 
   # Reverse the scenario
   hgraph.deleteSpatialEdge(hgraph.getSpatialEdge("3","5"))
   hgraph.newSpatialEdge( SpatialEdge.new("1","5",-20,1) )
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("should avoid channel 2437")
   (hgraph.getRadio("5").activeFreq==2437) ? test_result(false) : test_result(true)
 end
@@ -584,13 +586,13 @@ begin
   hgraph.newSpatialEdge( SpatialEdge.new("5","1",-20,1) )
   hgraph.newSpatialEdge( SpatialEdge.new("5","3",-20,1) )
 
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("should avoid channel 2412")
   (hgraph.getRadio("5").activeFreq==2412) ? test_result(false) : test_result(true)
 
   hgraph.getLinkEdge("1","2").txLen=2750
   hgraph.getLinkEdge("3","4").txLen=5750
-  results = Optimization.new(hgraph).run(Objective::PROD_PROP_AIRTIME,nil)
+  results = Optimization.new(hgraph).run(PARALLEL, Objective::PROD_PROP_AIRTIME,nil)
   intermed_test("should avoid channel 2437")
   (hgraph.getRadio("5").activeFreq==2437) ? test_result(false) : test_result(true)
 end
