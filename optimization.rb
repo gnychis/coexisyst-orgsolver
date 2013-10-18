@@ -423,7 +423,9 @@ class Optimization
       networks[n].radios.each {|r| r.frequencies=[4000]}
     }
     
+    cnn=1
     bandwidths.sort.reverse.each do |bw|
+      print "network (#{cnn} / #{networks.size}) "
       curr_networks=Array.new
       networks.each_value {|n| curr_networks.push(n) if(n.bandwidth==bw)}
       curr_networks.sort_by! {|n| n.dAirtime}
@@ -448,7 +450,8 @@ class Optimization
         freq = choose[rand(choose.length)]
         net.radios.each {|r| r.frequencies=[freq]}
         #puts freq.inspect
-        #puts "#{net.networkID} #{net.dAirtime} #{freq} #{outcomes}"
+        puts "#{net.networkID} #{net.dAirtime} #{freq} #{outcomes}"
+        cnn+=1
       end
     end
      return solve(parallel, Objective::LARGEST_FIRST, solution_name) 
@@ -462,8 +465,9 @@ class Optimization
       networks[n].radios.each {|r| r.frequencies=[4000]}
     }
     curr_networks = networks.to_a.map {|i| i[1]}
+    cnn=1
     curr_networks.shuffle.each do |net|
-      puts "networkID: #{net.networkID} dAirtime: #{net.dAirtime} protocol: #{net.protocol}"
+      puts "network (#{cnn} / #{networks.size}) networkID: #{net.networkID} dAirtime: #{net.dAirtime} protocol: #{net.protocol}"
       frequencies=net.radios[0].frequencies
       outcomes=Hash.new
       potential_freqs[net.networkID].each do |pf|
@@ -484,6 +488,7 @@ class Optimization
       #puts freq.inspect
       #puts "yep #{net.dAirtime} #{hgraph.getNetworks[net.networkID].airtime} #{hgraph.getNetworks[net.networkID].activeFreq}"
       #puts "#{net.networkID} #{net.dAirtime} #{freq} #{outcomes}"
+      cnn+=1
     end
     return solve(parallel, Objective::FCFS, solution_name) 
   end
